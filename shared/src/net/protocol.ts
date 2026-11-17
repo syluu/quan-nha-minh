@@ -1,4 +1,4 @@
-import type { ItemId, ShopId } from '../content';
+import type { IngredientId, ItemId, ShopId } from '../content';
 import type { CampaignId, DaySummary, LogEntry, SeatState, Settlement, StaffRole, StationState } from '../sim/world';
 
 export const MSG = {
@@ -117,7 +117,9 @@ export interface Snapshot {
   /** Quán người nhận đang đứng (mọi số liệu theo quán bên dưới là của quán này). */
   shopId: ShopId;
   /** Bản đồ: mọi quán/mặt bằng. */
-  shops: { id: ShopId; name: string; owned: boolean; complete: boolean; deposit: number; rentPerMonth: number }[];
+  shops: { id: ShopId; name: string; kind: 'shop' | 'farm'; owned: boolean; complete: boolean; deposit: number; rentPerMonth: number }[];
+  /** Kho tổng (nguyên liệu từ trang trại). */
+  warehouse: Partial<Record<IngredientId, number>>;
   /** Mọi quán đang có đã mở hết → được thuê mặt bằng mới. */
   canRent: boolean;
   day: number;

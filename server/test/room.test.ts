@@ -276,3 +276,25 @@ describe('plan 5: several shops', () => {
     await b.room.leave();
   });
 });
+
+describe('plan 6: farm', () => {
+  it('renting the farm moves the renter there and the snapshot carries the warehouse', async () => {
+    const code = await newWorld();
+    const raw = (await store.load(code)) as Record<string, any>;
+    raw.money = 10_000_000;
+    raw.warehouse = { rau: 4 };
+    await store.save(raw as never);
+    const a = await join(code, 'p6-a', 'Bố');
+    await sleep(300);
+    a.room.send(MSG.rentShop, { shopId: 'farm' });
+    await sleep(400);
+    const s = a.snapshot()!;
+    expect(s.shopId).toBe('farm');
+    expect(s.shops.find((x) => x.id === 'farm')).toMatchObject({ kind: 'farm', owned: true });
+    expect(s.warehouse.rau).toBe(4);
+    a.room.send(MSG.hire, { role: 'farmhand', item: null, shopId: 'farm' });
+    await sleep(300);
+    expect(a.snapshot()!.staff.map((x) => x.role)).toEqual(['farmhand']);
+    await a.room.leave();
+  });
+});

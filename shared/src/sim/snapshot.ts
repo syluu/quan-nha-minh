@@ -17,10 +17,11 @@ export function toSnapshot(world: WorldState, shopId: ShopId): Snapshot {
   return {
     shopId,
     shops: SHOP_IDS.map((id) => ({
-      id, name: SHOP_META[id].name, owned: world.shops[id].owned, complete: world.shops[id].owned && isShopComplete(world, id),
+      id, name: SHOP_META[id].name, kind: SHOP_META[id].kind, owned: world.shops[id].owned, complete: world.shops[id].owned && isShopComplete(world, id),
       deposit: SHOP_META[id].deposit, rentPerMonth: SHOP_META[id].rentPerMonth,
     })),
     canRent: canRent(world),
+    warehouse: { ...world.warehouse },
     day: world.day,
     secOfDay: world.secOfDay,
     money: world.money,

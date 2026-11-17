@@ -5,7 +5,7 @@ import { bankView, loanPreview, marketingView } from '../src/ui/menu/views';
 
 function snap(): Snapshot {
   return {
-    shopId: 'banh_mi', shops: [], canRent: false, day: 3, secOfDay: 0, money: 0, stars: 3.3, tiles: [], customers: [], log: [], prices: {}, players: [], stations: [], staff: [],
+    shopId: 'banh_mi', shops: [], canRent: false, warehouse: {}, day: 3, secOfDay: 0, money: 0, stars: 3.3, tiles: [], customers: [], log: [], prices: {}, players: [], stations: [], staff: [],
     ...V3,
     daysToMonthEnd: 5,
     campaigns: [{ id: 'mxh', daysLeft: 2 }],

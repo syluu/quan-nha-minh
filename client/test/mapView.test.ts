@@ -10,11 +10,12 @@ function snap(over: Partial<Snapshot> = {}): Snapshot {
   return {
     shopId: 'com_tam',
     shops: [
-      { id: 'banh_mi', name: 'Xe bánh mì', owned: true, complete: true, deposit: 0, rentPerMonth: 0 },
-      { id: 'com_tam', name: 'Quán cơm tấm', owned: true, complete: false, deposit: 8_000_000, rentPerMonth: 4_000_000 },
-      { id: 'pho_cafe', name: 'Quán phở & cà phê', owned: false, complete: false, deposit: 12_000_000, rentPerMonth: 6_000_000 },
+      { id: 'banh_mi', name: 'Xe bánh mì', kind: 'shop', owned: true, complete: true, deposit: 0, rentPerMonth: 0 },
+      { id: 'com_tam', name: 'Quán cơm tấm', kind: 'shop', owned: true, complete: false, deposit: 8_000_000, rentPerMonth: 4_000_000 },
+      { id: 'pho_cafe', name: 'Quán phở & cà phê', kind: 'shop', owned: false, complete: false, deposit: 12_000_000, rentPerMonth: 6_000_000 },
     ],
     canRent: false,
+    warehouse: {},
     day: 9, secOfDay: 0, money: 20_000_000, stars: 4, tiles: [], customers: [], log: [], prices: {},
     players: [
       { id: 'a', name: 'Bố', color: 0, x: 0, z: 0, dir: 0, carry: [], online: true, cap: 4, pick: 0, pickAt: null, carryLevel: 0, speedLevel: 0, location: 'com_tam' },
