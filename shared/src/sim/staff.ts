@@ -1,4 +1,4 @@
-import { BALANCE, ITEMS, SHOPS, getStationDef } from '../content';
+import { BALANCE, ITEMS, SHOPS, getStationDef, itemCost } from '../content';
 import type { ItemId, ShopId } from '../content';
 import { formatK } from '../money';
 import type { ActionResult } from './actions';
@@ -82,6 +82,17 @@ export function fireStaff(world: WorldState, shopId: ShopId, staffId: string, by
   if (world.money < s.wageOwed) return { ok: false, error: 'NO_MONEY' };
   world.money -= s.wageOwed;
   shop.staff = shop.staff.filter((x) => x !== s);
+  // Món đang cầm: trả về chỗ còn nhận được, còn thừa thì tính là hàng bỏ đi.
+  for (const item of s.carry) {
+    const to = targetForCarry(world, shopId, item);
+    if (to) {
+      const st = shop.stations[to];
+      const def = getStationDef(placedOf(shopId, to).def);
+      if (def.kind === 'display') st.stock += 1;
+      else st.inputs[item] = (st.inputs[item] ?? 0) + 1;
+    } else world.dayStats.wasted += itemCost(item);
+  }
+  s.carry = [];
   const paid = s.wageOwed ? `, trả ${formatK(s.wageOwed)} lương` : '';
   addLog(world, `${playerName(world, byPlayerId)} đã cho ${s.name} nghỉ${paid}`);
   return { ok: true };
@@ -191,9 +202,9 @@ export function tickStaff(world: WorldState, shopId: ShopId, dt: number): void {
       if (s.carry.length > 0) {
         const to = targetForCarry(world, shopId, s.carry[0]);
         if (to) s.task = { from: to, to, item: s.carry[0], phase: 'toTarget' };
-      } else {
-        s.task = chooseJob(world, shopId, s);
       }
+      // Tay trống, hoặc cầm món thừa chưa có chỗ trả: vẫn nhận việc khác nếu còn chỗ trên tay.
+      if (!s.task && s.carry.length < staffStats(s).carry) s.task = chooseJob(world, shopId, s);
       s.timer = 0;
       if (!s.task) {
         const home = producerOf(world, shopId, s.item!) ?? shelfOf(world, shopId, s.item!);
@@ -214,9 +225,10 @@ export function tickStaff(world: WorldState, shopId: ShopId, dt: number): void {
         break;
       case 'picking': {
         const src = shop.stations[t.from];
-        const want = Math.min(staffStats(s).carry, roomAt(world, shopId, t.to, t.item));
         const have = s.carry.filter((i) => i === t.item).length;
-        if (have >= want || src.outputCount <= 0) {
+        const handsFree = staffStats(s).carry - s.carry.length;
+        const want = Math.min(have + handsFree, roomAt(world, shopId, t.to, t.item));
+        if (have >= want || handsFree <= 0 || src.outputCount <= 0) {
           if (have > 0) t.phase = 'toTarget';
           else s.task = null;
           break;

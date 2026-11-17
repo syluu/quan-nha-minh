@@ -71,3 +71,38 @@ describe('staff at work', () => {
     expect(isCashierManned(w, 'banh_mi')).toBe(true);
   });
 });
+
+describe('staff leftovers', () => {
+  it('a fired cook hands items back where there is room; the rest counts as waste', async () => {
+    const { fireStaff } = await import('../src/sim/staff');
+    const w = idleWorld();
+    hireStaff(w, 'banh_mi', 'cook', 'banh_mi', 'owner');
+    const cook = w.shops.banh_mi.staff[0];
+    cook.carry = ['banh_mi', 'banh_mi'];
+    w.shops.banh_mi.stations.ke_banh_mi.stock = 9;
+    expect(fireStaff(w, 'banh_mi', cook.id, 'owner')).toEqual({ ok: true });
+    expect(w.shops.banh_mi.stations.ke_banh_mi.stock).toBe(10);
+    expect(w.dayStats.wasted).toBe(2000);
+  });
+
+  it('a combo cook stuck with leftover bread still fetches eggs', () => {
+    const w = idleWorld(7);
+    const st = w.shops.banh_mi.stations;
+    st.chao_op_la.unlocked = true;
+    st.ban_bm_trung.unlocked = true;
+    st.ke_bm_trung.unlocked = true;
+    w.shops.banh_mi.nextCustomerIn = 1e9;
+    st.lo_banh_mi.unlocked = false; // không có thêm bánh mì
+    hireStaff(w, 'banh_mi', 'cook', 'banh_mi_trung', 'owner');
+    const cook = w.shops.banh_mi.staff[0];
+    cook.carry = ['banh_mi'];
+    st.ban_bm_trung.inputs = { banh_mi: 6, trung_op: 0 };
+    st.ke_banh_mi.stock = 10; // kệ bánh mì đầy: không có chỗ trả bánh mì thừa
+    st.chao_op_la.outputCount = 3;
+    for (let i = 0; i < 400; i++) {
+      tick(w, 0.05);
+      expect(cook.carry.length).toBeLessThanOrEqual(BALANCE.STAFF_LEVELS[0].carry);
+    }
+    expect((st.ban_bm_trung.inputs.trung_op ?? 0) + st.ban_bm_trung.outputCount + st.ke_bm_trung.stock).toBeGreaterThan(0);
+  });
+});
