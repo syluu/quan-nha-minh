@@ -113,15 +113,55 @@ describe.each(shops.map((s) => [s.id, s] as const))('shop %s', (_id, shop) => {
       }
   });
 
-  it('every pay tile centre is outside the pick-up zone of every other station', () => {
+  it('no pay tile circle touches the pick-up zone of another station', () => {
     for (const tile of shop.stations.filter((s) => s.unlockCost > 0))
       for (const other of shop.stations) {
         if (other === tile) continue;
         const b = footprintOf(other);
         const dx = Math.max(b.minX - tile.x, 0, tile.x - b.maxX);
         const dz = Math.max(b.minZ - tile.z, 0, tile.z - b.maxZ);
-        expect(Math.hypot(dx, dz), `${tile.instanceId} vs ${other.instanceId}`).toBeGreaterThan(BALANCE.INTERACT_DIST);
+        expect(Math.hypot(dx, dz), `${tile.instanceId} vs ${other.instanceId}`).toBeGreaterThan(BALANCE.INTERACT_DIST + BALANCE.PAY_TILE_RADIUS);
       }
+  });
+
+  it('pick-up zones of any two stations do not overlap', () => {
+    const boxes = shop.stations.map((s) => [s.instanceId, footprintOf(s)] as const);
+    for (let i = 0; i < boxes.length; i++)
+      for (let j = i + 1; j < boxes.length; j++) {
+        const a = boxes[i][1];
+        const b = boxes[j][1];
+        const dx = Math.max(a.minX - b.maxX, b.minX - a.maxX, 0);
+        const dz = Math.max(a.minZ - b.maxZ, b.minZ - a.maxZ, 0);
+        expect(Math.hypot(dx, dz), `${boxes[i][0]} vs ${boxes[j][0]}`).toBeGreaterThan(2 * BALANCE.INTERACT_DIST);
+      }
+  });
+
+  it("every workPoint is within INTERACT_DIST of its own station and outside every other station's zone", () => {
+    for (const s of shop.stations) {
+      expect(s.workPoint, s.instanceId).toBeDefined();
+      for (const other of shop.stations) {
+        const b = footprintOf(other);
+        const dx = Math.max(b.minX - s.workPoint.x, 0, s.workPoint.x - b.maxX);
+        const dz = Math.max(b.minZ - s.workPoint.z, 0, s.workPoint.z - b.maxZ);
+        const d = Math.hypot(dx, dz);
+        if (other === s) expect(d, s.instanceId).toBeLessThanOrEqual(BALANCE.INTERACT_DIST);
+        else expect(d, `${s.instanceId} workPoint vs ${other.instanceId}`).toBeGreaterThan(BALANCE.INTERACT_DIST);
+      }
+    }
+  });
+
+  it("the trash bin exists, costs nothing and is not reachable from any other station's zone", () => {
+    const trash = shop.stations.find((s) => getStationDef(s.def).kind === 'trash');
+    expect(trash).toBeDefined();
+    expect(trash!.unlockCost).toBe(0);
+  });
+
+  it('staff route between any two kitchen/shelf workPoints does not cross a footprint', () => {
+    const pts = shop.stations.filter((s) => getStationDef(s.def).kind !== 'trash').map((s) => s.workPoint);
+    const boxes = shop.stations.map((s) => footprintOf(s, BALANCE.PLAYER_RADIUS));
+    for (let i = 0; i < pts.length; i++)
+      for (let j = i + 1; j < pts.length; j++)
+        for (const box of boxes) expect(segmentHitsBox(pts[i], pts[j], box), JSON.stringify([pts[i], pts[j]])).toBe(false);
   });
 
   it('customer paths are clear', () => {

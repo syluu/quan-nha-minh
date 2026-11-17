@@ -101,13 +101,4 @@ describe('tickPayTiles', () => {
     expect(chao.paid).toBe(0);
     expect(w.money).toBe(5_000_000);
   });
-
-  it('does not charge a player standing in a machine pick-up zone that overlaps the tile (I2)', () => {
-    const { w, tick, chao } = setup();
-    // Cạnh đông của lò bánh mì (mép x = -3.9): trong vùng nhặt đồ của lò VÀ trong bán kính ô chảo (tâm -3.0).
-    putPlayer(w, 'a', -3.45, -2.5);
-    repeat(5, tick);
-    expect(chao.paid).toBe(0);
-    expect(w.money).toBe(5_000_000);
-  });
 });

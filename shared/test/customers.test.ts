@@ -5,9 +5,9 @@ import { hourMultiplier, isCashierManned, spawnCustomer, tickCustomers, trafficM
 import type { SimEvent } from '../src/sim/events';
 import { gameHour } from '../src/sim/time';
 import { createWorld } from '../src/sim/world';
-import { putPlayer, repeat } from './helpers';
+import { putPlayer, repeat, standAt } from './helpers';
 
-const NEAR_CASHIER = { x: 4.6, z: -0.9 };
+const NEAR_CASHIER = standAt('thu_ngan');
 
 function noMoreSpawns(w: ReturnType<typeof createWorld>) {
   w.shops.banh_mi.nextCustomerIn = 1e9;
@@ -50,8 +50,8 @@ describe('spawning over a day', () => {
 describe('isCashierManned', () => {
   it('counts a player up to CASHIER_DIST (1 m) behind the counter, not further', () => {
     const w = createWorld('X', 1);
-    // thu_ngan ở (4.6, 0), mặt sau z = -0.4
-    const p = putPlayer(w, 'a', 4.6, -1.3); // cách 0,9 m
+    // thu_ngan: mặt sau z = -0.4
+    const p = putPlayer(w, 'a', NEAR_CASHIER.x, -1.3); // cách 0,9 m
     expect(isCashierManned(w, 'banh_mi')).toBe(true);
     p.z = -1.5; // cách 1,1 m
     expect(isCashierManned(w, 'banh_mi')).toBe(false);

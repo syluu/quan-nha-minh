@@ -1,4 +1,4 @@
-import { BALANCE } from '../src/content';
+import { BALANCE, getPlaced } from '../src/content';
 import type { ItemId } from '../src/content';
 import type { PlayerState, WorldState } from '../src/sim/world';
 
@@ -20,6 +20,11 @@ export function putPlayer(world: WorldState, id: string, x: number, z: number, c
   };
   world.players[id] = p;
   return p;
+}
+
+/** Chỗ đứng để dùng một trạm của xe bánh mì (workPoint trong content). */
+export function standAt(instanceId: string): { x: number; z: number } {
+  return { ...getPlaced('banh_mi', instanceId).workPoint };
 }
 
 export function repeat(seconds: number, fn: (dt: number) => void, dt = 0.05): void {

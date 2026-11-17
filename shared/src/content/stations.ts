@@ -29,7 +29,8 @@ export type StationDef =
       footprint: Footprint;
     }
   | { kind: 'display'; id: string; name: string; item: ItemId; cap: number; footprint: Footprint }
-  | { kind: 'cashier'; id: string; name: string; footprint: Footprint };
+  | { kind: 'cashier'; id: string; name: string; footprint: Footprint }
+  | { kind: 'trash'; id: string; name: string; footprint: Footprint };
 
 export interface PlacedStation {
   instanceId: string;
@@ -40,6 +41,8 @@ export interface PlacedStation {
   unlockCost: number;
   requires: string[];
   customerPoint?: { x: number; z: number };
+  /** Chỗ người chơi/nhân viên đứng để dùng trạm (phía bếp). */
+  workPoint: { x: number; z: number };
 }
 
 export interface ShopLayout {
@@ -79,6 +82,7 @@ const list: StationDef[] = [
   { kind: 'display', id: 'ke_thit_nuong', name: 'Kệ thịt nướng', item: 'thit_nuong', cap: 8, footprint: SHELF },
   { kind: 'display', id: 'ke_bm_thit', name: 'Kệ bánh mì thịt', item: 'banh_mi_thit', cap: 8, footprint: SHELF },
   { kind: 'cashier', id: 'thu_ngan', name: 'Quầy thu ngân', footprint: SHELF },
+  { kind: 'trash', id: 'thung_rac', name: 'Thùng rác', footprint: { w: 0.6, d: 0.6 } },
 ];
 
 export const STATIONS: Record<string, StationDef> = Object.fromEntries(list.map((d) => [d.id, d]));

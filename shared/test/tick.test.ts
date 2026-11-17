@@ -3,6 +3,8 @@ import { joinPlayer, leavePlayer, setInput } from '../src/sim/players';
 import { tick } from '../src/sim/tick';
 import type { SimEvent } from '../src/sim/events';
 import { createWorld } from '../src/sim/world';
+import { getPlaced } from '../src/content';
+import { standAt } from './helpers';
 import type { PlayerState } from '../src/sim/world';
 
 describe('players', () => {
@@ -60,8 +62,8 @@ describe('tick', () => {
   it('writes a log line when someone unlocks a station', () => {
     const w = createWorld('X', 1);
     const p = joinPlayer(w, 'a', 'Mẹ');
-    p.x = -3.0;
-    p.z = -2.5; // ô Chảo ốp la
+    p.x = getPlaced('banh_mi', 'chao_op_la').x;
+    p.z = getPlaced('banh_mi', 'chao_op_la').z; // ô Chảo ốp la
     for (let i = 0; i < 80; i++) tick(w, 0.05);
     expect(w.shops.banh_mi.stations.chao_op_la.unlocked).toBe(true);
     expect(w.log.at(-1)?.text).toBe('Mẹ đã mở Chảo ốp la');
@@ -87,14 +89,15 @@ describe('a full day with two bots (Review Focus 2)', () => {
     const w = createWorld('X', 42);
     const runner = joinPlayer(w, 'runner', 'Bố');
     const cashier = joinPlayer(w, 'cashier', 'Mẹ');
-    const runnerPath = [{ x: -3.0, z: 1.8 }, { x: -3.0, z: -1.2 }];
-    const cashierPath = [{ x: 5.6, z: -0.9 }, { x: 4.6, z: -0.9 }];
+    // Vào bếp qua khe giữa kệ bánh mì và kệ BM trứng (x = -5.0).
+    const runnerPath = [{ x: -5.0, z: 1.8 }, { x: -5.0, z: -1.6 }];
+    const cashierPath = [{ x: 7.5, z: standAt('thu_ngan').z }, standAt('thu_ngan')];
     const events: SimEvent[] = [];
     for (let i = 0; i < 7200; i++) {
       if (runnerPath.length) {
         if (steer(w, runner, runnerPath[0])) runnerPath.shift();
       } else {
-        steer(w, runner, runner.carry.length === 0 ? { x: -4.5, z: -1.6 } : { x: -4.5, z: -0.9 });
+        steer(w, runner, runner.carry.length === 0 ? standAt('lo_banh_mi') : standAt('ke_banh_mi'));
       }
       if (cashierPath.length && steer(w, cashier, cashierPath[0])) cashierPath.shift();
       events.push(...tick(w, 0.05));

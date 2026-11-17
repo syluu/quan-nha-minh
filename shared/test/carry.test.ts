@@ -1,12 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { tickCarry } from '../src/sim/carry';
 import { createWorld } from '../src/sim/world';
-import { putPlayer, repeat } from './helpers';
+import { putPlayer, repeat, standAt } from './helpers';
 
-// lo_banh_mi (-4.5,-2.5) mặt trước z=-2.0 · ke_banh_mi (-4.5,0) mặt sau z=-0.4 · ban_bm_trung (-1.5,-2.5)
-const NEAR_LO = { x: -4.5, z: -1.6 };
-const NEAR_KE = { x: -4.5, z: -0.9 };
-const NEAR_BAN_TRUNG = { x: -1.5, z: -1.6 };
+const NEAR_LO = standAt('lo_banh_mi');
+const NEAR_KE = standAt('ke_banh_mi');
+const NEAR_BAN_TRUNG = standAt('ban_bm_trung');
 
 describe('tickCarry', () => {
   it('picks one item per TRANSFER_INTERVAL up to carryCap', () => {
@@ -60,7 +59,7 @@ describe('tickCarry', () => {
   it('does not use a locked station', () => {
     const w = createWorld('X', 1);
     w.shops.banh_mi.stations.chao_op_la.outputCount = 3; // chảo chưa mở
-    const p = putPlayer(w, 'a', -3.0, -1.6);
+    const p = putPlayer(w, 'a', standAt('chao_op_la').x, standAt('chao_op_la').z);
     repeat(1.0, (dt) => tickCarry(w, 'banh_mi', dt));
     expect(p.carry).toEqual([]);
   });

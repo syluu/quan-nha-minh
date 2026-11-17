@@ -19,10 +19,9 @@ describe('movePlayer', () => {
   });
 
   it('stops PLAYER_RADIUS away from a solid station', () => {
-    // ke_banh_mi at (-4.5, 0), footprint 1.0 x 0.8 → front edge z = 0.4
     const shelf = layout.stations.find((s) => s.instanceId === 'ke_banh_mi')!;
     const front = shelf.z + getStationDef(shelf.def).footprint.d / 2;
-    let pos = { x: -4.5, z: 2, dir: 0 };
+    let pos = { x: shelf.x, z: 2, dir: 0 };
     for (let i = 0; i < 40; i++) pos = movePlayer(pos, { mx: 0, mz: -1 }, 3.2, 0.05, layout, solidAll);
     expect(pos.z).toBeCloseTo(front + BALANCE.PLAYER_RADIUS, 2);
   });
@@ -34,7 +33,7 @@ describe('movePlayer', () => {
   });
 
   it('is clamped inside bounds', () => {
-    const r = movePlayer({ x: 5.5, z: 3, dir: 0 }, { mx: 1, mz: 0 }, 3.2, 1, layout, solidAll);
+    const r = movePlayer({ x: layout.bounds.maxX - 0.5, z: 3, dir: 0 }, { mx: 1, mz: 0 }, 3.2, 1, layout, solidAll);
     expect(r.x).toBeCloseTo(layout.bounds.maxX - BALANCE.PLAYER_RADIUS);
   });
 
