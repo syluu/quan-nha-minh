@@ -42,8 +42,10 @@ function displayFor(shopId: ShopId, item: ItemId): PlacedStation | undefined {
 
 export function isCashierManned(world: WorldState, shopId: ShopId): boolean {
   const cashier = cashierOf(shopId);
-  return Object.values(world.players).some(
-    (p) => p.online && distanceToFootprint(cashier, p.x, p.z) <= BALANCE.CASHIER_DIST,
+  const near = (x: number, z: number) => distanceToFootprint(cashier, x, z) <= BALANCE.CASHIER_DIST;
+  return (
+    Object.values(world.players).some((p) => p.online && near(p.x, p.z)) ||
+    world.shops[shopId].staff.some((s) => s.role === 'cashier' && near(s.x, s.z))
   );
 }
 
