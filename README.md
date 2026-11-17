@@ -46,6 +46,7 @@ Mở `http://localhost:5173` ở 2 cửa sổ (hoặc 2 máy cùng wifi qua `htt
 ```bash
 npm test                  # toàn bộ test
 npm run typecheck
+npm run check            # typecheck + test (chạy trước khi đẩy code)
 # Test lưu Postgres thật (tuỳ chọn):
 docker run -d --rm --name qnm-pg -e POSTGRES_PASSWORD=test -p 55432:5432 postgres:16-alpine
 TEST_DATABASE_URL=postgres://postgres:test@localhost:55432/postgres npm test
@@ -61,7 +62,7 @@ TEST_DATABASE_URL=postgres://postgres:test@localhost:55432/postgres npm test
    | Region | Singapore |
    | Branch | `main` |
    | Runtime | Node |
-   | Build Command | `npm ci --include=dev && npm run build` |
+   | Build Command | `npm ci && npm run build` |
    | Start Command | `npm start` |
    | Instance Type | Free |
    | Health Check Path | `/health` |

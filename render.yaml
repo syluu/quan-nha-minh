@@ -5,8 +5,8 @@ services:
     runtime: node
     region: singapore
     plan: free
-    # NODE_ENV=production làm `npm ci` bỏ devDependencies → cần --include=dev để build được.
-    buildCommand: npm ci --include=dev && npm run build
+    # Build chỉ cần các gói trong "dependencies" (Vite, tsx…) nên chạy được cả khi NODE_ENV=production.
+    buildCommand: npm ci && npm run build
     startCommand: npm start
     healthCheckPath: /health
     envVars:
