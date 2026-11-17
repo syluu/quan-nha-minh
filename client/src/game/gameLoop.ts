@@ -66,6 +66,7 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
     tileViews = new Map(layout.stations.map((p) => [p.instanceId, createTileView(p)]));
     for (const v of stationViews.values()) scene.add(v.group);
     for (const v of tileViews.values()) scene.add(v.group);
+    shipperView.update(null, 0);
     interp.clear();
     predictor.reset(id);
     cameraSnapped = false;

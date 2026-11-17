@@ -46,9 +46,11 @@ export function advanceTime(world: WorldState, dt: number): DaySummary | null {
   world.secOfDay = 0;
   world.dayStats = emptyDayStats();
   for (const id of Object.keys(world.shops) as ShopId[]) {
-    world.shops[id].customers = [];
-    // Khách đang ngồi ăn về hết lúc đóng cửa → chỗ đó thành bẩn.
-    for (const st of Object.values(world.shops[id].stations)) st.seats = st.seats.map((x) => (x === 'taken' ? 'dirty' : x));
+    const shop = world.shops[id];
+    // Đóng cửa: khách đang ăn để lại chỗ bẩn; chỗ giữ cho khách chưa kịp ngồi thì trả lại.
+    for (const st of Object.values(shop.stations)) st.seats = st.seats.map((x) => (x === 'taken' ? 'free' : x));
+    for (const c of shop.customers) if (c.state === 'eating' && c.table) shop.stations[c.table].seats[c.seat] = 'dirty';
+    shop.customers = [];
   }
   return summary;
 }

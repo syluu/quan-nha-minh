@@ -28,7 +28,8 @@ export function toSnapshot(world: WorldState, shopId: ShopId): Snapshot {
     players: Object.values(world.players).map((p) => ({
       id: p.id, name: p.name, color: p.color, x: p.x, z: p.z, dir: p.dir, carry: [...p.carry], online: p.online,
       cap: p.carryCap,
-      pick: Math.min(1, p.pickTimer / BALANCE.PICK_INTERVAL),
+      // Đang dọn bàn: vòng tiến trình theo thời gian dọn 1 chỗ.
+      pick: Math.min(1, p.pickTimer / (p.pickAt?.startsWith('ban_an_') ? BALANCE.CLEAN_SEC : BALANCE.PICK_INTERVAL)),
       pickAt: p.pickAt,
       carryLevel: p.carryLevel,
       speedLevel: p.speedLevel,

@@ -266,8 +266,11 @@ describe('plan 5: several shops', () => {
     await sleep(400);
     expect(b.snapshot()!.shopId).toBe('com_tam');
     expect(a.errors).toEqual(['BAD_ITEM', 'NOT_FOUND']);
+    // Thao tác gửi kèm quán khác với quán đang đứng (vừa bị chuyển quán) → từ chối.
+    a.room.send(MSG.fire, { staffId: 's1', shopId: 'banh_mi' });
     b.room.send(MSG.travel, { to: 'banh_mi' });
     await sleep(300);
+    expect(a.errors).toContain('WRONG_SHOP');
     expect(b.snapshot()!.stations.find((s) => s.instanceId === 'lo_banh_mi')!.enabled).toBe(false);
     await a.room.leave();
     await b.room.leave();

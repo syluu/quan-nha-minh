@@ -59,7 +59,7 @@ export function staffView(s: Snapshot): {
           return { name: c?.name ?? null, staffId: c?.id ?? null, canHire: !c, detail: staffDetail(c) };
         })()
       : null,
-    cleaner: s.stations.some((st) => st.unlocked && st.seats.length > 0)
+    cleaner: s.stations.some((st) => st.unlocked && st.seats.length > 0) || s.staff.some((x) => x.role === 'cleaner')
       ? (() => {
           const c = s.staff.find((x) => x.role === 'cleaner');
           return { name: c?.name ?? null, staffId: c?.id ?? null, canHire: !c, detail: staffDetail(c) };
@@ -94,6 +94,7 @@ const ERRORS: Record<string, string> = {
   BAD_ROLE: 'Thao tác không hợp lệ',
   PAUSED: 'Đang kết toán cuối tháng — trả xong rồi mới mua được',
   NO_SETTLEMENT: 'Tháng này đã kết toán xong',
+  WRONG_SHOP: 'Bạn vừa được chuyển sang quán khác — xem lại rồi thử lại',
   NOT_READY: 'Cần mở hết máy và kệ ở các quán đang có trước khi thuê mặt bằng mới',
 };
 

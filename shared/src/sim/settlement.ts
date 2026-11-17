@@ -127,10 +127,14 @@ export function sellableStations(world: WorldState, shopId: ShopId): { instanceI
   // Kệ và máy làm món của một dây chuyền đang có phụ bếp: không bán (phụ bếp sẽ mất việc mà vẫn ăn lương).
   const staffedLines = new Set(shop.staff.filter((s) => s.role === 'cook' && s.item).map((s) => s.item));
   const hasCourier = shop.staff.some((s) => s.role === 'courier');
+  // Còn nhân viên dọn bàn thì giữ lại bàn cuối cùng (cho nghỉ trước rồi mới bán hết bàn).
+  const hasCleaner = shop.staff.some((s) => s.role === 'cleaner');
+  const openTables = layout.stations.filter((p) => p.seatPoints && shop.stations[p.instanceId].unlocked).length;
   const busy = (def: ReturnType<typeof getStationDef>) =>
     (def.kind === 'display' && staffedLines.has(def.item)) ||
     ((def.kind === 'producer' || def.kind === 'assembler') && staffedLines.has(def.output)) ||
-    (def.kind === 'pickup' && hasCourier);
+    (def.kind === 'pickup' && hasCourier) ||
+    (def.kind === 'table' && hasCleaner && openTables <= 1);
   return layout.stations
     .filter((p) => p.unlockCost > 0 && shop.stations[p.instanceId].unlocked && !busy(getStationDef(p.def)))
     .filter((p) => !layout.stations.some((o) => shop.stations[o.instanceId].unlocked && o.requires.includes(p.instanceId)))

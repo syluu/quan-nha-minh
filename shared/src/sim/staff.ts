@@ -331,7 +331,11 @@ const DINING_SIDE_Z = 1.7;
 function routeTo(from: { x: number; z: number }, to: { x: number; z: number }): { x: number; z: number }[] {
   const front = (p: { z: number }) => p.z > 0.6;
   if (front(from) === front(to)) return [to];
-  const gx = SHELF_GAPS.reduce((best, g) => (Math.abs(from.x - g) + Math.abs(g - to.x) < Math.abs(from.x - best) + Math.abs(best - to.x) ? g : best));
+  // Đang đứng trong khe giữa hai kệ: đi tiếp theo đúng khe đó.
+  const inGap = from.z > KITCHEN_SIDE_Z - 0.01 && from.z < DINING_SIDE_Z + 0.01;
+  const gx = inGap
+    ? SHELF_GAPS.reduce((best, g) => (Math.abs(from.x - g) < Math.abs(from.x - best) ? g : best))
+    : SHELF_GAPS.reduce((best, g) => (Math.abs(from.x - g) + Math.abs(g - to.x) < Math.abs(from.x - best) + Math.abs(best - to.x) ? g : best));
   const a = { x: gx, z: front(from) ? DINING_SIDE_Z : KITCHEN_SIDE_Z };
   const b = { x: gx, z: front(to) ? DINING_SIDE_Z : KITCHEN_SIDE_Z };
   return [a, b, to];

@@ -73,7 +73,8 @@ export function canReturn(world: WorldState, shopId: ShopId): boolean {
  * người đang đứng ở đó về xe bánh mì.
  */
 export function returnShop(world: WorldState, shopId: unknown, byPlayerId: string, forMonth?: unknown): ActionResult {
-  if (settlementMismatch(world, forMonth)) return { ok: false, error: 'NO_SETTLEMENT' };
+  // Chỉ trả mặt bằng trong bảng kết toán (tiền thuê tháng này đã tính xong).
+  if (!world.settlement || settlementMismatch(world, forMonth)) return { ok: false, error: 'NO_SETTLEMENT' };
   if (!isShopId(shopId) || !canReturn(world, shopId)) return { ok: false, error: 'NOT_SELLABLE' };
   const refund = returnRefund(world, shopId);
   const old = world.shops[shopId];

@@ -4,6 +4,7 @@ import type { Client } from '@colyseus/core';
 import {
   BALANCE,
   MSG,
+  SHOP_IDS,
   buildReport,
   drainSettleEvents,
   fireStaff,
@@ -102,6 +103,12 @@ export class WorldRoom extends Room {
       this.onMessage(type, (client: Client, msg: T) => {
         const pid = this.ownedPlayer(client);
         if (!pid) return;
+        // Thao tác theo quán gửi kèm quán đang xem; vừa bị chuyển quán (vd. người nhà trả mặt bằng) thì từ chối.
+        const sent = (msg as { shopId?: unknown } | null)?.shopId;
+        if (type !== MSG.sellStation && type !== MSG.rentShop && sent !== undefined && sent !== this.world.players[pid]?.location) {
+          client.send(MSG.actionError, { error: 'WRONG_SHOP' });
+          return;
+        }
         const r = run(pid, (msg ?? {}) as T);
         if (r && !r.ok) client.send(MSG.actionError, { error: r.error });
         // Vay / bán máy có thể vừa đóng kết toán tháng (hoặc phá sản): báo cho cả nhà và lưu ngay.
@@ -123,7 +130,7 @@ export class WorldRoom extends Room {
     act<TakeLoanMsg>(MSG.takeLoan, (pid, m) => takeLoan(this.world, m.amount, m.months, pid, m.forMonth));
     act<RepayLoanMsg>(MSG.repayLoan, (pid, m) => repayLoan(this.world, m.loanId, pid));
     act<SellStationMsg>(MSG.sellStation, (pid, m) => {
-      const shopId = m.shopId && m.shopId in this.world.shops ? m.shopId : here(pid);
+      const shopId = (SHOP_IDS as unknown[]).includes(m.shopId) ? m.shopId! : here(pid);
       return sellStation(this.world, shopId, m.instanceId, pid, m.forMonth);
     });
     act<SetOnlinePausedMsg>(MSG.setOnlinePaused, (pid, m) => setOnlinePaused(this.world, here(pid), m.paused, pid));

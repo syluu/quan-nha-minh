@@ -172,3 +172,36 @@ describe('machine on/off switch (plan 5)', () => {
     expect(setMachineEnabled(w, 'banh_mi', 'lo_banh_mi', 'no', 'a')).toEqual({ ok: false, error: 'BAD_ITEM' });
   });
 });
+
+describe('plan 5 review fixes', () => {
+  it('the last table cannot be sold while a cleaner is hired', () => {
+    const w = comTam(2);
+    putPlayer(w, 'a', 0, 2, [], 'com_tam');
+    hireStaff(w, 'com_tam', 'cleaner', null, 'a');
+    w.day = 7;
+    // Tiền thuê không bị tính lại khi thử kết toán → giữ bảng kết toán mở suốt test.
+    w.settlement = { month: 1, revenue: 0, ingredientCost: 0, marketing: 0, commission: 0, wages: 0, rent: 1e12, loanDue: 0, totalDue: 1e12 };
+    expect(sellStation(w, 'com_tam', 'ban_an_2', 'a', 1)).toEqual({ ok: true });
+    expect(sellStation(w, 'com_tam', 'ban_an_1', 'a', 1)).toEqual({ ok: false, error: 'NOT_SELLABLE' });
+  });
+
+  it('a place can only be returned from the month-end settlement', async () => {
+    const { returnShop } = await import('../src/sim/shops');
+    const w = comTam(0);
+    expect(returnShop(w, 'com_tam', 'a')).toEqual({ ok: false, error: 'NO_SETTLEMENT' });
+    expect(w.shops.com_tam.owned).toBe(true);
+  });
+
+  it('closing time: a seat reserved for someone still walking becomes free, an eaten one dirty', async () => {
+    const { advanceTime } = await import('../src/sim/time');
+    const w = comTam(1);
+    const a = spawnCustomer(w, 'com_tam')!;
+    const b = spawnCustomer(w, 'com_tam')!;
+    w.shops.com_tam.stations.ban_an_1.seats = ['taken', 'taken'];
+    Object.assign(a, { state: 'eating', table: 'ban_an_1', seat: 0 });
+    Object.assign(b, { state: 'toTable', table: 'ban_an_1', seat: 1 });
+    w.secOfDay = 359.99;
+    advanceTime(w, 0.1);
+    expect(w.shops.com_tam.stations.ban_an_1.seats).toEqual(['dirty', 'free']);
+  });
+});

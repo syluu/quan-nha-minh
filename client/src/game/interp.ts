@@ -41,7 +41,11 @@ export function createInterpolator(delayMs = 100) {
       const oldCustomers = new Map(a.s.customers.map((c) => [c.id, c]));
       return {
         ...b.s,
-        players: b.s.players.map((p) => blend(oldPlayers.get(p.id), p, k)),
+        // Người vừa đổi quán: không trượt từ toạ độ ở quán cũ.
+        players: b.s.players.map((p) => {
+          const o = oldPlayers.get(p.id);
+          return blend(o && o.location === p.location ? o : undefined, p, k);
+        }),
         customers: b.s.customers.map((c) => blend(oldCustomers.get(c.id), c, k)),
       };
     },
