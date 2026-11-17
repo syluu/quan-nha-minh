@@ -41,6 +41,15 @@ Mở `http://localhost:5173` ở 2 cửa sổ (hoặc 2 máy cùng wifi qua `htt
   - **Cài đặt**: âm lượng nhạc/hiệu ứng, tắt tiếng, đổi tên, ẩn dòng hướng dẫn.
 - **Âm thanh** bật sau lần bấm chuột/gõ phím đầu tiên (trình duyệt bắt buộc vậy).
 
+### Nâng cấp, quảng cáo, ngân hàng (Kế hoạch 3)
+
+- **Lương** cộng dồn mỗi ngày, **trả cuối tháng** (1 tháng = 7 ngày ≈ 42 phút chơi). Cho nghỉ thì trả ngay số ngày đã làm.
+- **Kết toán cuối tháng**: hiện bảng doanh thu, nguyên liệu, quảng cáo, lương, mặt bằng, góp nợ. Thiếu tiền thì **cả quán tạm dừng** tới khi ai đó vay ngân hàng hoặc bán máy ngay trong bảng. Hết cách → **phá sản**: quán về xe bánh mì ban đầu, giữ tên nhân vật và mã quán.
+- **Menu → Nhân sự**: nâng cấp **từng nhân viên** (cấp 1–4: đi nhanh hơn, mang nhiều hơn, lương 120K → 210K/ngày).
+- **Menu → Nâng cấp**: sức mang và tốc độ của chính bạn; từng máy (nhanh hơn 15%, chứa thêm 50% mỗi cấp).
+- **Menu → Quảng cáo**: tờ rơi, mạng xã hội, mời người review — tăng lượng khách trong vài ngày.
+- **Menu → Ngân hàng**: vay 1/2/4 tháng (lãi 5/9/15%), góp cuối tháng, trả sớm không phạt.
+
 ## Test
 
 ```bash
