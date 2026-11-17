@@ -37,7 +37,7 @@ export function tick(world: WorldState, dt: number): SimEvent[] {
         p.dir = next.dir;
       }
       events.push(...tickCarry(world, shopId, sdt));
-      tickStaff(world, shopId, sdt);
+      events.push(...tickStaff(world, shopId, sdt));
       tickOrders(world, shopId, sdt);
       events.push(...tickShipper(world, shopId, sdt));
       for (const e of tickPayTiles(world, shopId, sdt)) {

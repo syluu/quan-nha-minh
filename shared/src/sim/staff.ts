@@ -3,6 +3,8 @@ import type { ItemId, ShopId } from '../content';
 import { formatK } from '../money';
 import type { ActionResult } from './actions';
 import { trySettleAfterAction } from './settlement';
+import { deliverToPickup, pickupNeeds, pickupOf } from './online';
+import type { SimEvent } from './events';
 import { addLog, playerName } from './log';
 import { isOnSale } from './prices';
 import type { StaffRole, StaffState, WorldState } from './world';
@@ -17,7 +19,7 @@ export function staffWage(s: Pick<StaffState, 'level'>): number {
 }
 
 const ROLE_LABEL = (s: Pick<StaffState, 'role' | 'item'>) =>
-  s.role === 'cashier' ? 'thu ngân' : `phụ bếp ${ITEMS[s.item!].name}`;
+  s.role === 'cashier' ? 'thu ngân' : s.role === 'courier' ? 'giao đơn' : `phụ bếp ${ITEMS[s.item!].name}`;
 
 /** Các món có kệ đang mở (mỗi món = 1 chỗ phụ bếp). */
 function openLines(world: WorldState, shopId: ShopId): ItemId[] {
@@ -31,11 +33,14 @@ function openLines(world: WorldState, shopId: ShopId): ItemId[] {
 
 export function staffSlots(world: WorldState, shopId: ShopId): {
   cashier: { max: 1; used: number };
+  /** Chỉ có khi điểm giao hàng đã mở. */
+  courier: { max: 1; used: number } | null;
   cookLines: { item: ItemId; taken: string | null }[];
 } {
   const staff = world.shops[shopId].staff;
   return {
     cashier: { max: 1, used: staff.filter((s) => s.role === 'cashier').length },
+    courier: pickupOpen(world, shopId) ? { max: 1, used: staff.filter((s) => s.role === 'courier').length } : null,
     cookLines: openLines(world, shopId).map((item) => ({
       item,
       taken: staff.find((s) => s.role === 'cook' && s.item === item)?.id ?? null,
@@ -47,6 +52,10 @@ export function hireStaff(world: WorldState, shopId: ShopId, role: StaffRole, it
   const shop = world.shops[shopId];
   if (role === 'cashier') {
     if (shop.staff.some((s) => s.role === 'cashier')) return { ok: false, error: 'NO_SLOT' };
+    item = null;
+  } else if (role === 'courier') {
+    if (!pickupOpen(world, shopId)) return { ok: false, error: 'BAD_ITEM' };
+    if (shop.staff.some((s) => s.role === 'courier')) return { ok: false, error: 'NO_SLOT' };
     item = null;
   } else if (role === 'cook') {
     if (!item || !isOnSale(world, shopId, item)) return { ok: false, error: 'BAD_ITEM' };
@@ -192,9 +201,121 @@ function targetForCarry(world: WorldState, shopId: ShopId, item: ItemId): string
   return null;
 }
 
-export function tickStaff(world: WorldState, shopId: ShopId, dt: number): void {
+function pickupOpen(world: WorldState, shopId: ShopId): boolean {
+  const p = pickupOf(shopId);
+  return !!p && world.shops[shopId].stations[p.instanceId].unlocked;
+}
+
+/** Nguồn lấy món cho nhân viên giao đơn: đầu ra máy làm món, không có thì kệ món đó. */
+function courierSource(world: WorldState, shopId: ShopId, item: ItemId): string | null {
+  const shop = world.shops[shopId];
+  const maker = producerOf(world, shopId, item);
+  if (maker && shop.stations[maker.instanceId].outputCount > 0) return maker.instanceId;
+  const shelf = shelfOf(world, shopId, item);
+  if (shelf && shop.stations[shelf.instanceId].stock > 0) return shelf.instanceId;
+  return null;
+}
+
+/** Nhân viên giao đơn: lấy món shipper đang cần, mang ra điểm giao. */
+function tickCourier(world: WorldState, shopId: ShopId, s: StaffState, dt: number): SimEvent[] {
+  const shop = world.shops[shopId];
+  const pickup = pickupOf(shopId);
+  if (!pickup) return [];
+  const needs = pickupNeeds(shop);
+  const events: SimEvent[] = [];
+
+  if (!s.task) {
+    s.timer = 0;
+    const carried = s.carry.find((it) => needs.includes(it));
+    if (carried) s.task = { from: pickup.instanceId, to: pickup.instanceId, item: carried, phase: 'toTarget' };
+    else if (s.carry.length > 0) {
+      // Món không còn ai cần (đơn bị huỷ): trả về chỗ nhận được.
+      const to = targetForCarry(world, shopId, s.carry[0]);
+      if (to) s.task = { from: to, to, item: s.carry[0], phase: 'toTarget' };
+    } else {
+      for (const item of needs) {
+        const from = courierSource(world, shopId, item);
+        if (from) {
+          s.task = { from, to: pickup.instanceId, item, phase: 'toSource' };
+          break;
+        }
+      }
+    }
+    if (!s.task) {
+      walk(s, pickup.workPoint.x, pickup.workPoint.z, dt);
+      return events;
+    }
+  }
+
+  const t = s.task;
+  const from = placedOf(shopId, t.from);
+  const to = placedOf(shopId, t.to);
+  switch (t.phase) {
+    case 'toSource':
+      if (walk(s, from.workPoint.x, from.workPoint.z, dt)) t.phase = 'picking';
+      break;
+    case 'picking': {
+      const st = shop.stations[t.from];
+      const isShelf = getStationDef(from.def).kind === 'display';
+      const available = isShelf ? st.stock : st.outputCount;
+      const have = s.carry.filter((i) => i === t.item).length;
+      const want = Math.min(have + staffStats(s).carry - s.carry.length, needs.filter((i) => i === t.item).length);
+      if (have >= want || available <= 0) {
+        if (have > 0) t.phase = 'toTarget';
+        else s.task = null;
+        break;
+      }
+      s.timer += dt;
+      if (s.timer >= BALANCE.PICK_INTERVAL - 1e-6) {
+        s.timer = 0;
+        if (isShelf) st.stock -= 1;
+        else st.outputCount -= 1;
+        s.carry.push(t.item);
+      }
+      break;
+    }
+    case 'toTarget':
+      if (walk(s, to.workPoint.x, to.workPoint.z, dt)) {
+        t.phase = 'dropping';
+        s.timer = 0;
+      }
+      break;
+    case 'dropping': {
+      const idx = s.carry.lastIndexOf(t.item);
+      if (idx < 0) {
+        s.task = null;
+        break;
+      }
+      s.timer += dt;
+      if (s.timer < BALANCE.DROP_INTERVAL - 1e-6) break;
+      s.timer = 0;
+      if (t.to === pickup.instanceId) {
+        if (!pickupNeeds(shop).includes(t.item)) {
+          s.task = null;
+          break;
+        }
+        s.carry.splice(idx, 1);
+        events.push(...deliverToPickup(world, shopId, t.item));
+      } else if (roomAt(world, shopId, t.to, t.item) > 0) {
+        s.carry.splice(idx, 1);
+        const st = shop.stations[t.to];
+        if (getStationDef(to.def).kind === 'display') st.stock += 1;
+        else st.inputs[t.item] = (st.inputs[t.item] ?? 0) + 1;
+      } else s.task = null;
+      break;
+    }
+  }
+  return events;
+}
+
+export function tickStaff(world: WorldState, shopId: ShopId, dt: number): SimEvent[] {
+  const events: SimEvent[] = [];
   const shop = world.shops[shopId];
   for (const s of shop.staff) {
+    if (s.role === 'courier') {
+      events.push(...tickCourier(world, shopId, s, dt));
+      continue;
+    }
     if (s.role === 'cashier') {
       const wp = placedOf(shopId, SHOPS[shopId].stations.find((p) => getStationDef(p.def).kind === 'cashier')!.instanceId).workPoint;
       walk(s, wp.x, wp.z, dt);
@@ -269,4 +390,5 @@ export function tickStaff(world: WorldState, shopId: ShopId, dt: number): void {
       }
     }
   }
+  return events;
 }

@@ -34,7 +34,7 @@ export interface Customer {
   scored: boolean;
 }
 
-export type StaffRole = 'cashier' | 'cook';
+export type StaffRole = 'cashier' | 'cook' | 'courier';
 
 export interface StaffTask {
   from: string;

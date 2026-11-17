@@ -106,3 +106,47 @@ describe('staff leftovers', () => {
     expect((st.ban_bm_trung.inputs.trung_op ?? 0) + st.ban_bm_trung.outputCount + st.ke_bm_trung.stock).toBeGreaterThan(0);
   });
 });
+
+describe('courier (plan 4)', () => {
+  function courierWorld() {
+    const w = idleWorld();
+    w.shops.banh_mi.nextCustomerIn = 1e9;
+    w.shops.banh_mi.nextOrderIn = 1e9;
+    return w;
+  }
+
+  it('can only be hired once the pickup point is open, one per pickup', () => {
+    const w = courierWorld();
+    expect(hireStaff(w, 'banh_mi', 'courier', null, 'owner')).toEqual({ ok: false, error: 'BAD_ITEM' });
+    w.shops.banh_mi.stations.diem_giao.unlocked = true;
+    expect(hireStaff(w, 'banh_mi', 'courier', null, 'owner')).toEqual({ ok: true });
+    expect(hireStaff(w, 'banh_mi', 'courier', null, 'owner')).toEqual({ ok: false, error: 'NO_SLOT' });
+    expect(w.log.at(-1)?.text).toBe('Mẹ đã thuê Lan (giao đơn)');
+  });
+
+  it('fetches bread from the oven and hands it to the waiting shipper', () => {
+    const w = courierWorld();
+    w.shops.banh_mi.stations.diem_giao.unlocked = true;
+    hireStaff(w, 'banh_mi', 'courier', null, 'owner');
+    w.shops.banh_mi.orders.push({ id: 1, items: ['banh_mi'], delivered: [], total: 5000, createdSec: 0 });
+    w.shops.banh_mi.nextOrderId = 2;
+    for (let i = 0; i < 800; i++) {
+      tick(w, 0.05);
+      if (i % 20 === 0) checkStaff(w);
+    }
+    expect(w.dayStats.onlineOrders).toBe(1);
+  });
+
+  it('with nothing to deliver it waits without getting stuck (Review Focus 5)', () => {
+    const w = courierWorld();
+    w.shops.banh_mi.stations.diem_giao.unlocked = true;
+    w.shops.banh_mi.stations.lo_banh_mi.unlocked = false;
+    hireStaff(w, 'banh_mi', 'courier', null, 'owner');
+    w.shops.banh_mi.orders.push({ id: 1, items: ['banh_mi'], delivered: [], total: 5000, createdSec: 0 });
+    for (let i = 0; i < 400; i++) {
+      tick(w, 0.05);
+      checkStaff(w);
+    }
+    expect(w.shops.banh_mi.staff[0].carry).toEqual([]);
+  });
+});
