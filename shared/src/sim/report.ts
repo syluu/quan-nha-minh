@@ -13,6 +13,7 @@ export function buildReport(world: WorldState): Report {
   );
   return {
     history: world.history.map((h) => ({ ...h, sold: { ...h.sold } })),
+    months: world.months.map((m) => ({ ...m })),
     today: {
       ...s,
       sold: { ...s.sold },

@@ -1,7 +1,9 @@
 import { BALANCE, SHOPS } from '../content';
 import type { ShopId } from '../content';
 import type { Snapshot } from '../net/protocol';
+import { maxLoan } from './bank';
 import { migrateV1toV2, migrateV2toV3 } from './migrate';
+import { sellableStations } from './settlement';
 import { isTileVisible } from './payTiles';
 import { effectiveStars } from './marketing';
 import { createWorld } from './world';
@@ -20,17 +22,29 @@ export function toSnapshot(world: WorldState, shopId: ShopId): Snapshot {
       cap: p.carryCap,
       pick: Math.min(1, p.pickTimer / BALANCE.PICK_INTERVAL),
       pickAt: p.pickAt,
+      carryLevel: p.carryLevel,
+      speedLevel: p.speedLevel,
     })),
     staff: shop.staff.map((s) => ({
       id: s.id, name: s.name, role: s.role, item: s.item, x: s.x, z: s.z, dir: s.dir, carry: [...s.carry],
+      level: s.level, wageOwed: s.wageOwed,
     })),
+    month: world.month,
+    daysToMonthEnd: BALANCE.MONTH_DAYS - ((world.day - 1) % BALANCE.MONTH_DAYS),
+    campaigns: shop.campaigns.map((c) => ({ ...c })),
+    loans: world.loans.map((l) => ({
+      id: l.id, principal: l.principal, remaining: l.totalDue - l.paid, installment: l.installment, monthsLeft: l.monthsLeft,
+    })),
+    maxLoan: maxLoan(world),
+    settlement: world.settlement ? { ...world.settlement } : null,
+    sellable: world.settlement ? sellableStations(world, shopId) : [],
     prices: { ...shop.prices },
     customers: shop.customers.map((c) => ({ id: c.id, x: c.x, z: c.z, dir: c.dir, holding: [...c.holding] })),
     stations: layout.stations.map((placed) => {
       const st = shop.stations[placed.instanceId];
       return {
         instanceId: st.instanceId, unlocked: st.unlocked, outputCount: st.outputCount, stock: st.stock,
-        inputs: { ...st.inputs }, blocked: st.blocked,
+        inputs: { ...st.inputs }, blocked: st.blocked, level: st.level,
       };
     }),
     tiles: layout.stations

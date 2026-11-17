@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { V3 } from './fixtures';
 import type { DaySummary, Snapshot } from '@qnm/shared';
 import { carryBadge, hudText } from '../src/ui/hud';
 import { summaryRows } from '../src/ui/daySummary';
@@ -7,10 +8,11 @@ describe('hudText', () => {
   it('formats money, clock, stars and who is online', () => {
     const s: Snapshot = {
       day: 1, secOfDay: 33.75, money: 2_987_500, stars: 3.7, stations: [], tiles: [], customers: [], log: [], staff: [], prices: {},
+    ...V3,
       players: [
-        { id: 'a', name: 'Bố', color: 0, x: 0, z: 0, dir: 0, carry: ['banh_mi', 'banh_mi', 'tra_da'], online: true, cap: 4, pick: 0, pickAt: null },
-        { id: 'b', name: 'Mẹ', color: 0, x: 0, z: 0, dir: 0, carry: [], online: true, cap: 4, pick: 0, pickAt: null },
-        { id: 'c', name: 'Con', color: 0, x: 0, z: 0, dir: 0, carry: [], online: false, cap: 4, pick: 0, pickAt: null },
+        { id: 'a', name: 'Bố', color: 0, x: 0, z: 0, dir: 0, carry: ['banh_mi', 'banh_mi', 'tra_da'], online: true, cap: 4, pick: 0, pickAt: null, carryLevel: 0, speedLevel: 0 },
+        { id: 'b', name: 'Mẹ', color: 0, x: 0, z: 0, dir: 0, carry: [], online: true, cap: 4, pick: 0, pickAt: null, carryLevel: 0, speedLevel: 0 },
+        { id: 'c', name: 'Con', color: 0, x: 0, z: 0, dir: 0, carry: [], online: false, cap: 4, pick: 0, pickAt: null, carryLevel: 0, speedLevel: 0 },
       ],
     };
     expect(hudText(s, 'a')).toEqual({ money: '💰 2.987,5K', clock: 'Ngày 1 · 07:30', stars: '★ 3,7', online: 'Bố, Mẹ', basket: '🧺 3/4' });

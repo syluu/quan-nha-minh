@@ -47,3 +47,37 @@ describe('toSnapshot', () => {
     expect(s.stars).toBe(3);
   });
 });
+
+describe('toSnapshot v3', () => {
+  it('carries month, upgrades, campaigns, loans and settlement data', async () => {
+    const { takeLoan } = await import('../src/sim/bank');
+    const { runCampaign } = await import('../src/sim/marketing');
+    const { upgradePlayer, upgradeStaff } = await import('../src/sim/upgrades');
+    const { hireStaff } = await import('../src/sim/staff');
+    const { buildSettlement } = await import('../src/sim/settlement');
+    const w = createWorld('ABC-DEF', 3);
+    w.money = 20_000_000;
+    joinPlayer(w, 'a', 'Bố');
+    takeLoan(w, 1_000_000, 2, 'a');
+    runCampaign(w, 'banh_mi', 'to_roi', 'a');
+    upgradePlayer(w, 'a', 'carry');
+    hireStaff(w, 'banh_mi', 'cashier', null, 'a');
+    upgradeStaff(w, 'banh_mi', w.shops.banh_mi.staff[0].id, 'a');
+    let s = toSnapshot(w, 'banh_mi');
+    expect(s.month).toBe(1);
+    expect(s.daysToMonthEnd).toBe(7);
+    expect(s.campaigns).toEqual([{ id: 'to_roi', daysLeft: 1 }]);
+    expect(s.loans).toEqual([{ id: 'L1', principal: 1_000_000, remaining: 1_090_000, installment: 545_000, monthsLeft: 2 }]);
+    expect(s.maxLoan).toBe(900_000);
+    expect(s.players[0]).toMatchObject({ carryLevel: 1, speedLevel: 0, cap: 6 });
+    expect(s.staff[0]).toMatchObject({ level: 2, wageOwed: 0 });
+    expect(s.stations.find((x) => x.instanceId === 'lo_banh_mi')).toMatchObject({ level: 0 });
+    expect(s.settlement).toBeNull();
+    expect(s.sellable).toEqual([]);
+    w.day = 7;
+    w.settlement = buildSettlement(w);
+    s = toSnapshot(w, 'banh_mi');
+    expect(s.daysToMonthEnd).toBe(1);
+    expect(s.settlement).toMatchObject({ month: 1 });
+  });
+});

@@ -11,7 +11,7 @@ function day(n: number, revenue: number, profit: number): DaySummary {
 
 describe('reportRows', () => {
   it('lists today first, then past days newest to oldest, with K money', () => {
-    const r: Report = { history: [day(1, 500_000, 100_000), day(2, 800_000, 400_000)], today: day(3, 50_000, -350_000) };
+    const r: Report = { history: [day(1, 500_000, 100_000), day(2, 800_000, 400_000)], today: day(3, 50_000, -350_000), months: [] };
     const rows = reportRows(r);
     expect(rows.map((x) => x.day)).toEqual(['Hôm nay (ngày 3)', 'Ngày 2', 'Ngày 1']);
     expect(rows[1].cells).toEqual(['800K', '-100K', '-300K', '-2K', '400K', '0K', '10', '1', '★ 4,2']);
@@ -22,7 +22,7 @@ describe('reportRows', () => {
 describe('chartBars', () => {
   it('keeps the last 14 days including today, scaled to the largest value', () => {
     const history = Array.from({ length: 20 }, (_, i) => day(i + 1, (i + 1) * 100_000, 50_000));
-    const bars = chartBars({ history, today: day(21, 1_000_000, -500_000) });
+    const bars = chartBars({ history, today: day(21, 1_000_000, -500_000), months: [] });
     expect(bars).toHaveLength(14);
     expect(bars[0].day).toBe(8);
     expect(bars.at(-1)!.day).toBe(21);

@@ -1,15 +1,17 @@
 import { describe, expect, it } from 'vitest';
+import { V3 } from './fixtures';
 import type { Snapshot } from '@qnm/shared';
 import { actionErrorText, priceView, staffView } from '../src/ui/menu/views';
 
 function snap(): Snapshot {
-  const st = (instanceId: string, unlocked: boolean) => ({ instanceId, unlocked, outputCount: 0, stock: 0, inputs: {}, blocked: null });
+  const st = (instanceId: string, unlocked: boolean) => ({ instanceId, unlocked, outputCount: 0, stock: 0, inputs: {}, blocked: null, level: 0 });
   return {
     day: 1, secOfDay: 0, money: 0, stars: 3, tiles: [], customers: [], log: [],
     players: [],
     stations: [st('lo_banh_mi', true), st('ke_banh_mi', true), st('thu_ngan', true), st('ke_tra_da', false), st('ke_bm_trung', true)],
-    staff: [{ id: 's1', name: 'Lan', role: 'cashier', item: null, x: 0, z: 0, dir: 0, carry: [] }],
+    staff: [{ id: 's1', name: 'Lan', role: 'cashier', item: null, x: 0, z: 0, dir: 0, carry: [], level: 1, wageOwed: 0 }],
     prices: { banh_mi: 6000 },
+    ...V3,
   };
 }
 

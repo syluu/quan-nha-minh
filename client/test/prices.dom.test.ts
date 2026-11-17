@@ -1,13 +1,15 @@
 // @vitest-environment jsdom
+import { V3 } from './fixtures';
 import { describe, expect, it } from 'vitest';
 import type { Snapshot } from '@qnm/shared';
 import { pricesTab } from '../src/ui/menu/pricesTab';
 
 function snap(price?: number): Snapshot {
-  const st = (instanceId: string, unlocked: boolean) => ({ instanceId, unlocked, outputCount: 0, stock: 0, inputs: {}, blocked: null });
+  const st = (instanceId: string, unlocked: boolean) => ({ instanceId, unlocked, outputCount: 0, stock: 0, inputs: {}, blocked: null, level: 0 });
   return {
     day: 1, secOfDay: 0, money: 0, stars: 3, tiles: [], customers: [], log: [], players: [], staff: [],
     stations: [st('ke_banh_mi', true)], prices: price ? { banh_mi: price } : {},
+    ...V3,
   };
 }
 
