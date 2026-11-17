@@ -298,3 +298,37 @@ describe('plan 6: farm', () => {
     await a.room.leave();
   });
 });
+
+describe('plan 7: costumes', () => {
+  it('buying a costume dresses the buyer; everyone sees it in the snapshot', async () => {
+    const code = await newWorld();
+    const a = await join(code, 'p7-a', 'Bố');
+    const b = await join(code, 'p7-b', 'Mẹ');
+    await sleep(300);
+    a.room.send(MSG.buyCostume, { id: 'mu_dau_bep' });
+    b.room.send(MSG.wearCostume, { id: 'mu_dau_bep' }); // Mẹ chưa có
+    await sleep(400);
+    const bo = b.snapshot()!.players.find((p) => p.name === 'Bố')!;
+    expect(bo.outfit.hat).toBe('mu_dau_bep');
+    expect(bo.wardrobe).toEqual(['mu_dau_bep']);
+    expect(b.errors).toEqual(['NOT_FOUND']);
+    await a.room.leave();
+    await b.room.leave();
+  });
+});
+
+describe('plan 7 review: a broken save does not lock the shop code', () => {
+  it('a world that fails to load can be retried (no WORLD_BUSY forever)', async () => {
+    const code = await newWorld();
+    const raw = (await store.load(code)) as Record<string, any>;
+    const good = structuredClone(raw);
+    raw.schemaVersion = 99;
+    await store.save(raw as never);
+    await expect(new Client(base).joinOrCreate('world', { code, token: 'broken', name: 'x' })).rejects.toThrow();
+    await store.save(good as never);
+    const a = await join(code, 'broken', 'Bố');
+    await sleep(200);
+    expect(a.snapshot()).not.toBeNull();
+    await a.room.leave();
+  });
+});

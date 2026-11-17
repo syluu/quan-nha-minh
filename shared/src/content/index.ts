@@ -26,3 +26,5 @@ export function getPlaced(shopId: ShopId, instanceId: string): PlacedStation {
   if (!p) throw new Error(`Unknown station instance ${shopId}/${instanceId}`);
   return p;
 }
+export { COSTUMES, COSTUME_LIST, COSTUME_SLOTS, DEFAULT_OUTFIT } from './costumes';
+export type { CostumeDef, CostumeSlot, CostumeStyle, Outfit } from './costumes';

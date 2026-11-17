@@ -23,6 +23,8 @@ export function putPlayer(world: WorldState, id: string, x: number, z: number, c
     carryLevel: 0,
     speedLevel: 0,
     location,
+    outfit: { hat: 'non_la', shirt: 'ao_mac_dinh', pants: 'quan_nau', apron: 'khong_tap_de' },
+    wardrobe: [],
   };
   world.players[id] = p;
   return p;

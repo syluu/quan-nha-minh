@@ -20,6 +20,7 @@ import { upgradesTab } from './ui/menu/upgradesTab';
 import { marketingTab } from './ui/menu/marketingTab';
 import { bankTab } from './ui/menu/bankTab';
 import { mapTab } from './ui/menu/mapTab';
+import { costumeTab } from './ui/menu/costumeTab';
 import { actionErrorText } from './ui/menu/views';
 import { showToast } from './ui/toast';
 
@@ -50,6 +51,7 @@ function enterGame(conn: GameConnection) {
       pricesTab(conn, () => latest),
       marketingTab(conn, () => latest),
       bankTab(conn, () => latest),
+      costumeTab(conn, () => latest, conn.playerId),
       settingsTab(conn, myName),
     ],
     (open) => game.setInputBlocked('menu', open),

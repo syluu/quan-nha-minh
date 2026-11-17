@@ -99,3 +99,7 @@ table.staff td.act button + button { margin-left: 6px; }
 .settle .close { margin-top: 12px; }
 .off { background: #555; color: #fff; border-radius: 4px; padding: 0 5px; font-size: 11px; font-weight: 700; }
 button:disabled { opacity: 0.5; cursor: not-allowed; }
+.costumes { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.costume { display: flex; flex-direction: column; gap: 4px; padding: 8px; border-radius: 8px; background: rgba(255, 250, 240, 0.7); border: 2px solid transparent; }
+.costume.wearing { border-color: #1f8a3a; }
+.costume .swatch { width: 28px; height: 28px; border-radius: 6px; border: 1px solid rgba(0, 0, 0, 0.25); }

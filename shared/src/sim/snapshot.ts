@@ -1,9 +1,9 @@
-import { BALANCE, SHOP_IDS, SHOP_META, SHOPS } from '../content';
+import { BALANCE, COSTUMES, COSTUME_SLOTS, DEFAULT_OUTFIT, SHOP_IDS, SHOP_META, SHOPS } from '../content';
 import { canRent, isShopComplete } from './shops';
 import type { ShopId } from '../content';
 import type { Snapshot } from '../net/protocol';
 import { maxLoan } from './bank';
-import { migrateV1toV2, migrateV2toV3, migrateV3toV4, migrateV4toV5, migrateV5toV6 } from './migrate';
+import { migrateV1toV2, migrateV2toV3, migrateV3toV4, migrateV4toV5, migrateV5toV6, migrateV6toV7 } from './migrate';
 import { onlineSnapshot } from './online';
 import { sellableStations } from './settlement';
 import { isTileVisible } from './payTiles';
@@ -35,6 +35,8 @@ export function toSnapshot(world: WorldState, shopId: ShopId): Snapshot {
       carryLevel: p.carryLevel,
       speedLevel: p.speedLevel,
       location: p.location,
+      outfit: { ...p.outfit },
+      wardrobe: [...p.wardrobe],
     })),
     staff: shop.staff.map((s) => ({
       id: s.id, name: s.name, role: s.role, item: s.item, x: s.x, z: s.z, dir: s.dir, carry: [...s.carry],
@@ -74,15 +76,16 @@ export function toSnapshot(world: WorldState, shopId: ShopId): Snapshot {
 /** Chuẩn hoá thế giới vừa tải từ DB: nâng version, dọn trạng thái tạm, bổ sung trạm mới thêm vào nội dung. */
 export function normalizeLoaded(raw: unknown): WorldState {
   const version = raw && typeof raw === 'object' ? (raw as { schemaVersion?: unknown }).schemaVersion : undefined;
-  if (version !== 1 && version !== 2 && version !== 3 && version !== 4 && version !== 5 && version !== 6) throw new Error('UNSUPPORTED_SCHEMA');
+  if (version !== 1 && version !== 2 && version !== 3 && version !== 4 && version !== 5 && version !== 6 && version !== 7) throw new Error('UNSUPPORTED_SCHEMA');
   let w: unknown = raw;
   if (version === 1) w = migrateV1toV2(w);
   if (version === 1 || version === 2) w = migrateV2toV3(w);
-  if (version !== 4 && version !== 5 && version !== 6) w = migrateV3toV4(w);
+  if (version !== 4 && version !== 5 && version !== 6 && version !== 7) w = migrateV3toV4(w);
   const code = (w as { code: string }).code;
   const fresh = createWorld(code, 0);
-  if (version !== 5 && version !== 6) w = migrateV4toV5(w, fresh.shops);
-  if (version !== 6) w = migrateV5toV6(w, fresh.shops);
+  if (version !== 5 && version !== 6 && version !== 7) w = migrateV4toV5(w, fresh.shops);
+  if (version !== 6 && version !== 7) w = migrateV5toV6(w, fresh.shops);
+  if (version !== 7) w = migrateV6toV7(w, DEFAULT_OUTFIT);
   const world = w as WorldState;
   world.deliveredTo ??= [];
   for (const id of Object.keys(fresh.shops) as ShopId[]) {
@@ -105,6 +108,17 @@ export function normalizeLoaded(raw: unknown): WorldState {
     p.pickTimer = 0;
     p.pickAt = null;
     p.inMenu = false;
+    // Dữ liệu trang phục hỏng / món lạ / sai ô / chưa mua → về đồ mặc định của ô đó.
+    const wardrobe: unknown[] = Array.isArray(p.wardrobe) ? p.wardrobe : [];
+    p.wardrobe = [...new Set(wardrobe.filter((id): id is string => typeof id === 'string' && Object.hasOwn(COSTUMES, id)))];
+    const outfit = (p.outfit && typeof p.outfit === 'object' ? p.outfit : {}) as Record<string, unknown>;
+    p.outfit = { ...DEFAULT_OUTFIT };
+    for (const slot of COSTUME_SLOTS) {
+      const id = outfit[slot];
+      if (typeof id !== 'string' || !Object.hasOwn(COSTUMES, id)) continue;
+      const c = COSTUMES[id];
+      if (c.slot === slot && (c.price === 0 || p.wardrobe.includes(id))) p.outfit[slot] = id;
+    }
     if (!world.shops[p.location]?.owned) {
       p.location = 'banh_mi';
       p.x = SHOPS.banh_mi.entrance.x;

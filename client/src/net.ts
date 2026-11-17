@@ -33,6 +33,8 @@ export interface GameConnection {
   rentShop(shopId: ShopId): void;
   travel(to: ShopId): void;
   setMachineEnabled(instanceId: string, enabled: boolean): void;
+  buyCostume(id: string): void;
+  wearCostume(id: string): void;
 }
 
 export function serverEndpoint(): string {
@@ -104,6 +106,8 @@ export async function connect(opts: JoinOptions): Promise<GameConnection> {
     upgradePickup: () => room.send(MSG.upgradePickup, { shopId: here }),
     rentShop: (shopId) => room.send(MSG.rentShop, { shopId }),
     travel: (to) => room.send(MSG.travel, { to }),
+    buyCostume: (id) => room.send(MSG.buyCostume, { id }),
+    wearCostume: (id) => room.send(MSG.wearCostume, { id }),
     setMachineEnabled: (instanceId, enabled) => room.send(MSG.setMachineEnabled, { instanceId, enabled, shopId: here }),
   };
 }

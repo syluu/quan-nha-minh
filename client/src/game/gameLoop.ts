@@ -137,6 +137,7 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
         v.setPose(pose.x, pose.z, pose.dir, moving, t);
         v.setCarry(p.carry, p.cap);
         v.setName(p.name);
+        if (p.outfit) v.setOutfit(p.outfit);
       }
       for (const [id, v] of players) if (!seen.has(id)) (v.dispose(), players.delete(id));
 

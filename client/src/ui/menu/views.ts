@@ -1,5 +1,5 @@
 import {
-  BALANCE, INGREDIENTS, ITEMS, SHOP_META, SHOPS, effectiveCycle, isFarm, effectiveOutputCap, formatK, getStationDef, loanTerms, machineUpgradeCost,
+  BALANCE, COSTUME_LIST, COSTUME_SLOTS, DEFAULT_OUTFIT, INGREDIENTS, ITEMS, SHOP_META, SHOPS, effectiveCycle, isFarm, effectiveOutputCap, formatK, getStationDef, loanTerms, machineUpgradeCost,
   marketingMultiplier, priceRange,
 } from '@qnm/shared';
 import type { CampaignId, ItemId, ShopState, Snapshot, StationState } from '@qnm/shared';
@@ -284,4 +284,29 @@ export function sellableName(x: { shopId: Snapshot['shopId']; instanceId: string
   if (x.instanceId === 'mat_bang') return `Trả mặt bằng ${shop}`;
   const p = SHOPS[x.shopId].stations.find((st) => st.instanceId === x.instanceId);
   return `${p ? getStationDef(p.def).name : x.instanceId} (${shop})`;
+}
+
+const SLOT_NAMES = { hat: 'Mũ', shirt: 'Áo', pants: 'Quần', apron: 'Tạp dề' } as const;
+
+/** Tab Trang phục: từng ô (mũ, áo, quần, tạp dề), món đang mặc / đã có / mua được. */
+export function costumeView(s: Snapshot, myId: string) {
+  const me = s.players.find((p) => p.id === myId);
+  const hex = (c: number, fallback: number) => `#${(c || fallback).toString(16).padStart(6, '0')}`;
+  return COSTUME_SLOTS.map((slot) => ({
+    slot,
+    title: SLOT_NAMES[slot],
+    items: COSTUME_LIST.filter((c) => c.slot === slot).map((c) => {
+      const owned = c.price === 0 || !!me?.wardrobe?.includes(c.id);
+      const wearing = (me?.outfit?.[slot] ?? DEFAULT_OUTFIT[slot]) === c.id;
+      return {
+        id: c.id,
+        name: c.name,
+        // Áo màu riêng: màu nhân vật; "không đeo tạp dề": ô trống.
+        swatch: c.style === 'khong' ? 'transparent' : hex(c.color, me?.color ?? 0x888888),
+        price: c.price ? formatK(c.price) : 'Miễn phí',
+        state: wearing ? ('wearing' as const) : owned ? ('owned' as const) : ('buy' as const),
+        affordable: owned || (s.money >= c.price && !s.settlement),
+      };
+    }),
+  }));
 }

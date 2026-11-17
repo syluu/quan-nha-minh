@@ -78,6 +78,12 @@ Mở `http://localhost:5173` ở 2 cửa sổ (hoặc 2 máy cùng wifi qua `htt
 - Phí xe chở hàng: 50K cho mỗi quán đã dùng hàng trong kho hôm đó (tính cuối ngày).
 - **Nhân sự** ở trang trại: tối đa 2 **người làm trang trại**, tự bê thùng hàng ra xe.
 
+### Trang phục (Kế hoạch 7)
+
+- **Menu → 👕 Trang phục**: mũ (nón lá, lưỡi trai, bảo hiểm, đầu bếp, mũ phớt), áo (nhiều màu, áo dài đỏ/xanh), quần, tạp dề — giá 200K–5.000K, trả từ ví chung.
+- Đồ thuộc về người mua, mặc ngay; đồ đã có đổi mặc lại miễn phí. Người khác trong nhà thấy ngay.
+- Quán phá sản vẫn **giữ trang phục** đã mua (cùng tên nhân vật và mã quán).
+
 ## Test
 
 ```bash

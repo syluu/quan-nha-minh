@@ -1,5 +1,5 @@
 import { BALANCE, SHOPS } from '../content';
-import type { IngredientId, ItemId, ShopId } from '../content';
+import type { IngredientId, ItemId, Outfit, ShopId } from '../content';
 
 export interface StationState {
   instanceId: string;
@@ -171,6 +171,9 @@ export interface PlayerState {
   speedLevel: number;
   /** Quán người chơi đang đứng. */
   location: ShopId;
+  /** Trang phục đang mặc (id trong COSTUMES) và các món đã mua (giữ cả khi phá sản). */
+  outfit: Outfit;
+  wardrobe: string[];
 }
 
 export interface DayStats {
@@ -203,7 +206,7 @@ export interface LogEntry {
 }
 
 export interface WorldState {
-  schemaVersion: 6;
+  schemaVersion: 7;
   code: string;
   money: number;
   day: number;
@@ -266,7 +269,7 @@ export function createShop(id: ShopId, owned: boolean): ShopState {
 
 export function createWorld(code: string, seed: number): WorldState {
   return {
-    schemaVersion: 6,
+    schemaVersion: 7,
     code,
     money: BALANCE.START_MONEY,
     day: 1,

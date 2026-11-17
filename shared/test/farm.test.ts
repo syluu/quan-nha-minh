@@ -72,7 +72,7 @@ describe('save v5 → v6 (Review Focus 4)', () => {
     delete raw.warehouse;
     delete raw.shops.farm;
     const loaded = normalizeLoaded(raw);
-    expect(loaded.schemaVersion).toBe(6);
+    expect(loaded.schemaVersion).toBe(7);
     expect(loaded.shops.farm.owned).toBe(false);
     expect(loaded.warehouse).toEqual({});
   });

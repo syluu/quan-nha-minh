@@ -103,3 +103,14 @@ export function migrateV5toV6(raw: any, freshShops: Record<string, any>): any {
   for (const [id, fresh] of Object.entries<any>(freshShops)) w.shops[id] ??= structuredClone(fresh);
   return w;
 }
+
+/** Kế hoạch 6 → 7: trang phục (mọi người mặc đồ mặc định, tủ đồ trống). */
+export function migrateV6toV7(raw: any, defaultOutfit: Record<string, string>): any {
+  const w = structuredClone(raw);
+  w.schemaVersion = 7;
+  for (const p of Object.values<any>(w.players ?? {})) {
+    if (!p.outfit || typeof p.outfit !== 'object') p.outfit = { ...defaultOutfit };
+    if (!Array.isArray(p.wardrobe)) p.wardrobe = [];
+  }
+  return w;
+}
