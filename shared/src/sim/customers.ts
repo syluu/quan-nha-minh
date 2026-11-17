@@ -2,7 +2,8 @@ import { BALANCE, ITEMS, SHOPS, getStationDef } from '../content';
 import type { ItemId, PlacedStation, ShopId, ShopLayout } from '../content';
 import { distanceToFootprint } from './carry';
 import type { SimEvent } from './events';
-import { pushRating, stars } from './rating';
+import { effectiveStars, marketingMultiplier } from './marketing';
+import { pushRating } from './rating';
 import { gameHour } from './time';
 import type { Customer, ShopState, WorldState } from './world';
 import { nextRandom } from './world';
@@ -140,7 +141,7 @@ export function tickCustomers(world: WorldState, shopId: ShopId, dt: number): Si
       shop.nextCustomerIn = 0.5;
     } else {
       spawnCustomer(world, shopId);
-      const mean = layout.baseCustomerIntervalSec / (hm * trafficMultiplier(stars(shop.ratings)));
+      const mean = layout.baseCustomerIntervalSec / (hm * trafficMultiplier(effectiveStars(shop)) * marketingMultiplier(shop));
       shop.nextCustomerIn = -Math.log(1 - nextRandom(world)) * mean;
     }
   }

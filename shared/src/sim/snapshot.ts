@@ -3,7 +3,7 @@ import type { ShopId } from '../content';
 import type { Snapshot } from '../net/protocol';
 import { migrateV1toV2, migrateV2toV3 } from './migrate';
 import { isTileVisible } from './payTiles';
-import { stars } from './rating';
+import { effectiveStars } from './marketing';
 import { createWorld } from './world';
 import type { WorldState } from './world';
 
@@ -14,7 +14,7 @@ export function toSnapshot(world: WorldState, shopId: ShopId): Snapshot {
     day: world.day,
     secOfDay: world.secOfDay,
     money: world.money,
-    stars: stars(shop.ratings),
+    stars: effectiveStars(shop),
     players: Object.values(world.players).map((p) => ({
       id: p.id, name: p.name, color: p.color, x: p.x, z: p.z, dir: p.dir, carry: [...p.carry], online: p.online,
       cap: p.carryCap,

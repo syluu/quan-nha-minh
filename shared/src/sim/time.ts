@@ -2,6 +2,7 @@ import { BALANCE } from '../content';
 import type { ShopId } from '../content';
 import { stars } from './rating';
 import { buildSettlement } from './settlement';
+import { tickCampaignsDaily } from './marketing';
 import { accrueWages } from './staff';
 import { emptyDayStats } from './world';
 import type { DaySummary, WorldState } from './world';
@@ -28,6 +29,7 @@ export function advanceTime(world: WorldState, dt: number): DaySummary | null {
   if (world.secOfDay < BALANCE.DAY_REAL_SEC) return null;
 
   accrueWages(world);
+  tickCampaignsDaily(world);
   const s = world.dayStats;
   const summary: DaySummary = {
     ...s,
