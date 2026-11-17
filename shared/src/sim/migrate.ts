@@ -50,3 +50,23 @@ export function migrateV2toV3(raw: any): any {
   }
   return w;
 }
+
+/** Kế hoạch 3 → 4: bán online. */
+export function migrateV3toV4(raw: any): any {
+  const w = structuredClone(raw);
+  w.schemaVersion = 4;
+  w.dayStats = { commission: 0, onlineOrders: 0, onlineCancelled: 0, ...w.dayStats };
+  for (const h of w.history ?? []) {
+    h.commission ??= 0;
+    h.onlineOrders ??= 0;
+    h.onlineCancelled ??= 0;
+  }
+  for (const shop of Object.values<any>(w.shops ?? {})) {
+    shop.orders ??= [];
+    shop.nextOrderId ??= 1;
+    shop.nextOrderIn ??= 5;
+    shop.shipper ??= null;
+    shop.onlinePaused ??= false;
+  }
+  return w;
+}

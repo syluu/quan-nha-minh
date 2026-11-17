@@ -64,6 +64,27 @@ export interface StaffState {
 
 export type CampaignId = 'to_roi' | 'mxh' | 'review';
 
+/** Đơn online: món cần giao và món đã đưa cho shipper. */
+export interface Order {
+  id: number;
+  items: ItemId[];
+  delivered: ItemId[];
+  /** Tổng tiền món theo giá bán (chưa trừ hoa hồng). */
+  total: number;
+  /** secOfDay lúc có đơn (để xe ô tô biết đơn đã chờ bao lâu). */
+  createdSec: number;
+}
+
+export interface Shipper {
+  vehicle: 'bike' | 'car';
+  x: number;
+  z: number;
+  dir: number;
+  state: 'arriving' | 'waiting' | 'leaving';
+  orderIds: number[];
+  waited: number;
+}
+
 export interface Loan {
   id: string;
   principal: number;
@@ -101,6 +122,11 @@ export interface ShopState {
   /** Số người bị cho nghỉ hôm nay (vẫn phải trả lương ngày đó). */
   firedToday: number;
   campaigns: { id: CampaignId; daysLeft: number }[];
+  orders: Order[];
+  nextOrderId: number;
+  nextOrderIn: number;
+  shipper: Shipper | null;
+  onlinePaused: boolean;
 }
 
 export interface PlayerState {
@@ -137,6 +163,10 @@ export interface DayStats {
   wasted: number;
   sold: Partial<Record<ItemId, number>>;
   marketing: number;
+  /** Hoa hồng app giao đồ ăn (đã trừ khỏi tiền nhận). */
+  commission: number;
+  onlineOrders: number;
+  onlineCancelled: number;
 }
 
 export interface DaySummary extends DayStats {
@@ -152,7 +182,7 @@ export interface LogEntry {
 }
 
 export interface WorldState {
-  schemaVersion: 3;
+  schemaVersion: 4;
   code: string;
   money: number;
   day: number;
@@ -174,7 +204,7 @@ export interface WorldState {
 }
 
 export function emptyDayStats(): DayStats {
-  return { revenue: 0, ingredientCost: 0, unlockSpend: 0, served: 0, lost: 0, wages: 0, wasted: 0, sold: {}, marketing: 0 };
+  return { revenue: 0, ingredientCost: 0, unlockSpend: 0, served: 0, lost: 0, wages: 0, wasted: 0, sold: {}, marketing: 0, commission: 0, onlineOrders: 0, onlineCancelled: 0 };
 }
 
 function createShop(id: ShopId): ShopState {
@@ -199,12 +229,13 @@ function createShop(id: ShopId): ShopState {
   return {
     id, stations, customers: [], prices: {}, ratings: [], nextCustomerIn: 1, nextCustomerId: 1,
     staff: [], nextStaffId: 1, firedToday: 0, campaigns: [],
+    orders: [], nextOrderId: 1, nextOrderIn: 5, shipper: null, onlinePaused: false,
   };
 }
 
 export function createWorld(code: string, seed: number): WorldState {
   return {
-    schemaVersion: 3,
+    schemaVersion: 4,
     code,
     money: BALANCE.START_MONEY,
     day: 1,

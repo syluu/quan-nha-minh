@@ -2,7 +2,7 @@ import { BALANCE, SHOPS } from '../content';
 import type { ShopId } from '../content';
 import type { Snapshot } from '../net/protocol';
 import { maxLoan } from './bank';
-import { migrateV1toV2, migrateV2toV3 } from './migrate';
+import { migrateV1toV2, migrateV2toV3, migrateV3toV4 } from './migrate';
 import { sellableStations } from './settlement';
 import { isTileVisible } from './payTiles';
 import { effectiveStars } from './marketing';
@@ -60,16 +60,20 @@ export function toSnapshot(world: WorldState, shopId: ShopId): Snapshot {
 /** Chuẩn hoá thế giới vừa tải từ DB: nâng version, dọn trạng thái tạm, bổ sung trạm mới thêm vào nội dung. */
 export function normalizeLoaded(raw: unknown): WorldState {
   const version = raw && typeof raw === 'object' ? (raw as { schemaVersion?: unknown }).schemaVersion : undefined;
-  if (version !== 1 && version !== 2 && version !== 3) throw new Error('UNSUPPORTED_SCHEMA');
+  if (version !== 1 && version !== 2 && version !== 3 && version !== 4) throw new Error('UNSUPPORTED_SCHEMA');
   let w: unknown = raw;
   if (version === 1) w = migrateV1toV2(w);
-  if (version !== 3) w = migrateV2toV3(w);
+  if (version === 1 || version === 2) w = migrateV2toV3(w);
+  if (version !== 4) w = migrateV3toV4(w);
   const world = w as WorldState;
   const fresh = createWorld(world.code, 0);
   for (const id of Object.keys(fresh.shops) as ShopId[]) {
     const shop = (world.shops[id] ??= fresh.shops[id]);
     for (const [instanceId, st] of Object.entries(fresh.shops[id].stations)) shop.stations[instanceId] ??= st;
     shop.customers = [];
+    // Đơn online dở dang và shipper không giữ qua lần tải lại.
+    shop.orders = [];
+    shop.shipper = null;
     for (const st of Object.values(shop.stations)) st.tileOccupant = null;
   }
   for (const p of Object.values(world.players)) {

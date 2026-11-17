@@ -37,7 +37,7 @@ function v1Save() {
 describe('normalizeLoaded v1 → v2', () => {
   it('fills the new fields with defaults and keeps progress', () => {
     const w = normalizeLoaded(v1Save());
-    expect(w.schemaVersion).toBe(3);
+    expect(w.schemaVersion).toBe(4);
     expect(w.money).toBe(4_200_000);
     expect(w.day).toBe(3);
     expect(w.history).toEqual([]);
@@ -85,7 +85,7 @@ describe('normalizeLoaded v2 → v3', () => {
 
   it('fills v3 defaults and keeps progress', () => {
     const w = normalizeLoaded(v2Save());
-    expect(w.schemaVersion).toBe(3);
+    expect(w.schemaVersion).toBe(4);
     expect(w.loans).toEqual([]);
     expect(w.nextLoanId).toBe(1);
     expect(w.settlement).toBeNull();
@@ -109,5 +109,29 @@ describe('normalizeLoaded v2 → v3', () => {
     w.settlement = { month: 1, revenue: 1, ingredientCost: 2, marketing: 0, wages: 840_000, rent: 0, loanDue: 0, totalDue: 840_000 };
     const again = normalizeLoaded(JSON.parse(JSON.stringify(w)));
     expect(again.settlement).toEqual(w.settlement);
+  });
+});
+
+describe('normalizeLoaded v3 → v4', () => {
+  it('adds online fields, the pickup station (locked) and drops unfinished orders on load', () => {
+    const w3 = normalizeLoaded(v1Save()) as unknown as Record<string, any>;
+    w3.schemaVersion = 3;
+    delete w3.dayStats.commission; delete w3.dayStats.onlineOrders; delete w3.dayStats.onlineCancelled;
+    for (const shop of Object.values<any>(w3.shops)) {
+      delete shop.orders; delete shop.nextOrderId; delete shop.nextOrderIn; delete shop.shipper; delete shop.onlinePaused;
+      delete shop.stations.diem_giao;
+    }
+    const w = normalizeLoaded(w3);
+    expect(w.schemaVersion).toBe(4);
+    const shop = w.shops.banh_mi;
+    expect(shop).toMatchObject({ orders: [], nextOrderId: 1, shipper: null, onlinePaused: false });
+    expect(shop.stations.diem_giao.unlocked).toBe(false);
+    expect(w.dayStats).toMatchObject({ commission: 0, onlineOrders: 0, onlineCancelled: 0 });
+
+    shop.orders.push({ id: 1, items: ['banh_mi'], delivered: [], total: 5000, createdSec: 0 });
+    shop.shipper = { vehicle: 'bike', x: 0, z: 0, dir: 0, state: 'waiting', orderIds: [1], waited: 3 };
+    const again = normalizeLoaded(JSON.parse(JSON.stringify(w)));
+    expect(again.shops.banh_mi.orders).toEqual([]);
+    expect(again.shops.banh_mi.shipper).toBeNull();
   });
 });
