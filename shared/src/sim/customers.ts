@@ -43,7 +43,7 @@ function displayFor(shopId: ShopId, item: ItemId): PlacedStation | undefined {
 export function isCashierManned(world: WorldState, shopId: ShopId): boolean {
   const cashier = cashierOf(shopId);
   return Object.values(world.players).some(
-    (p) => p.online && distanceToFootprint(cashier, p.x, p.z) <= BALANCE.INTERACT_DIST,
+    (p) => p.online && distanceToFootprint(cashier, p.x, p.z) <= BALANCE.CASHIER_DIST,
   );
 }
 

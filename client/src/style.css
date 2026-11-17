@@ -15,3 +15,21 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); 
 .status { padding: 16px; font-weight: 700; }
 .game { position: fixed; inset: 0; overflow: hidden; }
 .game canvas { display: block; }
+.ui { position: fixed; inset: 0; pointer-events: none; }
+.hud { position: absolute; top: 12px; left: 12px; right: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+.pill { background: rgba(43,33,24,.85); color: #fff; font-weight: 700; font-size: 15px; padding: 6px 12px; border-radius: 999px; }
+.pill.stars { color: #ffd76a; }
+.pill.code { margin-left: auto; background: rgba(200,69,44,.9); }
+.conn { position: absolute; top: 56px; left: 50%; transform: translateX(-50%); background: #c8452c; color: #fff; font-weight: 700; padding: 8px 14px; border-radius: 10px; }
+.hint { position: absolute; bottom: 12px; left: 12px; color: var(--muted); font-size: 13px; background: rgba(255,250,240,.8); padding: 4px 10px; border-radius: 8px; }
+.log { position: absolute; top: 56px; right: 12px; display: flex; flex-direction: column; gap: 4px; max-width: 320px; }
+.log div { background: rgba(255,250,240,.9); border: 1px solid var(--line); padding: 4px 10px; border-radius: 8px; font-size: 13px; }
+.float { position: absolute; left: 0; top: 0; font-weight: 800; font-size: 18px; text-shadow: 0 0 3px #fff, 0 0 6px #fff; will-change: transform; }
+.float.gain { color: #1f8a3a; }
+.float.loss { color: #c8452c; }
+.summary { pointer-events: auto; cursor: pointer; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); background: var(--card); border: 2px solid var(--line); border-radius: 16px; padding: 20px 26px; min-width: 300px; box-shadow: 0 10px 40px rgba(0,0,0,.2); }
+.summary h2 { margin: 0 0 10px; font-size: 20px; }
+.summary table { width: 100%; border-collapse: collapse; font-size: 15px; }
+.summary td { padding: 5px 0; border-bottom: 1px solid var(--line); }
+.summary td:last-child { text-align: right; font-weight: 700; }
+.summary p { margin: 10px 0 0; color: var(--muted); font-size: 12px; text-align: center; }

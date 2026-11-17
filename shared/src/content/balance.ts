@@ -12,6 +12,8 @@ export const BALANCE = {
   PLAYER_RADIUS: 0.3,
   PLAYER_CARRY: 4,
   INTERACT_DIST: 0.6,
+  /** Vùng đứng thu ngân rộng hơn để dễ đứng trúng (có ô vàng vẽ trên sàn). */
+  CASHIER_DIST: 1.0,
   TRANSFER_INTERVAL: 0.2,
 
   CUSTOMER_SPEED: 2.0,

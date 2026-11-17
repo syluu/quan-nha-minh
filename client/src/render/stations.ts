@@ -83,6 +83,17 @@ export function createStationView(placed: PlacedStation): StationView {
   name.visible = def.kind !== 'cashier';
   group.add(name);
 
+  if (def.kind === 'cashier') {
+    // Ô vàng sau quầy: đứng ở đây là có người thu ngân.
+    const spot = new THREE.Mesh(
+      new THREE.PlaneGeometry(w, 0.8),
+      new THREE.MeshBasicMaterial({ color: 0xf2c14e, transparent: true, opacity: 0.55, depthWrite: false }),
+    );
+    spot.rotation.x = -Math.PI / 2;
+    spot.position.set(0, 0.015, -d / 2 - 0.5);
+    group.add(spot);
+  }
+
   const warn = makeLabel('💸 Hết tiền', { bg: '#c8452c', size: 30, scale: 0.007 });
   warn.position.set(0, topY + 1.3, 0);
   warn.visible = false;

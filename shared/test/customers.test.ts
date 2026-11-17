@@ -47,6 +47,17 @@ describe('spawning over a day', () => {
   });
 });
 
+describe('isCashierManned', () => {
+  it('counts a player up to CASHIER_DIST (1 m) behind the counter, not further', () => {
+    const w = createWorld('X', 1);
+    // thu_ngan ở (4.6, 0), mặt sau z = -0.4
+    const p = putPlayer(w, 'a', 4.6, -1.3); // cách 0,9 m
+    expect(isCashierManned(w, 'banh_mi')).toBe(true);
+    p.z = -1.5; // cách 1,1 m
+    expect(isCashierManned(w, 'banh_mi')).toBe(false);
+  });
+});
+
 describe('a single customer', () => {
   it('walks away (rating 3) when every wanted item is too expensive', () => {
     const w = createWorld('X', 1);
