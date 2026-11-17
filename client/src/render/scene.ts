@@ -39,6 +39,7 @@ export function createScene(container: HTMLElement) {
 export function createShopBackdrop(shopId: ShopId): THREE.Group {
   const root = new THREE.Group();
   const scene = root;
+  const farm = SHOP_META[shopId].kind === 'farm';
   const b = SHOPS[shopId].bounds;
   const w = b.maxX - b.minX;
   const d = b.maxZ - b.minZ;
@@ -48,7 +49,7 @@ export function createShopBackdrop(shopId: ShopId): THREE.Group {
   const fg = fc.getContext('2d')!;
   for (let i = 0; i < w; i++)
     for (let j = 0; j < Math.ceil(d); j++) {
-      fg.fillStyle = (i + j) % 2 ? '#e6d7bb' : '#efe3cb';
+      fg.fillStyle = farm ? ((i + j) % 2 ? '#8fbf5a' : '#9acb63') : (i + j) % 2 ? '#e6d7bb' : '#efe3cb';
       fg.fillRect(i * 32, j * 32, 32, 32);
     }
   const floorTex = new THREE.CanvasTexture(fc);

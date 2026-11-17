@@ -70,6 +70,14 @@ Mở `http://localhost:5173` ở 2 cửa sổ (hoặc 2 máy cùng wifi qua `htt
 - Tiền thuê mặt bằng vào **kết toán cuối tháng** (tháng đầu tính theo số ngày đã thuê). Thiếu tiền thì có thể **trả mặt bằng** (thu 50% cọc + 50% máy).
 - **Menu → Nâng cấp → Máy**: nút **Tắt máy / Bật máy** — máy làm xong mẻ đang làm rồi dừng, nhân viên không bê thêm nguyên liệu vào.
 
+### Trang trại (Kế hoạch 6)
+
+- **Bản đồ → Trang trại**: thuê được bất cứ lúc nào (cọc 5.000K, thuê 1.500K/tháng + 300K/tháng cho mỗi lô mở thêm). Có sẵn ruộng rau và xe chở hàng.
+- Mở thêm lô bằng ô trả tiền: ruộng lúa mì (bột mì), ruộng lúa (gạo), chuồng gà (trứng), chuồng lợn (thịt lợn), chuồng bò (thịt bò + xương bò). Mỗi lô chạy như một cái máy: trả tiền giống/thức ăn mỗi mẻ, ra **thùng hàng**.
+- Bê thùng hàng tới **xe chở hàng** → nguyên liệu vào **kho tổng** (xem trong Bản đồ). Máy ở mọi quán lấy kho trước, thiếu mới mua chợ — rẻ hơn khoảng một nửa.
+- Mỗi sáng xe chở hàng tới các quán: 50K/quán (chỉ khi kho còn hàng).
+- **Nhân sự** ở trang trại: tối đa 2 **người làm trang trại**, tự bê thùng hàng ra xe.
+
 ## Test
 
 ```bash

@@ -65,3 +65,25 @@ describe('shop-aware menus (plan 5)', () => {
     expect(sellableName({ shopId: 'banh_mi', instanceId: 'chao_op_la' })).toBe('Chảo ốp la (Xe bánh mì)');
   });
 });
+
+describe('farm in the client (plan 6)', () => {
+  const farmShops: Snapshot['shops'] = [
+    { id: 'banh_mi', name: 'Xe bánh mì', kind: 'shop', owned: true, complete: false, deposit: 0, rentPerMonth: 0 },
+    { id: 'farm', name: 'Trang trại', kind: 'farm', owned: false, complete: false, deposit: 5_000_000, rentPerMonth: 1_500_000 },
+  ];
+  it('the farm can be rented before the shops are complete; the warehouse is listed', () => {
+    const v = mapView(snap({ shopId: 'banh_mi', shops: farmShops, canRent: false, warehouse: { rau: 12, gao: 0, trung: 10 } }));
+    const farm = v.free.find((f) => f.id === 'farm')!;
+    expect(farm).toMatchObject({ farm: true, canRent: true, deposit: '5.000K' });
+    expect(farm.menu).toContain('Chuồng bò');
+    expect(v.warehouse).toBe('12 rau, 10 trứng');
+  });
+
+  it('staff tab at the farm offers farmhands only; HUD hides stars there', () => {
+    const s = snap({ shopId: 'farm', shops: farmShops, stations: [], staff: [] });
+    const v = staffView(s);
+    expect(v.farm).toEqual({ hands: [], canHire: true });
+    expect(hudText(s, 'a').stars).toBe('★ —');
+    expect(staffLabel({ name: 'Nam', role: 'farmhand', item: null })).toBe('Nam · trang trại');
+  });
+});

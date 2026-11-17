@@ -34,6 +34,15 @@ export function staffTab(conn: GameConnection, latest: () => Snapshot | null): M
         const row = (job: string, name: string | null, id: string | null, d: StaffDetail | null, hire: string) => `
           <tr><td>${job}</td><td>${name ? `<b>${name}</b>${info(d)}` : '<span class="muted">Chưa có</span>'}</td>
           <td class="act">${actions(name, id, d, hire)}</td></tr>`;
+        if (v.farm) {
+          body.innerHTML = `
+            <h3>Người làm trang trại <span class="muted">(tối đa 2)</span></h3>
+            <table class="staff"><tbody>
+              ${v.farm.hands.map((h) => row('Làm trang trại — bê thùng hàng ra xe', h.name, h.staffId, h.detail, 'farmhand')).join('')}
+              ${v.farm.canHire ? row('Làm trang trại — bê thùng hàng ra xe', null, null, null, 'farmhand') : ''}
+            </tbody></table>
+            <p class="note">Lương ${v.wagePerDay}/ngày, trả cuối tháng. Người làm tự nhặt thùng hàng ở các lô và bốc lên xe chở hàng vào kho tổng.</p>`;
+        } else
         body.innerHTML = `
           <h3>Nhân viên <span class="muted">(${v.shopName})</span></h3>
           <table class="staff">
@@ -50,7 +59,7 @@ export function staffTab(conn: GameConnection, latest: () => Snapshot | null): M
         body.querySelectorAll<HTMLButtonElement>('[data-hire]').forEach((b) => {
           b.onclick = () => {
             const [role, item] = b.dataset.hire!.split(':');
-            conn.hire(role as 'cashier' | 'cook' | 'courier' | 'cleaner', (item as never) ?? null);
+            conn.hire(role as 'cashier' | 'cook' | 'courier' | 'cleaner' | 'farmhand', (item as never) ?? null);
           };
         });
         body.querySelectorAll<HTMLButtonElement>('[data-train]').forEach((b) => (b.onclick = () => conn.upgradeStaff(b.dataset.train!)));

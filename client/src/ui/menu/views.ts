@@ -1,5 +1,5 @@
 import {
-  BALANCE, ITEMS, SHOP_META, SHOPS, effectiveCycle, effectiveOutputCap, formatK, getStationDef, loanTerms, machineUpgradeCost,
+  BALANCE, INGREDIENTS, ITEMS, SHOP_META, SHOPS, effectiveCycle, isFarm, effectiveOutputCap, formatK, getStationDef, loanTerms, machineUpgradeCost,
   marketingMultiplier, priceRange,
 } from '@qnm/shared';
 import type { CampaignId, ItemId, ShopState, Snapshot, StationState } from '@qnm/shared';
@@ -46,6 +46,8 @@ export function staffView(s: Snapshot): {
   courier: { name: string | null; staffId: string | null; canHire: boolean; detail: StaffDetail | null } | null;
   /** Chỉ có khi quán đã mở bàn ăn. */
   cleaner: { name: string | null; staffId: string | null; canHire: boolean; detail: StaffDetail | null } | null;
+  /** Chỉ ở trang trại: người đang làm + còn thuê thêm được không. */
+  farm: { hands: { name: string; staffId: string; detail: StaffDetail | null }[]; canHire: boolean } | null;
   lines: { item: ItemId; itemName: string; staffName: string | null; staffId: string | null; detail: StaffDetail | null }[];
   wagePerDay: string;
   shopName: string;
@@ -71,6 +73,15 @@ export function staffView(s: Snapshot): {
     }),
     wagePerDay: formatK(BALANCE.STAFF_LEVELS[0].wage),
     shopName: SHOP_META[s.shopId].name,
+    farm: isFarm(s.shopId)
+      ? (() => {
+          const hands = s.staff.filter((x) => x.role === 'farmhand');
+          return {
+            hands: hands.map((h) => ({ name: h.name, staffId: h.id, detail: staffDetail(h) })),
+            canHire: hands.length < BALANCE.FARMHANDS_MAX,
+          };
+        })()
+      : null,
   };
 }
 
@@ -113,7 +124,7 @@ export function upgradeView(s: Snapshot, myId: string) {
   const speedMax = BALANCE.PLAYER_SPEED_COSTS.length;
   const machines = SHOPS[s.shopId].stations
     .map((p) => ({ p, def: getStationDef(p.def), st: s.stations.find((x) => x.instanceId === p.instanceId) }))
-    .filter(({ def, st }) => (def.kind === 'producer' || def.kind === 'assembler') && st?.unlocked)
+    .filter(({ def, st }) => (def.kind === 'producer' || def.kind === 'assembler' || def.kind === 'plot') && st?.unlocked)
     .map(({ p, def, st }) => {
       const level = st!.level;
       const lv = { level } as Pick<StationState, 'level'>;
@@ -215,7 +226,7 @@ export function onlineView(s: Snapshot) {
 /** Nhãn trên đầu nhân viên: "Lan · thu ngân", "Mai · giao đơn", "Hùng · Bánh mì". */
 export function staffLabel(st: { name: string; role: string; item: ItemId | null }): string {
   const job =
-    st.role === 'cashier' ? 'thu ngân' : st.role === 'courier' ? 'giao đơn' : st.role === 'cleaner' ? 'dọn bàn' : st.item ? ITEMS[st.item].name : 'phụ bếp';
+    st.role === 'cashier' ? 'thu ngân' : st.role === 'courier' ? 'giao đơn' : st.role === 'cleaner' ? 'dọn bàn' : st.role === 'farmhand' ? 'trang trại' : st.item ? ITEMS[st.item].name : 'phụ bếp';
   return `${st.name} · ${job}`;
 }
 
@@ -231,7 +242,10 @@ export function mapView(s: Snapshot) {
         name: x.name,
         here: x.id === here,
         status: x.complete ? 'Đã mở hết' : 'Đang mở thêm',
-        rent: x.rentPerMonth > 0 ? `Thuê ${formatK(x.rentPerMonth)}/tháng` : 'Xe nhà, không tốn tiền thuê',
+        rent:
+          x.rentPerMonth <= 0
+            ? 'Xe nhà, không tốn tiền thuê'
+            : `Thuê ${formatK(x.rentPerMonth)}/tháng${x.kind === 'farm' ? ` + ${formatK(SHOP_META.farm.plotRent)}/lô mở thêm` : ''}`,
       })),
     free: s.shops
       .filter((x) => !x.owned)
@@ -241,8 +255,14 @@ export function mapView(s: Snapshot) {
         deposit: formatK(x.deposit),
         rent: `${formatK(x.rentPerMonth)}/tháng`,
         menu: menuOf(x.id),
-        canRent: s.canRent && s.money >= x.deposit && !s.settlement,
+        farm: x.kind === 'farm',
+        // Trang trại thuê lúc nào cũng được (đủ tiền); quán mới cần mở hết các quán đang có.
+        canRent: (x.kind === 'farm' || s.canRent) && s.money >= x.deposit && !s.settlement,
       })),
+    warehouse: (Object.entries(s.warehouse) as [keyof typeof INGREDIENTS, number][])
+      .filter(([, n]) => n > 0)
+      .map(([id, n]) => `${n} ${INGREDIENTS[id].name.toLowerCase()}`)
+      .join(', '),
     hint: s.canRent ? '' : 'Mở hết máy và kệ ở các quán đang có thì mới thuê được mặt bằng mới.',
   };
 }
@@ -253,6 +273,7 @@ export function menuOf(shopId: Snapshot['shopId']): string {
   for (const p of SHOPS[shopId].stations) {
     const def = getStationDef(p.def);
     if (def.kind === 'display') items.push(ITEMS[def.item].name);
+    if (def.kind === 'plot') items.push(def.name);
   }
   return items.join(', ');
 }

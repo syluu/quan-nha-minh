@@ -23,7 +23,9 @@ const HOT_TOP = new Set(['lo_than', 'lo_suon']);
 
 const plateGeo = new THREE.CylinderGeometry(0.15, 0.13, 0.03, 10);
 const stoolGeo = new THREE.CylinderGeometry(0.17, 0.15, 0.45, 8);
-markSharedGeometry(plateGeo, stoolGeo);
+const sproutGeo = new THREE.ConeGeometry(0.16, 0.3, 6);
+const wheelGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.12, 10);
+markSharedGeometry(plateGeo, stoolGeo, sproutGeo, wheelGeo);
 
 function itemGrid(items: ItemId[], w: number, d: number, y: number): THREE.Group {
   const g = new THREE.Group();
@@ -89,6 +91,55 @@ export function createStationView(placed: PlacedStation): StationView {
     const sign = makeLabel('🛵 Giao hàng', { bg: '#1f8a3a', size: 30, scale: 0.006 });
     sign.position.set(0, 1.5, 0);
     group.add(sign);
+  } else if (def.kind === 'plot') {
+    topY = 0.3;
+    if (!def.animal) {
+      // Ruộng: luống đất + cây xanh (lúa mì vàng, lúa xanh nhạt, rau xanh đậm).
+      const soil = box(w, 0.18, d, 0x6b4a2b);
+      soil.position.y = 0.09;
+      group.add(soil);
+      const leaf = def.id === 'ruong_lua_mi' ? 0xd9b44a : def.id === 'ruong_lua' ? 0x9cc65a : 0x3f8f3a;
+      for (let i = 0; i < 4; i++)
+        for (let j = 0; j < 3; j++) {
+          const plant = new THREE.Mesh(sproutGeo, mat(leaf));
+          plant.position.set((i - 1.5) * (w / 4.4), 0.32, (j - 1) * (d / 3.4));
+          group.add(plant);
+        }
+    } else {
+      // Chuồng: nền rơm + rào gỗ + con vật khối.
+      const floor = box(w, 0.06, d, 0xd8c27a);
+      floor.position.y = 0.03;
+      group.add(floor);
+      for (const [fx, fz, fw, fd] of [[0, -d / 2, w, 0.08], [0, d / 2, w, 0.08], [-w / 2, 0, 0.08, d], [w / 2, 0, 0.08, d]]) {
+        const rail = box(fw, 0.5, fd, 0x8a5a2b);
+        rail.position.set(fx, 0.25, fz);
+        group.add(rail);
+      }
+      const look = def.id === 'chuong_ga' ? { c: 0xf4f1ea, s: 0.25, n: 4 } : def.id === 'chuong_lon' ? { c: 0xe8a0a0, s: 0.45, n: 2 } : { c: 0x6b4a32, s: 0.6, n: 2 };
+      for (let i = 0; i < look.n; i++) {
+        const a = box(look.s * 1.4, look.s, look.s, look.c);
+        a.position.set((i - (look.n - 1) / 2) * (w / (look.n + 0.5)), look.s / 2 + 0.06, (i % 2 ? 0.2 : -0.2));
+        group.add(a);
+      }
+    }
+  } else if (def.kind === 'truck') {
+    topY = 0.9;
+    const bed = box(w, 0.5, d * 0.65, 0x3d7dd8);
+    bed.position.set(0, 0.55, -d * 0.17);
+    const cab = box(w, 0.9, d * 0.32, 0x2f5fa8);
+    cab.position.set(0, 0.75, d * 0.33);
+    const glass = box(w * 0.9, 0.3, 0.03, 0xbfe3ff);
+    glass.position.set(0, 0.95, d * 0.49 + 0.01);
+    group.add(bed, cab, glass);
+    for (const [wx, wz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+      const wheel = new THREE.Mesh(wheelGeo, mat(0x222222));
+      wheel.rotation.z = Math.PI / 2;
+      wheel.position.set((wx * w) / 2, 0.2, wz * d * 0.32);
+      group.add(wheel);
+    }
+    const sign = makeLabel('🚚 Bốc hàng vào kho', { bg: '#2f5fa8', size: 28, scale: 0.006 });
+    sign.position.set(0, 1.7, 0);
+    group.add(sign);
   } else if (def.kind === 'table') {
     topY = 0.75;
     const top = box(w, 0.06, d, 0xc98a4b);
@@ -124,7 +175,7 @@ export function createStationView(placed: PlacedStation): StationView {
 
   const name = makeLabel(def.name, { color: '#2b2118', bg: 'rgba(255,250,240,.85)', size: 26, scale: 0.006 });
   name.position.set(0, topY + 0.9, 0);
-  name.visible = def.kind !== 'cashier' && def.kind !== 'pickup';
+  name.visible = def.kind !== 'cashier' && def.kind !== 'pickup' && def.kind !== 'truck';
   group.add(name);
 
   if (def.kind === 'cashier') {
@@ -181,7 +232,7 @@ export function createStationView(placed: PlacedStation): StationView {
         return;
       }
       let items: ItemId[] = [];
-      if (def.kind === 'producer') items = Array(s.outputCount).fill(def.output);
+      if (def.kind === 'producer' || def.kind === 'plot') items = Array(s.outputCount).fill(def.output);
       else if (def.kind === 'display') items = Array(s.stock).fill(def.item);
       else if (def.kind === 'assembler') {
         for (const inp of def.inputs) items.push(...Array<ItemId>(s.inputs[inp.item] ?? 0).fill(inp.item));
