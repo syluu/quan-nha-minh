@@ -4,15 +4,20 @@ import type { Client } from '@colyseus/core';
 import {
   BALANCE,
   MSG,
+  buildReport,
+  fireStaff,
+  hireStaff,
   joinPlayer,
   leavePlayer,
   normalizeCode,
   normalizeLoaded,
+  renamePlayer,
   setInput,
+  setPrice,
   tick,
   toSnapshot,
 } from '@qnm/shared';
-import type { InputMsg, JoinOptions, WorldState } from '@qnm/shared';
+import type { ActionResult, FireMsg, HireMsg, InputMsg, JoinOptions, RenameMsg, SetPriceMsg, WorldState } from '@qnm/shared';
 import type { WorldStore } from '../persistence';
 
 interface ClientData {
@@ -73,6 +78,22 @@ export class WorldRoom extends Room {
     this.onMessage(MSG.input, (client: Client, msg: InputMsg) => {
       const pid = this.ownedPlayer(client);
       if (pid) setInput(this.world, pid, msg ?? { mx: 0, mz: 0 });
+    });
+
+    // Thao tác quản lý: chỉ chủ nhân vật mới được gửi; lỗi trả về riêng cho người gửi.
+    const act = <T,>(type: string, run: (pid: string, msg: T) => ActionResult | void) =>
+      this.onMessage(type, (client: Client, msg: T) => {
+        const pid = this.ownedPlayer(client);
+        if (!pid) return;
+        const r = run(pid, (msg ?? {}) as T);
+        if (r && !r.ok) client.send(MSG.actionError, { error: r.error });
+      });
+    act<HireMsg>(MSG.hire, (pid, m) => hireStaff(this.world, 'banh_mi', m.role, m.item ?? null, pid));
+    act<FireMsg>(MSG.fire, (pid, m) => fireStaff(this.world, 'banh_mi', String(m.staffId), pid));
+    act<SetPriceMsg>(MSG.setPrice, (pid, m) => setPrice(this.world, 'banh_mi', m.item, m.price, pid));
+    act<RenameMsg>(MSG.rename, (pid, m) => renamePlayer(this.world, pid, m.name));
+    this.onMessage(MSG.getReport, (client: Client) => {
+      if (this.ownedPlayer(client)) client.send(MSG.report, buildReport(this.world));
     });
 
     this.setSimulationInterval((deltaMs) => {

@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Client } from '@colyseus/sdk';
 import { MSG, normalizeCode } from '@qnm/shared';
-import type { Snapshot } from '@qnm/shared';
+import type { Report, Snapshot } from '@qnm/shared';
 import { createGameServer } from '../src/app';
 import { MemoryWorldStore } from '../src/persistence';
 import { WorldRoom } from '../src/rooms/WorldRoom';
@@ -37,8 +37,12 @@ async function join(code: string, token: string, name = 'Bố') {
   room.onMessage(MSG.snapshot, (s: Snapshot) => (last = s));
   room.onMessage(MSG.event, () => {});
   room.onMessage(MSG.welcome, () => {});
+  const errors: string[] = [];
+  let report: Report | null = null;
+  room.onMessage(MSG.actionError, (m: { error: string }) => errors.push(m.error));
+  room.onMessage(MSG.report, (r: Report) => (report = r));
   room.onLeave((c: number) => (leaveCode = c));
-  return { room, snapshot: () => last, leaveCode: () => leaveCode };
+  return { room, snapshot: () => last, leaveCode: () => leaveCode, errors, report: () => report };
 }
 
 describe('http', () => {
@@ -138,5 +142,30 @@ describe('WorldRoom', () => {
     const players = Object.values(saved.players);
     expect(players).toHaveLength(2);
     expect(players.every((p) => p.online === false)).toBe(true);
+  });
+});
+
+describe('management messages', () => {
+  it('hire, refuse a second cashier, set a price, rename and fetch the report', async () => {
+    const code = await newWorld();
+    const a = await join(code, 'mgr-token', 'Mẹ');
+    a.room.send(MSG.hire, { role: 'cashier', item: null });
+    await sleep(300);
+    expect(a.snapshot()!.staff.map((s) => s.role)).toEqual(['cashier']);
+    a.room.send(MSG.hire, { role: 'cashier', item: null });
+    await sleep(300);
+    expect(a.errors).toEqual(['NO_SLOT']);
+    a.room.send(MSG.setPrice, { item: 'banh_mi', price: 6000 });
+    a.room.send(MSG.rename, { name: 'Ông Bố' });
+    a.room.send(MSG.getReport, {});
+    await sleep(300);
+    expect(a.snapshot()!.prices.banh_mi).toBe(6000);
+    expect(a.snapshot()!.players[0].name).toBe('Ông Bố');
+    expect(a.report()!.today.day).toBe(1);
+    const staffId = a.snapshot()!.staff[0].id;
+    a.room.send(MSG.fire, { staffId });
+    await sleep(300);
+    expect(a.snapshot()!.staff).toEqual([]);
+    await a.room.leave();
   });
 });
