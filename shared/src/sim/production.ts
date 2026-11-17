@@ -1,5 +1,6 @@
 import { INGREDIENTS, SHOPS, getStationDef } from '../content';
 import type { ShopId } from '../content';
+import { effectiveCycle, effectiveOutputCap } from './upgrades';
 import type { WorldState } from './world';
 
 const EPS = 1e-6;
@@ -14,7 +15,7 @@ export function tickStations(world: WorldState, shopId: ShopId, dt: number): voi
     if (!st.unlocked) continue;
 
     if (!st.running) {
-      if (st.outputCount >= def.outputCap) {
+      if (st.outputCount >= effectiveOutputCap(def, st)) {
         st.blocked = 'full';
         continue;
       }
@@ -36,7 +37,7 @@ export function tickStations(world: WorldState, shopId: ShopId, dt: number): voi
     }
 
     st.progress += dt;
-    if (st.progress >= def.cycleSec - EPS) {
+    if (st.progress >= effectiveCycle(def, st) - EPS) {
       st.outputCount += 1;
       st.running = false;
       st.progress = 0;
