@@ -18,8 +18,8 @@ function snap(over: Partial<Snapshot> = {}): Snapshot {
     warehouse: {},
     day: 9, secOfDay: 0, money: 20_000_000, stars: 4, tiles: [], customers: [], log: [], prices: {},
     players: [
-      { id: 'a', name: 'Bố', color: 0, x: 0, z: 0, dir: 0, carry: [], online: true, cap: 4, pick: 0, pickAt: null, carryLevel: 0, speedLevel: 0, location: 'com_tam', outfit: { hat: 'non_la', shirt: 'ao_mac_dinh', pants: 'quan_nau', apron: 'khong_tap_de' }, wardrobe: [] },
-      { id: 'b', name: 'Mẹ', color: 0, x: 0, z: 0, dir: 0, carry: [], online: true, cap: 4, pick: 0, pickAt: null, carryLevel: 0, speedLevel: 0, location: 'banh_mi', outfit: { hat: 'non_la', shirt: 'ao_mac_dinh', pants: 'quan_nau', apron: 'khong_tap_de' }, wardrobe: [] },
+      { id: 'a', name: 'Bố', color: 0, x: 0, z: 0, dir: 0, carry: [], online: true, cap: 4, pick: 0, pickAt: null, carryLevel: 0, speedLevel: 0, location: 'com_tam', outfit: { hat: 'non_la', hair: 'toc_ngan_den', shirt: 'ao_mac_dinh', pants: 'quan_nau', apron: 'khong_tap_de' }, wardrobe: [] },
+      { id: 'b', name: 'Mẹ', color: 0, x: 0, z: 0, dir: 0, carry: [], online: true, cap: 4, pick: 0, pickAt: null, carryLevel: 0, speedLevel: 0, location: 'banh_mi', outfit: { hat: 'non_la', hair: 'toc_ngan_den', shirt: 'ao_mac_dinh', pants: 'quan_nau', apron: 'khong_tap_de' }, wardrobe: [] },
     ],
     stations: [st('noi_com', true, [], false), st('ke_com_tam_suon', true), st('thu_ngan', true), st('ban_an_1', true, ['dirty', 'free'])],
     staff: [],
@@ -92,10 +92,10 @@ describe('costume tab (plan 7)', () => {
   it('shows wearing / owned / buy per slot, with affordability', async () => {
     const { costumeView } = await import('../src/ui/menu/views');
     const s = snap({ money: 1_000_000 });
-    s.players[0].outfit = { hat: 'mu_dau_bep', shirt: 'ao_mac_dinh', pants: 'quan_nau', apron: 'khong_tap_de' };
+    s.players[0].outfit = { hat: 'mu_dau_bep', hair: 'toc_ngan_den', shirt: 'ao_mac_dinh', pants: 'quan_nau', apron: 'khong_tap_de' };
     s.players[0].wardrobe = ['mu_dau_bep'];
     const v = costumeView(s, 'a');
-    expect(v.map((x) => x.title)).toEqual(['Mũ', 'Áo', 'Quần', 'Tạp dề']);
+    expect(v.map((x) => x.title)).toEqual(['Mũ', 'Tóc', 'Áo & váy liền', 'Quần & chân váy', 'Tạp dề']);
     const hats = v[0].items;
     expect(hats.find((h) => h.id === 'mu_dau_bep')!.state).toBe('wearing');
     expect(hats.find((h) => h.id === 'non_la')).toMatchObject({ state: 'owned', price: 'Miễn phí' });

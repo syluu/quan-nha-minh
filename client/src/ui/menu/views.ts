@@ -287,7 +287,15 @@ export function sellableName(x: { shopId: Snapshot['shopId']; instanceId: string
   return `${p ? getStationDef(p.def).name : x.instanceId} (${shop})`;
 }
 
-const SLOT_NAMES = { hat: 'Mũ', shirt: 'Áo', pants: 'Quần', apron: 'Tạp dề' } as const;
+const SLOT_NAMES = { hat: 'Mũ', hair: 'Tóc', shirt: 'Áo & váy liền', pants: 'Quần & chân váy', apron: 'Tạp dề' } as const;
+
+const STYLE_ICON: Record<string, string> = {
+  khong_mu: '🚫', non_la: '🎋', mu_luoi_trai: '🧢', mu_bao_hiem: '⛑️', mu_dau_bep: '👨‍🍳', mu_phot: '🎩', mu_len: '🧶', mu_coi: '👒', mu_tai_beo: '🪖',
+  toc_ngan: '💇', toc_dai: '💇‍♀️', toc_duoi_ngua: '🎀', toc_bui: '🍡', toc_hai_bim: '🎀', toc_xoan: '🌀',
+  ao_mau_rieng: '👕', ao_phong: '👕', ao_ba_lo: '🎽', so_mi: '👔', ao_khoac: '🧥', ao_dai: '👘', vay_lien: '👗',
+  quan_dai: '👖', quan_jean: '👖', quan_short: '🩳', chan_vay: '👗',
+  khong: '🚫', tap_de: '🧑‍🍳', tap_de_caro: '🧑‍🍳',
+};
 
 /** Tab Trang phục: từng ô (mũ, áo, quần, tạp dề), món đang mặc / đã có / mua được. */
 export function costumeView(s: Snapshot, myId: string) {
@@ -302,6 +310,7 @@ export function costumeView(s: Snapshot, myId: string) {
       return {
         id: c.id,
         name: c.name,
+        icon: STYLE_ICON[c.style] ?? '👕',
         // Áo màu riêng: màu nhân vật; "không đeo tạp dề": ô trống.
         swatch: c.style === 'khong' ? 'transparent' : hex(c.color, me?.color ?? 0x888888),
         price: c.price ? formatK(c.price) : 'Miễn phí',

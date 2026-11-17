@@ -83,7 +83,13 @@ Mở `http://localhost:5173` ở 2 cửa sổ (hoặc 2 máy cùng wifi qua `htt
 
 ### Trang phục (Kế hoạch 7)
 
-- **Menu → 👕 Trang phục**: mũ (nón lá, lưỡi trai, bảo hiểm, đầu bếp, mũ phớt), áo (nhiều màu, áo dài đỏ/xanh), quần, tạp dề — giá 200K–5.000K, trả từ ví chung.
+- **Menu → 👕 Trang phục**: thay **kiểu dáng** chứ không chỉ màu — giá 200K–5.000K, trả từ ví chung:
+  - **Mũ**: nón lá, không đội mũ, lưỡi trai, mũ len có quả bông, mũ tai bèo, mũ cói rộng vành, mũ bảo hiểm, mũ đầu bếp, mũ phớt.
+  - **Tóc**: ngắn, dài, đuôi ngựa, búi, tết hai bím, xoăn (nhiều màu).
+  - **Áo & váy liền**: áo phông, áo ba lỗ, sơ mi, áo khoác có mũ, váy liền, áo dài (đỏ / xanh / trắng).
+  - **Quần & chân váy**: quần dài, quần jean xắn gấu, quần short, chân váy.
+  - **Tạp dề**: trơn hoặc kẻ caro.
+- Nhân vật có tay chân, đi thì vung tay bước chân, bê đồ thì đưa hai tay ra trước; khách hàng cũng có nhiều kiểu tóc, áo, quần khác nhau.
 - Đồ thuộc về người mua, mặc ngay; đồ đã có đổi mặc lại miễn phí. Người khác trong nhà thấy ngay.
 - Quán phá sản vẫn **giữ trang phục** đã mua (cùng tên nhân vật và mã quán).
 

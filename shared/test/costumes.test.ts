@@ -8,7 +8,7 @@ import { createWorld } from '../src/sim/world';
 
 describe('costume catalog (plan 7)', () => {
   it('has hats, shirts (incl. áo dài), pants and aprons priced 200K–5.000K; defaults are free', () => {
-    for (const slot of ['hat', 'shirt', 'pants', 'apron'] as const) {
+    for (const slot of ['hat', 'hair', 'shirt', 'pants', 'apron'] as const) {
       expect(COSTUMES[DEFAULT_OUTFIT[slot]]).toMatchObject({ slot, price: 0 });
       const paid = COSTUME_LIST.filter((c) => c.slot === slot && c.price > 0);
       expect(paid.length, slot).toBeGreaterThanOrEqual(3);
@@ -17,7 +17,10 @@ describe('costume catalog (plan 7)', () => {
         expect(c.price).toBeLessThanOrEqual(5_000_000);
       }
     }
-    expect(COSTUME_LIST.filter((c) => c.style === 'ao_dai')).toHaveLength(2);
+    // Thay được kiểu dáng, không chỉ màu: đủ các kiểu áo, quần/váy, mũ, tóc.
+    const styles = new Set(COSTUME_LIST.map((c) => c.style));
+    for (const s of ['ao_phong', 'so_mi', 'ao_khoac', 'ao_dai', 'vay_lien', 'quan_jean', 'quan_short', 'chan_vay', 'mu_len', 'mu_coi', 'toc_dai', 'toc_duoi_ngua', 'toc_bui', 'toc_xoan'])
+      expect(styles.has(s as never), s).toBe(true);
   });
 });
 
@@ -106,7 +109,7 @@ describe('plan 7 review fixes: malformed costume data in saves', () => {
     expect(Array.isArray(p.wardrobe)).toBe(true);
     expect(new Set(p.wardrobe).size).toBe(p.wardrobe.length);
     for (const id of p.wardrobe) expect(Object.hasOwn(COSTUMES, id)).toBe(true);
-    for (const slot of ['hat', 'shirt', 'pants', 'apron'] as const) {
+    for (const slot of ['hat', 'hair', 'shirt', 'pants', 'apron'] as const) {
       const c = COSTUMES[p.outfit[slot]];
       expect(c.slot).toBe(slot);
       expect(c.price === 0 || p.wardrobe.includes(c.id)).toBe(true);

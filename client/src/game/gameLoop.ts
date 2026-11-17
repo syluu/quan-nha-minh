@@ -157,7 +157,7 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
         seenC.add(c.id);
         let v = customers.get(c.id);
         if (!v) {
-          v = createCharacter([0x3d7dd8, 0xd8573d, 0x5aa34a, 0x9b59b6, 0xe0a020, 0x2aa3a3][c.id % 6], { look: 'customer' });
+          v = createCharacter([0x3d7dd8, 0xd8573d, 0x5aa34a, 0x9b59b6, 0xe0a020, 0x2aa3a3][c.id % 6], { look: 'customer', variant: c.id });
           customers.set(c.id, v);
           scene.add(v.group);
         }

@@ -23,7 +23,7 @@ export function costumeTab(conn: GameConnection, latest: () => Snapshot | null, 
               (slot) => `<h3>${slot.title}</h3><div class="costumes">${slot.items
                 .map(
                   (c) => `<div class="costume ${c.state}">
-                    <span class="swatch" style="background:${c.swatch}"></span>
+                    <span class="swatch" style="background:${c.swatch}">${c.icon}</span>
                     <b>${c.name}</b><span class="muted">${c.state === 'buy' ? c.price : c.state === 'wearing' ? 'Đang mặc' : 'Đã có'}</span>
                     ${
                       c.state === 'wearing'

@@ -102,7 +102,7 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .costumes { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
 .costume { display: flex; flex-direction: column; gap: 4px; padding: 8px; border-radius: 8px; background: rgba(255, 250, 240, 0.7); border: 2px solid transparent; }
 .costume.wearing { border-color: #1f8a3a; }
-.costume .swatch { width: 28px; height: 28px; border-radius: 6px; border: 1px solid rgba(0, 0, 0, 0.25); }
+.costume .swatch { width: 34px; height: 34px; border-radius: 8px; border: 1px solid rgba(0, 0, 0, 0.25); display: grid; place-items: center; font-size: 20px; }
 .joy { position: fixed; width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%; background: rgba(255, 250, 240, 0.25); border: 2px solid rgba(255, 250, 240, 0.8); pointer-events: none; z-index: 5; }
 .joy-knob { position: absolute; left: 36px; top: 36px; width: 48px; height: 48px; border-radius: 50%; background: rgba(200, 69, 44, 0.85); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3); }
 .shipper-alert { position: absolute; top: 56px; left: 12px; max-width: 280px; background: rgba(255, 250, 240, 0.95); border: 2px solid #1f8a3a; border-left-width: 6px; border-radius: 10px; padding: 8px 12px; font-size: 13px; display: flex; flex-direction: column; gap: 3px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15); }
