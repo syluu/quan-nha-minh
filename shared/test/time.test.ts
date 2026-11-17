@@ -22,7 +22,7 @@ describe('advanceTime', () => {
     w.secOfDay = 359;
     w.dayStats = { revenue: 100_000, ingredientCost: 40_000, unlockSpend: 800_000, served: 9, lost: 1, wages: 0, wasted: 0, sold: { banh_mi: 9 }, marketing: 0, commission: 0, onlineOrders: 0, onlineCancelled: 0 };
     w.shops.banh_mi.customers.push({
-      id: 1, x: 0, z: 0, dir: 0, state: 'toShelf', wants: ['banh_mi'], bill: 0, waited: 0, payTimer: 0, holding: [], scored: false,
+      id: 1, x: 0, z: 0, dir: 0, state: 'toShelf', wants: ['banh_mi'], bill: 0, waited: 0, payTimer: 0, holding: [], scored: false, table: null, seat: 0, eatTimer: 0,
     });
     const summary = advanceTime(w, 2);
     expect(summary).not.toBeNull();

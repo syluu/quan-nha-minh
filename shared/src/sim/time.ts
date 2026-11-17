@@ -1,6 +1,6 @@
 import { BALANCE } from '../content';
 import type { ShopId } from '../content';
-import { stars } from './rating';
+import { averageStars } from './rating';
 import { buildSettlement } from './settlement';
 import { tickCampaignsDaily } from './marketing';
 import { accrueWages } from './staff';
@@ -36,7 +36,7 @@ export function advanceTime(world: WorldState, dt: number): DaySummary | null {
     sold: { ...s.sold },
     day: world.day,
     operatingProfit: s.revenue - s.ingredientCost - s.wages - s.commission,
-    stars: stars(world.shops.banh_mi.ratings),
+    stars: averageStars(world),
   };
   world.history.push(summary);
   while (world.history.length > BALANCE.HISTORY_DAYS) world.history.shift();

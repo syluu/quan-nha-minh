@@ -16,25 +16,35 @@ export interface StationState {
   level: number;
   /** Tổng tiền đã nâng cấp máy này (tính tài sản, hoàn tiền khi bán). */
   upgradeSpent: number;
-  blocked: null | 'no_money' | 'no_input' | 'full';
+  blocked: null | 'no_money' | 'no_input' | 'full' | 'off';
+  /** Công tắc tự sản xuất (máy/bàn ghép). Tắt giữa mẻ → làm xong mẻ rồi dừng. */
+  enabled: boolean;
+  /** Chỗ ngồi (chỉ bàn ăn). */
+  seats: SeatState[];
   tileOccupant: null | { playerId: string; sec: number };
 }
+
+export type SeatState = 'free' | 'taken' | 'dirty';
 
 export interface Customer {
   id: number;
   x: number;
   z: number;
   dir: number;
-  state: 'toShelf' | 'atShelf' | 'toQueue' | 'inQueue' | 'paying' | 'leaving';
+  state: 'toShelf' | 'atShelf' | 'toQueue' | 'inQueue' | 'paying' | 'toTable' | 'eating' | 'leaving';
   wants: ItemId[];
   bill: number;
   waited: number;
   payTimer: number;
   holding: ItemId[];
   scored: boolean;
+  /** Bàn + chỗ đang ngồi (ăn tại chỗ). */
+  table: string | null;
+  seat: number;
+  eatTimer: number;
 }
 
-export type StaffRole = 'cashier' | 'cook' | 'courier';
+export type StaffRole = 'cashier' | 'cook' | 'courier' | 'cleaner';
 
 export interface StaffTask {
   from: string;
@@ -113,6 +123,8 @@ export interface Settlement {
 
 export interface ShopState {
   id: ShopId;
+  /** Đã thuê (bánh mì luôn true). Quán chưa thuê không chạy. */
+  owned: boolean;
   stations: Record<string, StationState>;
   customers: Customer[];
   prices: Partial<Record<ItemId, number>>;
@@ -152,6 +164,8 @@ export interface PlayerState {
   inMenu: boolean;
   carryLevel: number;
   speedLevel: number;
+  /** Quán người chơi đang đứng. */
+  location: ShopId;
 }
 
 export interface DayStats {
@@ -184,7 +198,7 @@ export interface LogEntry {
 }
 
 export interface WorldState {
-  schemaVersion: 4;
+  schemaVersion: 5;
   code: string;
   money: number;
   day: number;
@@ -203,33 +217,39 @@ export interface WorldState {
   month: number;
   /** Các kỳ kết toán đã xong (tối đa 12). */
   months: Settlement[];
+  /** Lương còn nợ của nhân viên ở mặt bằng đã trả (vào kết toán tháng). */
+  extraWagesOwed: number;
 }
 
 export function emptyDayStats(): DayStats {
   return { revenue: 0, ingredientCost: 0, unlockSpend: 0, served: 0, lost: 0, wages: 0, wasted: 0, sold: {}, marketing: 0, commission: 0, onlineOrders: 0, onlineCancelled: 0 };
 }
 
-function createShop(id: ShopId): ShopState {
+export function createStationState(instanceId: string, unlocked: boolean, seats: number): StationState {
+  return {
+    instanceId,
+    unlocked,
+    paid: 0,
+    outputCount: 0,
+    inputs: {},
+    stock: 0,
+    progress: 0,
+    running: false,
+    blocked: null,
+    enabled: true,
+    seats: Array.from({ length: seats }, () => 'free' as SeatState),
+    tileOccupant: null,
+    level: 0,
+    upgradeSpent: 0,
+  };
+}
+
+export function createShop(id: ShopId, owned: boolean): ShopState {
   const layout = SHOPS[id];
   const stations: Record<string, StationState> = {};
-  for (const p of layout.stations) {
-    stations[p.instanceId] = {
-      instanceId: p.instanceId,
-      unlocked: p.unlockCost === 0,
-      paid: 0,
-      outputCount: 0,
-      inputs: {},
-      stock: 0,
-      progress: 0,
-      running: false,
-      blocked: null,
-      tileOccupant: null,
-      level: 0,
-      upgradeSpent: 0,
-    };
-  }
+  for (const p of layout.stations) stations[p.instanceId] = createStationState(p.instanceId, p.unlockCost === 0, p.seatPoints?.length ?? 0);
   return {
-    id, stations, customers: [], prices: {}, ratings: [], nextCustomerIn: 1, nextCustomerId: 1,
+    id, owned, stations, customers: [], prices: {}, ratings: [], nextCustomerIn: 1, nextCustomerId: 1,
     staff: [], nextStaffId: 1, firedToday: 0, campaigns: [],
     orders: [], nextOrderId: 1, nextOrderIn: 5, shipper: null, onlinePaused: false,
   };
@@ -237,13 +257,13 @@ function createShop(id: ShopId): ShopState {
 
 export function createWorld(code: string, seed: number): WorldState {
   return {
-    schemaVersion: 4,
+    schemaVersion: 5,
     code,
     money: BALANCE.START_MONEY,
     day: 1,
     secOfDay: 0,
     rngState: seed >>> 0,
-    shops: { banh_mi: createShop('banh_mi') },
+    shops: { banh_mi: createShop('banh_mi', true), com_tam: createShop('com_tam', false), pho_cafe: createShop('pho_cafe', false) },
     players: {},
     log: [],
     dayStats: emptyDayStats(),
@@ -253,6 +273,7 @@ export function createWorld(code: string, seed: number): WorldState {
     settlement: null,
     month: 1,
     months: [],
+    extraWagesOwed: 0,
   };
 }
 

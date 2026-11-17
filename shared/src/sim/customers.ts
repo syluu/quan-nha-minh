@@ -45,7 +45,7 @@ export function isCashierManned(world: WorldState, shopId: ShopId): boolean {
   const cashier = cashierOf(shopId);
   const near = (x: number, z: number) => distanceToFootprint(cashier, x, z) <= BALANCE.CASHIER_DIST;
   return (
-    Object.values(world.players).some((p) => p.online && near(p.x, p.z)) ||
+    Object.values(world.players).some((p) => p.online && p.location === shopId && near(p.x, p.z)) ||
     world.shops[shopId].staff.some((s) => s.role === 'cashier' && near(s.x, s.z))
   );
 }
@@ -104,6 +104,9 @@ export function spawnCustomer(world: WorldState, shopId: ShopId): Customer | nul
     payTimer: 0,
     holding: [],
     scored: false,
+    table: null,
+    seat: 0,
+    eatTimer: 0,
   };
   if (!kept.length) {
     pushRating(shop, BALANCE.SCORE_PRICEY);

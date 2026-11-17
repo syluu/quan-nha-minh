@@ -1,4 +1,4 @@
-import { BALANCE, SHOPS } from '../content';
+import { BALANCE, SHOP_META, SHOPS } from '../content';
 import type { ShopId } from '../content';
 import { formatK } from '../money';
 import type { ActionResult } from './actions';
@@ -13,13 +13,26 @@ export function stationValue(shopId: ShopId, instanceId: string): number {
   return p.unlockCost > 0 ? p.unlockCost : BALANCE.STARTER_VALUES[instanceId] ?? 0;
 }
 
-/** Tổng giá trị tài sản: các máy đang có + tiền đã nâng cấp máy. */
-export function assetValue(world: WorldState): number {
-  let n = 0;
-  for (const shopId of Object.keys(world.shops) as ShopId[])
-    for (const st of Object.values(world.shops[shopId].stations))
-      if (st.unlocked) n += stationValue(shopId, st.instanceId) + st.upgradeSpent;
+/**
+ * Giá trị một quán đang có: máy đã mở + tiền nâng cấp. Mặt bằng thuê thì bộ khởi đầu đã nằm trong
+ * tiền cọc → tính cọc thay cho giá trị bộ khởi đầu.
+ */
+export function shopAssetValue(world: WorldState, shopId: ShopId): number {
+  const shop = world.shops[shopId];
+  if (!shop.owned) return 0;
+  const deposit = SHOP_META[shopId].deposit;
+  let n = deposit;
+  for (const p of SHOPS[shopId].stations) {
+    const st = shop.stations[p.instanceId];
+    if (!st.unlocked) continue;
+    n += st.upgradeSpent + (deposit > 0 && p.unlockCost === 0 ? 0 : stationValue(shopId, p.instanceId));
+  }
   return n;
+}
+
+/** Tổng giá trị tài sản các quán đang có. */
+export function assetValue(world: WorldState): number {
+  return (Object.keys(world.shops) as ShopId[]).reduce((n, id) => n + shopAssetValue(world, id), 0);
 }
 
 export function debtRemaining(world: WorldState): number {

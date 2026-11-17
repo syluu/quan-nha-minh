@@ -44,7 +44,7 @@ export function tickCarry(world: WorldState, shopId: ShopId, dt: number): SimEve
   const events: SimEvent[] = [];
   const shop = world.shops[shopId];
   for (const p of Object.values(world.players)) {
-    if (!p.online) continue;
+    if (!p.online || p.location !== shopId) continue;
     p.dropCd = Math.max(p.dropCd - dt, 0);
 
     const placed = nearestStation(shop, shopId, p.x, p.z, BALANCE.INTERACT_DIST);

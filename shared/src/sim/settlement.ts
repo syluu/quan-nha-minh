@@ -154,7 +154,7 @@ export function bankrupt(world: WorldState): void {
   const entrance = SHOPS.banh_mi.entrance;
   for (const p of Object.values(players)) {
     Object.assign(p, {
-      x: entrance.x, z: entrance.z, carry: [], carryLevel: 0, speedLevel: 0,
+      x: entrance.x, z: entrance.z, location: 'banh_mi', carry: [], carryLevel: 0, speedLevel: 0,
       carryCap: BALANCE.PLAYER_CARRY_CAPS[0], speed: BALANCE.PLAYER_SPEED,
       dropCd: 0, pickTimer: 0, pickAt: null, inMenu: false, input: { mx: 0, mz: 0 },
     });

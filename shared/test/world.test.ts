@@ -10,7 +10,7 @@ describe('createWorld', () => {
     expect(w.day).toBe(1);
     expect(w.secOfDay).toBe(0);
     expect(w.code).toBe('ABC-DEF');
-    expect(w.schemaVersion).toBe(4);
+    expect(w.schemaVersion).toBe(5);
     expect(w.history).toEqual([]);
     expect(Object.keys(w.players)).toEqual([]);
   });
@@ -49,5 +49,18 @@ describe('rating', () => {
     for (let i = 0; i < 51; i++) pushRating(shop, i === 0 ? 1 : 5);
     expect(shop.ratings.length).toBe(50);
     expect(stars(shop.ratings)).toBe(5);
+  });
+});
+
+describe('createWorld (plan 5)', () => {
+  it('has all three shops, only the bánh mì cart is owned; tables start with free seats', () => {
+    const w = createWorld('ABC-DEF', 1);
+    expect(Object.keys(w.shops).sort()).toEqual(['banh_mi', 'com_tam', 'pho_cafe']);
+    expect(w.shops.banh_mi.owned).toBe(true);
+    expect(w.shops.com_tam.owned).toBe(false);
+    expect(w.shops.pho_cafe.owned).toBe(false);
+    expect(w.shops.com_tam.stations.ban_an_1.seats).toEqual(['free', 'free']);
+    expect(w.shops.banh_mi.stations.lo_banh_mi.enabled).toBe(true);
+    expect(w.extraWagesOwed).toBe(0);
   });
 });
