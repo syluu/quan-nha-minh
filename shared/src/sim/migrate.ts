@@ -93,3 +93,12 @@ export function migrateV4toV5(raw: any, freshShops: Record<string, any>): any {
   for (const p of Object.values<any>(w.players ?? {})) p.location ??= 'banh_mi';
   return w;
 }
+
+/** Kế hoạch 5 → 6: trang trại (chưa thuê) và kho tổng rỗng. */
+export function migrateV5toV6(raw: any, freshShops: Record<string, any>): any {
+  const w = structuredClone(raw);
+  w.schemaVersion = 6;
+  w.warehouse ??= {};
+  for (const [id, fresh] of Object.entries<any>(freshShops)) w.shops[id] ??= structuredClone(fresh);
+  return w;
+}

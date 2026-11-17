@@ -10,7 +10,7 @@ export function tickStations(world: WorldState, shopId: ShopId, dt: number): voi
   const shop = world.shops[shopId];
   for (const placed of SHOPS[shopId].stations) {
     const def = getStationDef(placed.def);
-    if (def.kind !== 'producer' && def.kind !== 'assembler') continue;
+    if (def.kind !== 'producer' && def.kind !== 'assembler' && def.kind !== 'plot') continue;
     const st = shop.stations[placed.instanceId];
     if (!st.unlocked) continue;
 
@@ -28,11 +28,20 @@ export function tickStations(world: WorldState, shopId: ShopId, dt: number): voi
         st.blocked = 'no_input';
         continue;
       }
-      const cost = def.ingredients.reduce((sum, ing) => sum + INGREDIENTS[ing.id].marketPrice * ing.qty, 0);
+      // Nguyên liệu: lấy kho tổng trước (đã trả lúc trồng/nuôi), thiếu mới mua chợ. Lô trang trại trả tiền giống.
+      const ingredients = def.kind === 'plot' ? [] : def.ingredients;
+      const fromStore = ingredients.map((ing) => Math.min(ing.qty, world.warehouse[ing.id] ?? 0));
+      const cost =
+        def.kind === 'plot'
+          ? def.seedCost
+          : ingredients.reduce((sum, ing, i) => sum + INGREDIENTS[ing.id].marketPrice * (ing.qty - fromStore[i]), 0);
       if (world.money < cost) {
         st.blocked = 'no_money';
         continue;
       }
+      ingredients.forEach((ing, i) => {
+        if (fromStore[i] > 0) world.warehouse[ing.id] = (world.warehouse[ing.id] ?? 0) - fromStore[i];
+      });
       world.money -= cost;
       world.dayStats.ingredientCost += cost;
       if (def.kind === 'assembler') for (const i of def.inputs) st.inputs[i.item] = (st.inputs[i.item] ?? 0) - i.qty;

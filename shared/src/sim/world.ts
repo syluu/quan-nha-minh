@@ -1,5 +1,5 @@
 import { BALANCE, SHOPS } from '../content';
-import type { ItemId, ShopId } from '../content';
+import type { IngredientId, ItemId, ShopId } from '../content';
 
 export interface StationState {
   instanceId: string;
@@ -203,7 +203,7 @@ export interface LogEntry {
 }
 
 export interface WorldState {
-  schemaVersion: 5;
+  schemaVersion: 6;
   code: string;
   money: number;
   day: number;
@@ -224,6 +224,8 @@ export interface WorldState {
   months: Settlement[];
   /** Lương còn nợ của nhân viên ở mặt bằng đã trả (vào kết toán tháng). */
   extraWagesOwed: number;
+  /** Kho tổng: nguyên liệu từ trang trại, dùng chung mọi quán (máy lấy kho trước, thiếu mới mua chợ). */
+  warehouse: Partial<Record<IngredientId, number>>;
 }
 
 export function emptyDayStats(): DayStats {
@@ -262,13 +264,13 @@ export function createShop(id: ShopId, owned: boolean): ShopState {
 
 export function createWorld(code: string, seed: number): WorldState {
   return {
-    schemaVersion: 5,
+    schemaVersion: 6,
     code,
     money: BALANCE.START_MONEY,
     day: 1,
     secOfDay: 0,
     rngState: seed >>> 0,
-    shops: { banh_mi: createShop('banh_mi', true), com_tam: createShop('com_tam', false), pho_cafe: createShop('pho_cafe', false) },
+    shops: { banh_mi: createShop('banh_mi', true), com_tam: createShop('com_tam', false), pho_cafe: createShop('pho_cafe', false), farm: createShop('farm', false) },
     players: {},
     log: [],
     dayStats: emptyDayStats(),
@@ -279,6 +281,7 @@ export function createWorld(code: string, seed: number): WorldState {
     month: 1,
     months: [],
     extraWagesOwed: 0,
+    warehouse: {},
   };
 }
 
