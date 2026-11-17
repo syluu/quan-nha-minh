@@ -37,8 +37,8 @@ export function tickCarry(world: WorldState, shopId: ShopId, dt: number): void {
   const shop = world.shops[shopId];
   for (const p of Object.values(world.players)) {
     if (!p.online) continue;
-    p.transferCd = Math.max(p.transferCd - dt, 0);
-    if (p.transferCd > 0) continue;
+    p.dropCd = Math.max(p.dropCd - dt, 0);
+    if (p.dropCd > 0) continue;
 
     const placed = nearestStation(shop, shopId, p.x, p.z, BALANCE.INTERACT_DIST);
     if (!placed) continue;
@@ -67,6 +67,6 @@ export function tickCarry(world: WorldState, shopId: ShopId, dt: number): void {
       moved = true;
     }
 
-    if (moved) p.transferCd = BALANCE.TRANSFER_INTERVAL;
+    if (moved) p.dropCd = BALANCE.TRANSFER_INTERVAL;
   }
 }

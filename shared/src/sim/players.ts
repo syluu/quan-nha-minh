@@ -26,7 +26,9 @@ export function joinPlayer(world: WorldState, playerId: string, name: string): P
     speed: BALANCE.PLAYER_SPEED,
     online: true,
     input: { mx: 0, mz: 0 },
-    transferCd: 0,
+    dropCd: 0,
+    pickTimer: 0,
+    pickAt: null,
   };
   world.players[playerId] = p;
   return p;

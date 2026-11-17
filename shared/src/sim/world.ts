@@ -30,6 +30,30 @@ export interface Customer {
   scored: boolean;
 }
 
+export type StaffRole = 'cashier' | 'cook';
+
+export interface StaffTask {
+  from: string;
+  to: string;
+  item: ItemId;
+  phase: 'toSource' | 'picking' | 'toTarget' | 'dropping';
+}
+
+export interface StaffState {
+  id: string;
+  name: string;
+  role: StaffRole;
+  /** Món phụ trách (phụ bếp); null với thu ngân. */
+  item: ItemId | null;
+  x: number;
+  z: number;
+  dir: number;
+  carry: ItemId[];
+  task: StaffTask | null;
+  timer: number;
+  hiredDay: number;
+}
+
 export interface ShopState {
   id: ShopId;
   stations: Record<string, StationState>;
@@ -38,6 +62,10 @@ export interface ShopState {
   ratings: number[];
   nextCustomerIn: number;
   nextCustomerId: number;
+  staff: StaffState[];
+  nextStaffId: number;
+  /** Số người bị cho nghỉ hôm nay (vẫn phải trả lương ngày đó). */
+  firedToday: number;
 }
 
 export interface PlayerState {
@@ -52,7 +80,11 @@ export interface PlayerState {
   speed: number;
   online: boolean;
   input: { mx: number; mz: number };
-  transferCd: number;
+  /** Thời gian chờ trước lần đặt/bỏ món tiếp theo. */
+  dropCd: number;
+  /** Thời gian đã đứng nhặt ở trạm `pickAt`. */
+  pickTimer: number;
+  pickAt: string | null;
 }
 
 export interface DayStats {
@@ -61,6 +93,10 @@ export interface DayStats {
   unlockSpend: number;
   served: number;
   lost: number;
+  wages: number;
+  /** Giá trị nguyên liệu của món bị bỏ vào thùng rác. */
+  wasted: number;
+  sold: Partial<Record<ItemId, number>>;
 }
 
 export interface DaySummary extends DayStats {
@@ -76,7 +112,7 @@ export interface LogEntry {
 }
 
 export interface WorldState {
-  schemaVersion: 1;
+  schemaVersion: 2;
   code: string;
   money: number;
   day: number;
@@ -86,10 +122,12 @@ export interface WorldState {
   players: Record<string, PlayerState>;
   log: LogEntry[];
   dayStats: DayStats;
+  /** Tổng kết các ngày đã qua (tối đa BALANCE.HISTORY_DAYS). */
+  history: DaySummary[];
 }
 
 export function emptyDayStats(): DayStats {
-  return { revenue: 0, ingredientCost: 0, unlockSpend: 0, served: 0, lost: 0 };
+  return { revenue: 0, ingredientCost: 0, unlockSpend: 0, served: 0, lost: 0, wages: 0, wasted: 0, sold: {} };
 }
 
 function createShop(id: ShopId): ShopState {
@@ -109,12 +147,15 @@ function createShop(id: ShopId): ShopState {
       tileOccupant: null,
     };
   }
-  return { id, stations, customers: [], prices: {}, ratings: [], nextCustomerIn: 1, nextCustomerId: 1 };
+  return {
+    id, stations, customers: [], prices: {}, ratings: [], nextCustomerIn: 1, nextCustomerId: 1,
+    staff: [], nextStaffId: 1, firedToday: 0,
+  };
 }
 
 export function createWorld(code: string, seed: number): WorldState {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     code,
     money: BALANCE.START_MONEY,
     day: 1,
@@ -124,6 +165,7 @@ export function createWorld(code: string, seed: number): WorldState {
     players: {},
     log: [],
     dayStats: emptyDayStats(),
+    history: [],
   };
 }
 

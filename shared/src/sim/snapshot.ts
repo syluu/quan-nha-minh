@@ -1,6 +1,7 @@
 import { SHOPS } from '../content';
 import type { ShopId } from '../content';
 import type { Snapshot } from '../net/protocol';
+import { migrateV1toV2 } from './migrate';
 import { isTileVisible } from './payTiles';
 import { stars } from './rating';
 import { createWorld } from './world';
@@ -35,12 +36,11 @@ export function toSnapshot(world: WorldState, shopId: ShopId): Snapshot {
   };
 }
 
-/** Chuẩn hoá thế giới vừa tải từ DB: dọn trạng thái tạm, bổ sung trạm mới thêm vào nội dung. */
+/** Chuẩn hoá thế giới vừa tải từ DB: nâng version, dọn trạng thái tạm, bổ sung trạm mới thêm vào nội dung. */
 export function normalizeLoaded(raw: unknown): WorldState {
-  if (!raw || typeof raw !== 'object' || (raw as { schemaVersion?: unknown }).schemaVersion !== 1) {
-    throw new Error('UNSUPPORTED_SCHEMA');
-  }
-  const world = raw as WorldState;
+  const version = raw && typeof raw === 'object' ? (raw as { schemaVersion?: unknown }).schemaVersion : undefined;
+  if (version !== 1 && version !== 2) throw new Error('UNSUPPORTED_SCHEMA');
+  const world = (version === 1 ? migrateV1toV2(raw) : raw) as WorldState;
   const fresh = createWorld(world.code, 0);
   for (const id of Object.keys(fresh.shops) as ShopId[]) {
     const shop = (world.shops[id] ??= fresh.shops[id]);
@@ -51,7 +51,9 @@ export function normalizeLoaded(raw: unknown): WorldState {
   for (const p of Object.values(world.players)) {
     p.online = false;
     p.input = { mx: 0, mz: 0 };
-    p.transferCd = 0;
+    p.dropCd = 0;
+    p.pickTimer = 0;
+    p.pickAt = null;
   }
   return world;
 }

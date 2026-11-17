@@ -16,7 +16,9 @@ export function putPlayer(world: WorldState, id: string, x: number, z: number, c
     speed: BALANCE.PLAYER_SPEED,
     online: true,
     input: { mx: 0, mz: 0 },
-    transferCd: 0,
+    dropCd: 0,
+    pickTimer: 0,
+    pickAt: null,
   };
   world.players[id] = p;
   return p;
