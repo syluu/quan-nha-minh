@@ -57,3 +57,19 @@ table.report { border-collapse: collapse; font-size: 13px; width: 100%; white-sp
 table.report th, table.report td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; }
 table.report th:first-child, table.report td:first-child { text-align: left; }
 table.report tr.today { background: #fff3d6; font-weight: 700; }
+.muted { color: var(--muted); font-size: 12px; }
+table.staff { width: 100%; border-collapse: collapse; font-size: 14px; }
+table.staff th, table.staff td { padding: 8px 6px; border-bottom: 1px solid var(--line); text-align: left; }
+table.staff td.act { text-align: right; }
+.menu-body button { font: inherit; font-weight: 700; font-size: 13px; padding: 6px 12px; border-radius: 8px; border: 2px solid #2b2118; background: #fff; cursor: pointer; }
+.menu-body button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.prices { display: flex; flex-direction: column; gap: 8px; }
+.price-row { display: grid; grid-template-columns: minmax(130px, 1.2fr) auto minmax(120px, 2fr) auto 64px auto; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.price-row .pname { display: flex; flex-direction: column; }
+.price-row output { font-weight: 800; text-align: right; }
+.price-row .reset { font-weight: 600; font-size: 12px; border-color: var(--line); }
+.setting { display: flex; align-items: center; gap: 12px; margin: 8px 0; font-size: 14px; }
+.setting input[type=range] { width: 220px; }
+.setting.rename input { font: inherit; padding: 7px 10px; border: 2px solid var(--line); border-radius: 8px; }
+.toast { position: absolute; top: 60px; left: 50%; transform: translateX(-50%); background: #2b2118; color: #fff; padding: 8px 14px; border-radius: 10px; font-weight: 700; }
+@media (max-width: 640px) { .price-row { grid-template-columns: 1fr auto auto auto; } .price-row input[type=range], .price-row .reset { grid-column: 1 / -1; } }

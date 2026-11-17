@@ -30,11 +30,12 @@ const KEYMAP: Record<string, keyof Keys> = {
   KeyD: 'right', ArrowRight: 'right',
 };
 
-export function createKeyboardInput(): { read(): { mx: number; mz: number }; dispose(): void } {
+export function createKeyboardInput(): { read(): { mx: number; mz: number }; dispose(): void; setEnabled(on: boolean): void } {
   const keys: Keys = { up: false, down: false, left: false, right: false };
+  let enabled = true;
   const set = (e: KeyboardEvent, v: boolean) => {
     const k = KEYMAP[e.code];
-    if (!k) return;
+    if (!k || !enabled) return;
     if ((e.target as HTMLElement | null)?.tagName === 'INPUT') return;
     keys[k] = v;
     e.preventDefault();
@@ -46,7 +47,12 @@ export function createKeyboardInput(): { read(): { mx: number; mz: number }; dis
   window.addEventListener('keyup', up);
   window.addEventListener('blur', blur);
   return {
-    read: () => keysToWorld(keys),
+    read: () => (enabled ? keysToWorld(keys) : { mx: 0, mz: 0 }),
+    /** Tắt khi mở menu: nhân vật dừng lại và quên các phím đang giữ. */
+    setEnabled(on: boolean) {
+      enabled = on;
+      blur();
+    },
     dispose() {
       window.removeEventListener('keydown', down);
       window.removeEventListener('keyup', up);

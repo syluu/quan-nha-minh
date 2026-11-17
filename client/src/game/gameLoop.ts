@@ -14,6 +14,8 @@ import { createInterpolator } from './interp';
 import { createPredictor } from './prediction';
 
 export interface GameHandle {
+  /** Tắt/bật điều khiển di chuyển (khi mở/đóng menu). */
+  setInputEnabled(on: boolean): void;
   /** Chiếu một điểm thế giới ra toạ độ màn hình (px) — dùng cho chữ nổi. */
   project(x: number, y: number, z: number): { x: number; y: number };
 }
@@ -152,6 +154,9 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
 
   const v = new THREE.Vector3();
   return {
+    setInputEnabled(on) {
+      input.setEnabled(on);
+    },
     project(x, y, z) {
       v.set(x, y, z).project(camera);
       const r = renderer.domElement.getBoundingClientRect();
