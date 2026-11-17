@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { BALANCE, SHOPS } from '@qnm/shared';
 import type { ShopId, Snapshot } from '@qnm/shared';
 import { createInputGate, createKeyboardInput } from '../input';
+import { createPointerControls, dragToWorld } from '../pointer';
 import type { GameConnection } from '../net';
 import { createFollowCamera } from '../render/camera';
 import { createCharacter } from '../render/characters';
@@ -32,6 +33,11 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
   const interp = createInterpolator(100);
   const predictor = createPredictor();
   const input = createKeyboardInput();
+  // Chuột: giữ trái kéo = joystick; giữ phải kéo = xem quanh quán.
+  const pointer = createPointerControls(renderer.domElement, container, (dx, dy) => {
+    const d = dragToWorld(dx, dy, cam.metersPerPx());
+    cam.pan(d.x, d.z);
+  });
   const gate = createInputGate();
 
   let stationViews = new Map<string, StationView>();
@@ -103,7 +109,7 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
     prev = now;
     const t = now / 1000;
 
-    const local = input.read();
+    const local = pointer.joystick() ?? input.read();
     sendTimer -= dt;
     if (local.mx !== lastSent.mx || local.mz !== lastSent.mz || menuChanged || sendTimer <= 0) {
       conn.sendInput(local.mx, local.mz, menuOpen);
@@ -193,6 +199,8 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
 
       const focus = myPose ?? s.players.find((p) => p.id === conn.playerId);
       if (focus) {
+        // Đang xem chỗ khác mà nhân vật bắt đầu đi → khung nhìn tự quay về nhân vật.
+        if (iAmWalking && cam.isPanned()) cam.recenter(dt);
         if (!cameraSnapped) {
           cam.snap(focus.x, focus.z);
           cameraSnapped = true;
@@ -210,6 +218,7 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
       gate.set(reason, blocked);
       const on = !gate.blocked();
       input.setEnabled(on);
+      pointer.setEnabled(on);
       menuOpen = !on;
       menuChanged = true;
     },

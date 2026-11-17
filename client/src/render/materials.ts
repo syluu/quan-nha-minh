@@ -36,6 +36,17 @@ export function disposeTree(root: THREE.Object3D): void {
   root.removeFromParent();
 }
 
+/** Kính trong (tủ kính, bình trà): dùng chung theo màu/độ trong như mat(). */
+export function glassMat(color = 0xdff3ff, opacity = 0.28): THREE.MeshLambertMaterial {
+  const key = `glass:${color}:${opacity}`;
+  let m = cache.get(key);
+  if (!m) {
+    m = new THREE.MeshLambertMaterial({ color, transparent: true, opacity, depthWrite: false });
+    cache.set(key, m);
+  }
+  return m;
+}
+
 export function box(w: number, h: number, d: number, color: number, emissive = 0): THREE.Mesh {
   return new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(color, emissive));
 }
