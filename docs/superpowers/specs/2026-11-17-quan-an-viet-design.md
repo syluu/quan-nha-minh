@@ -93,6 +93,12 @@ Món ghép cần đủ nguyên liệu đầu vào được bê tới máy ghép 
 
 **Máy tự chạy, không cần người đứng máy** [Đã chốt]: máy tự làm ra món vào ô đầu ra (có sức chứa giới hạn, đầy thì dừng); người chơi/nhân viên chỉ **bê**. Máy ghép tự làm khi đủ đầu vào.
 
+**Công tắc bật/tắt từng máy** [Đã chốt 2026-11-17 — làm ở Kế hoạch 5]: mỗi máy làm món (cả máy ghép như bàn bánh mì trứng/thịt) có công tắc bật/tắt tự làm.
+- Tắt khi đang làm dở → **làm xong mẻ đó rồi mới dừng** (tiền nguyên liệu mẻ đó đã trừ).
+- Nút bật/tắt nằm trong **danh sách "Máy" ở tab Nâng cấp** của menu.
+- Máy ghép đang tắt → **nhân viên ngừng bê nguyên liệu vào máy đó**.
+- [Đề xuất] Máy mặc định bật (file lưu cũ cũng vậy); trên máy hiện dấu "TẮT" cho cả nhà thấy; bảng sự kiện ghi ai bật/tắt máy nào. Phụ bếp phụ trách máy đang tắt bê nốt món còn trong ô đầu ra rồi đứng chờ.
+
 **Tự động hoá hoàn toàn được phép** [Đã chốt — giống My Mini Mart]: thuê đủ người thì quán tự chạy. Để người chơi vẫn có việc, [Đề xuất]: nhân viên **yếu hơn người chơi đã nâng cấp** (tốc độ gốc ~70% người chơi, sức mang thấp hơn, trần nâng cấp thấp hơn), và **giờ cao điểm** (sáng/trưa tuỳ quán) khách dồn tới vượt sức nhân viên → người chơi nhảy vào chỗ đang ùn là lợi nhuận tăng rõ.
 
 ### 7.3 Danh sách món v1 [Đề xuất — giá gần thực tế 2026, sẽ cân bằng lại]

@@ -15,7 +15,7 @@
 2. Quản lý quán: đổi giá (§8), nhân viên phụ bếp/thu ngân + tuyển/sa thải + lương (§9), nâng cấp nhân vật/nhân viên/máy (§10), marketing (§8).
 3. Ngân hàng & nợ đến hạn, bán tài sản, phá sản, bảng tổng kết đầy đủ chi phí (§11, §6).
 4. Bán online: đăng ký, shipper xe máy/ô tô, nhân viên giao đơn (§8.1).
-5. Nhiều địa điểm: bản đồ/xe máy di chuyển, thuê mặt bằng + chọn loại hình, quán cơm tấm, quán phở & cà phê, bàn ghế + dọn bàn (§7.3, §7.4, §5).
+5. Nhiều địa điểm: bản đồ/xe máy di chuyển, thuê mặt bằng + chọn loại hình, quán cơm tấm, quán phở & cà phê, bàn ghế + dọn bàn (§7.3, §7.4, §5); công tắc bật/tắt từng máy (§7.2).
 6. Trang trại + kho tổng + giao hàng mỗi sáng (§13).
 7. Trang phục (§10).
 
