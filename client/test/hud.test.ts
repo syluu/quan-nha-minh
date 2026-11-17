@@ -7,15 +7,15 @@ import { summaryRows } from '../src/ui/daySummary';
 describe('hudText', () => {
   it('formats money, clock, stars and who is online', () => {
     const s: Snapshot = {
-      day: 1, secOfDay: 33.75, money: 2_987_500, stars: 3.7, stations: [], tiles: [], customers: [], log: [], staff: [], prices: {},
+      shopId: 'banh_mi', shops: [], canRent: false, day: 1, secOfDay: 33.75, money: 2_987_500, stars: 3.7, stations: [], tiles: [], customers: [], log: [], staff: [], prices: {},
     ...V3,
       players: [
-        { id: 'a', name: 'Bố', color: 0, x: 0, z: 0, dir: 0, carry: ['banh_mi', 'banh_mi', 'tra_da'], online: true, cap: 4, pick: 0, pickAt: null, carryLevel: 0, speedLevel: 0 },
-        { id: 'b', name: 'Mẹ', color: 0, x: 0, z: 0, dir: 0, carry: [], online: true, cap: 4, pick: 0, pickAt: null, carryLevel: 0, speedLevel: 0 },
-        { id: 'c', name: 'Con', color: 0, x: 0, z: 0, dir: 0, carry: [], online: false, cap: 4, pick: 0, pickAt: null, carryLevel: 0, speedLevel: 0 },
+        { id: 'a', name: 'Bố', color: 0, x: 0, z: 0, dir: 0, carry: ['banh_mi', 'banh_mi', 'tra_da'], online: true, cap: 4, pick: 0, pickAt: null, carryLevel: 0, speedLevel: 0, location: 'banh_mi' },
+        { id: 'b', name: 'Mẹ', color: 0, x: 0, z: 0, dir: 0, carry: [], online: true, cap: 4, pick: 0, pickAt: null, carryLevel: 0, speedLevel: 0, location: 'banh_mi' },
+        { id: 'c', name: 'Con', color: 0, x: 0, z: 0, dir: 0, carry: [], online: false, cap: 4, pick: 0, pickAt: null, carryLevel: 0, speedLevel: 0, location: 'banh_mi' },
       ],
     };
-    expect(hudText(s, 'a')).toEqual({ money: '💰 2.987,5K', clock: 'Ngày 1 · 07:30', stars: '★ 3,7', online: 'Bố, Mẹ', basket: '🧺 3/4' });
+    expect(hudText(s, 'a')).toEqual({ shop: '🏠 Xe bánh mì', money: '💰 2.987,5K', clock: 'Ngày 1 · 07:30', stars: '★ 3,7', online: 'Bố, Mẹ', basket: '🧺 3/4' });
   });
 });
 

@@ -13,6 +13,29 @@ export function mat(color: number, emissive = 0): THREE.MeshLambertMaterial {
   return m;
 }
 
+/** Hình khối dùng chung (món ăn, ghế…): không giải phóng khi dọn cảnh. */
+const sharedGeos = new Set<THREE.BufferGeometry>();
+export function markSharedGeometry(...geos: THREE.BufferGeometry[]): void {
+  for (const g of geos) sharedGeos.add(g);
+}
+
+/** Gỡ một nhánh cảnh và giải phóng hình/vật liệu/ảnh riêng của nó (vật liệu dùng chung theo màu thì giữ). */
+export function disposeTree(root: THREE.Object3D): void {
+  const cached = new Set<THREE.Material>(cache.values());
+  root.traverse((o) => {
+    const m = o as THREE.Mesh | THREE.Sprite;
+    if (!(m as THREE.Mesh).isMesh && !(m as THREE.Sprite).isSprite) return;
+    if ((m as THREE.Mesh).isMesh && !sharedGeos.has(m.geometry)) m.geometry.dispose();
+    const mats = Array.isArray(m.material) ? m.material : [m.material];
+    for (const mt of mats) {
+      if (cached.has(mt)) continue;
+      (mt as THREE.MeshBasicMaterial).map?.dispose();
+      mt.dispose();
+    }
+  });
+  root.removeFromParent();
+}
+
 export function box(w: number, h: number, d: number, color: number, emissive = 0): THREE.Mesh {
   return new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(color, emissive));
 }

@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { getStationDef } from '@qnm/shared';
 import type { ItemId, PlacedStation, Snapshot } from '@qnm/shared';
 import { ITEM_STACK_H, createItemMesh } from './items';
-import { box, makeLabel, mat } from './materials';
+import { box, makeLabel, markSharedGeometry, mat } from './materials';
 
 type StationSnap = Snapshot['stations'][number];
 
@@ -11,7 +11,19 @@ const LOOK: Record<string, { color: number; h: number }> = {
   chao_op_la: { color: 0x5a5a5a, h: 0.85 },
   lo_than: { color: 0x3b3b3b, h: 0.7 },
   binh_tra: { color: 0x6aa0c8, h: 0.8 },
+  noi_com: { color: 0xc9ccd0, h: 0.9 },
+  lo_suon: { color: 0x3b3b3b, h: 0.7 },
+  chao_cha: { color: 0x5a5a5a, h: 0.85 },
+  noi_nuoc_dung: { color: 0xa9b0b8, h: 1.05 },
+  may_banh_pho: { color: 0xe6e0d0, h: 0.95 },
+  thot_bo: { color: 0x9a6a3a, h: 0.8 },
+  may_pha_phin: { color: 0x6b4a32, h: 0.95 },
 };
+const HOT_TOP = new Set(['lo_than', 'lo_suon']);
+
+const plateGeo = new THREE.CylinderGeometry(0.15, 0.13, 0.03, 10);
+const stoolGeo = new THREE.CylinderGeometry(0.17, 0.15, 0.45, 8);
+markSharedGeometry(plateGeo, stoolGeo);
 
 function itemGrid(items: ItemId[], w: number, d: number, y: number): THREE.Group {
   const g = new THREE.Group();
@@ -47,7 +59,7 @@ export function createStationView(placed: PlacedStation): StationView {
     const body = box(w, look.h, d, look.color);
     body.position.y = look.h / 2;
     group.add(body);
-    const top = box(w * 0.95, 0.05, d * 0.95, def.id === 'lo_than' ? 0xc0392b : 0x5b4636, def.id === 'lo_than' ? 0xff3010 : 0);
+    const top = box(w * 0.95, 0.05, d * 0.95, HOT_TOP.has(def.id) ? 0xc0392b : 0x5b4636, HOT_TOP.has(def.id) ? 0xff3010 : 0);
     top.position.y = look.h + 0.02;
     group.add(top);
     if (def.id === 'lo_banh_mi') {
@@ -77,6 +89,21 @@ export function createStationView(placed: PlacedStation): StationView {
     const sign = makeLabel('🛵 Giao hàng', { bg: '#1f8a3a', size: 30, scale: 0.006 });
     sign.position.set(0, 1.5, 0);
     group.add(sign);
+  } else if (def.kind === 'table') {
+    topY = 0.75;
+    const top = box(w, 0.06, d, 0xc98a4b);
+    top.position.y = 0.75;
+    group.add(top);
+    for (const [lx, lz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+      const leg = box(0.06, 0.72, 0.06, 0x7a4e2a);
+      leg.position.set((lx * (w - 0.12)) / 2, 0.36, (lz * (d - 0.12)) / 2);
+      group.add(leg);
+    }
+    for (const seat of placed.seatPoints ?? []) {
+      const stool = new THREE.Mesh(stoolGeo, mat(0x2f6db5));
+      stool.position.set(seat.x - placed.x, 0.22, seat.z - placed.z);
+      group.add(stool);
+    }
   } else if (def.kind === 'trash') {
     topY = 0.7;
     const bin = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.23, 0.62, 12), mat(0x6b7a6e));
@@ -115,6 +142,14 @@ export function createStationView(placed: PlacedStation): StationView {
   warn.position.set(0, topY + 1.3, 0);
   warn.visible = false;
   group.add(warn);
+  const off = makeLabel('⏻ TẮT', { bg: '#555', size: 30, scale: 0.007 });
+  off.position.set(0, topY + 1.3, 0);
+  off.visible = false;
+  group.add(off);
+  const dirtyTag = makeLabel('🧽 Cần dọn', { bg: '#8a6d3b', size: 28, scale: 0.006 });
+  dirtyTag.position.set(0, 1.6, 0);
+  dirtyTag.visible = false;
+  group.add(dirtyTag);
 
   const contents = new THREE.Group();
   group.add(contents);
@@ -126,6 +161,25 @@ export function createStationView(placed: PlacedStation): StationView {
       group.visible = s.unlocked;
       if (!s.unlocked) return;
       warn.visible = s.blocked === 'no_money';
+      off.visible = !s.enabled;
+      if (def.kind === 'table') {
+        // Đĩa bẩn ở chỗ đã ăn xong; khách đang ngồi thì chưa có đĩa bẩn.
+        const k = s.seats.join(',');
+        dirtyTag.visible = s.seats.includes('dirty');
+        if (k === key) return;
+        key = k;
+        contents.clear();
+        (placed.seatPoints ?? []).forEach((seat, i) => {
+          if (s.seats[i] !== 'dirty') return;
+          const plate = new THREE.Mesh(plateGeo, mat(0xd8d2c4));
+          plate.position.set(seat.x - placed.x, topY + 0.05, (seat.z - placed.z) * 0.35);
+          const crumbs = new THREE.Mesh(plateGeo, mat(0x8a6d3b));
+          crumbs.scale.set(0.5, 0.6, 0.4);
+          crumbs.position.set(seat.x - placed.x + 0.03, topY + 0.07, (seat.z - placed.z) * 0.35);
+          contents.add(plate, crumbs);
+        });
+        return;
+      }
       let items: ItemId[] = [];
       if (def.kind === 'producer') items = Array(s.outputCount).fill(def.output);
       else if (def.kind === 'display') items = Array(s.stock).fill(def.item);

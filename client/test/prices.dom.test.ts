@@ -5,9 +5,9 @@ import type { Snapshot } from '@qnm/shared';
 import { pricesTab } from '../src/ui/menu/pricesTab';
 
 function snap(price?: number): Snapshot {
-  const st = (instanceId: string, unlocked: boolean) => ({ instanceId, unlocked, outputCount: 0, stock: 0, inputs: {}, blocked: null, level: 0 });
+  const st = (instanceId: string, unlocked: boolean) => ({ instanceId, unlocked, outputCount: 0, stock: 0, inputs: {}, enabled: true, seats: [], blocked: null, level: 0 });
   return {
-    day: 1, secOfDay: 0, money: 0, stars: 3, tiles: [], customers: [], log: [], players: [], staff: [],
+    shopId: 'banh_mi', shops: [], canRent: false, day: 1, secOfDay: 0, money: 0, stars: 3, tiles: [], customers: [], log: [], players: [], staff: [],
     stations: [st('ke_banh_mi', true)], prices: price ? { banh_mi: price } : {},
     ...V3,
   };

@@ -97,3 +97,5 @@ table.staff td.act button + button { margin-left: 6px; }
 .settle button { font: inherit; font-weight: 700; font-size: 13px; padding: 6px 12px; border-radius: 8px; border: 2px solid #2b2118; background: #fff; cursor: pointer; }
 .settle button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 .settle .close { margin-top: 12px; }
+.off { background: #555; color: #fff; border-radius: 4px; padding: 0 5px; font-size: 11px; font-weight: 700; }
+button:disabled { opacity: 0.5; cursor: not-allowed; }

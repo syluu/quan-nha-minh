@@ -35,12 +35,13 @@ export function staffTab(conn: GameConnection, latest: () => Snapshot | null): M
           <tr><td>${job}</td><td>${name ? `<b>${name}</b>${info(d)}` : '<span class="muted">Chưa có</span>'}</td>
           <td class="act">${actions(name, id, d, hire)}</td></tr>`;
         body.innerHTML = `
-          <h3>Nhân viên</h3>
+          <h3>Nhân viên <span class="muted">(${v.shopName})</span></h3>
           <table class="staff">
             <thead><tr><th>Việc</th><th>Người làm</th><th></th></tr></thead>
             <tbody>
               ${row('Thu ngân — đứng quầy tính tiền', v.cashier.name, v.cashier.staffId, v.cashier.detail, 'cashier')}
               ${v.courier ? row('Giao đơn — bê món ra cho shipper', v.courier.name, v.courier.staffId, v.courier.detail, 'courier') : ''}
+              ${v.cleaner ? row('Dọn bàn — dọn chỗ khách ăn xong', v.cleaner.name, v.cleaner.staffId, v.cleaner.detail, 'cleaner') : ''}
               ${v.lines.map((l) => row(`Phụ bếp ${l.itemName} — bê từ máy ra kệ`, l.staffName, l.staffId, l.detail, `cook:${l.item}`)).join('')}
             </tbody>
           </table>
@@ -49,7 +50,7 @@ export function staffTab(conn: GameConnection, latest: () => Snapshot | null): M
         body.querySelectorAll<HTMLButtonElement>('[data-hire]').forEach((b) => {
           b.onclick = () => {
             const [role, item] = b.dataset.hire!.split(':');
-            conn.hire(role as 'cashier' | 'cook', (item as never) ?? null);
+            conn.hire(role as 'cashier' | 'cook' | 'courier' | 'cleaner', (item as never) ?? null);
           };
         });
         body.querySelectorAll<HTMLButtonElement>('[data-train]').forEach((b) => (b.onclick = () => conn.upgradeStaff(b.dataset.train!)));

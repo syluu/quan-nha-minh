@@ -1,5 +1,5 @@
 import { BALANCE, SHOPS, movePlayer } from '@qnm/shared';
-import type { Pose } from '@qnm/shared';
+import type { Pose, ShopId } from '@qnm/shared';
 
 const SNAP_DIST = 1.5;
 const EASE = 0.1;
@@ -7,7 +7,13 @@ const EASE = 0.1;
 /** Dự đoán chuyển động nhân vật của chính mình để phím bấm có phản hồi ngay, rồi kéo dần về vị trí server. */
 export function createPredictor() {
   let pose: Pose | null = null;
+  let shopId: ShopId = 'banh_mi';
   return {
+    /** Sang quán khác: dùng bố cục quán đó, chờ vị trí server để đặt lại. */
+    reset(id: ShopId) {
+      shopId = id;
+      pose = null;
+    },
     pose(): Pose {
       return pose ?? { x: 0, z: 0, dir: 0 };
     },
@@ -16,7 +22,7 @@ export function createPredictor() {
     },
     step(input: { mx: number; mz: number }, dt: number, solid: (id: string) => boolean): Pose {
       if (!pose) return { x: 0, z: 0, dir: 0 };
-      pose = movePlayer(pose, input, BALANCE.PLAYER_SPEED, dt, SHOPS.banh_mi, solid);
+      pose = movePlayer(pose, input, BALANCE.PLAYER_SPEED, dt, SHOPS[shopId], solid);
       return pose;
     },
     reconcile(server: { x: number; z: number; dir?: number }) {

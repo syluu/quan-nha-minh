@@ -1,5 +1,5 @@
 import {
-  BALANCE, ITEMS, SHOPS, effectiveCycle, effectiveOutputCap, formatK, getStationDef, loanTerms, machineUpgradeCost,
+  BALANCE, ITEMS, SHOP_META, SHOPS, effectiveCycle, effectiveOutputCap, formatK, getStationDef, loanTerms, machineUpgradeCost,
   marketingMultiplier, priceRange,
 } from '@qnm/shared';
 import type { CampaignId, ItemId, ShopState, Snapshot, StationState } from '@qnm/shared';
@@ -8,7 +8,7 @@ import type { CampaignId, ItemId, ShopState, Snapshot, StationState } from '@qnm
 function openItems(s: Snapshot): ItemId[] {
   const unlocked = new Set(s.stations.filter((st) => st.unlocked).map((st) => st.instanceId));
   const items: ItemId[] = [];
-  for (const p of SHOPS.banh_mi.stations) {
+  for (const p of SHOPS[s.shopId].stations) {
     const def = getStationDef(p.def);
     if (def.kind === 'display' && unlocked.has(p.instanceId)) items.push(def.item);
   }
@@ -44,8 +44,11 @@ function staffDetail(x: Snapshot['staff'][number] | undefined): StaffDetail | nu
 export function staffView(s: Snapshot): {
   cashier: { name: string | null; staffId: string | null; canHire: boolean; detail: StaffDetail | null };
   courier: { name: string | null; staffId: string | null; canHire: boolean; detail: StaffDetail | null } | null;
+  /** Chỉ có khi quán đã mở bàn ăn. */
+  cleaner: { name: string | null; staffId: string | null; canHire: boolean; detail: StaffDetail | null } | null;
   lines: { item: ItemId; itemName: string; staffName: string | null; staffId: string | null; detail: StaffDetail | null }[];
   wagePerDay: string;
+  shopName: string;
 } {
   const cashier = s.staff.find((x) => x.role === 'cashier');
   return {
@@ -56,11 +59,18 @@ export function staffView(s: Snapshot): {
           return { name: c?.name ?? null, staffId: c?.id ?? null, canHire: !c, detail: staffDetail(c) };
         })()
       : null,
+    cleaner: s.stations.some((st) => st.unlocked && st.seats.length > 0)
+      ? (() => {
+          const c = s.staff.find((x) => x.role === 'cleaner');
+          return { name: c?.name ?? null, staffId: c?.id ?? null, canHire: !c, detail: staffDetail(c) };
+        })()
+      : null,
     lines: openItems(s).map((item) => {
       const cook = s.staff.find((x) => x.role === 'cook' && x.item === item);
       return { item, itemName: ITEMS[item].name, staffName: cook?.name ?? null, staffId: cook?.id ?? null, detail: staffDetail(cook) };
     }),
     wagePerDay: formatK(BALANCE.STAFF_LEVELS[0].wage),
+    shopName: SHOP_META[s.shopId].name,
   };
 }
 
@@ -84,6 +94,7 @@ const ERRORS: Record<string, string> = {
   BAD_ROLE: 'Thao tác không hợp lệ',
   PAUSED: 'Đang kết toán cuối tháng — trả xong rồi mới mua được',
   NO_SETTLEMENT: 'Tháng này đã kết toán xong',
+  NOT_READY: 'Cần mở hết máy và kệ ở các quán đang có trước khi thuê mặt bằng mới',
 };
 
 export function actionErrorText(e: string): string {
@@ -99,7 +110,7 @@ export function upgradeView(s: Snapshot, myId: string) {
   const speedLevel = me?.speedLevel ?? 0;
   const carryMax = BALANCE.PLAYER_CARRY_COSTS.length;
   const speedMax = BALANCE.PLAYER_SPEED_COSTS.length;
-  const machines = SHOPS.banh_mi.stations
+  const machines = SHOPS[s.shopId].stations
     .map((p) => ({ p, def: getStationDef(p.def), st: s.stations.find((x) => x.instanceId === p.instanceId) }))
     .filter(({ def, st }) => (def.kind === 'producer' || def.kind === 'assembler') && st?.unlocked)
     .map(({ p, def, st }) => {
@@ -109,10 +120,11 @@ export function upgradeView(s: Snapshot, myId: string) {
         instanceId: p.instanceId,
         name: def.name,
         level,
+        enabled: st!.enabled,
         max: BALANCE.MACHINE_MAX_LEVEL,
         cycle: `${oneDecimal(effectiveCycle(def, lv))} giây/món`,
         cap: `chứa ${effectiveOutputCap(def, lv)}`,
-        cost: level < BALANCE.MACHINE_MAX_LEVEL ? formatK(machineUpgradeCost('banh_mi', p.instanceId, level + 1)) : null,
+        cost: level < BALANCE.MACHINE_MAX_LEVEL ? formatK(machineUpgradeCost(s.shopId, p.instanceId, level + 1)) : null,
       };
     });
   return {
@@ -201,6 +213,53 @@ export function onlineView(s: Snapshot) {
 
 /** Nhãn trên đầu nhân viên: "Lan · thu ngân", "Mai · giao đơn", "Hùng · Bánh mì". */
 export function staffLabel(st: { name: string; role: string; item: ItemId | null }): string {
-  const job = st.role === 'cashier' ? 'thu ngân' : st.role === 'courier' ? 'giao đơn' : st.item ? ITEMS[st.item].name : 'phụ bếp';
+  const job =
+    st.role === 'cashier' ? 'thu ngân' : st.role === 'courier' ? 'giao đơn' : st.role === 'cleaner' ? 'dọn bàn' : st.item ? ITEMS[st.item].name : 'phụ bếp';
   return `${st.name} · ${job}`;
+}
+
+/** Tab Bản đồ: quán đang có (đi tới) và mặt bằng còn trống (thuê). */
+export function mapView(s: Snapshot) {
+  const here = s.shopId;
+  return {
+    here: SHOP_META[here].name,
+    owned: s.shops
+      .filter((x) => x.owned)
+      .map((x) => ({
+        id: x.id,
+        name: x.name,
+        here: x.id === here,
+        status: x.complete ? 'Đã mở hết' : 'Đang mở thêm',
+        rent: x.rentPerMonth > 0 ? `Thuê ${formatK(x.rentPerMonth)}/tháng` : 'Xe nhà, không tốn tiền thuê',
+      })),
+    free: s.shops
+      .filter((x) => !x.owned)
+      .map((x) => ({
+        id: x.id,
+        name: x.name,
+        deposit: formatK(x.deposit),
+        rent: `${formatK(x.rentPerMonth)}/tháng`,
+        menu: menuOf(x.id),
+        canRent: s.canRent && s.money >= x.deposit && !s.settlement,
+      })),
+    hint: s.canRent ? '' : 'Mở hết máy và kệ ở các quán đang có thì mới thuê được mặt bằng mới.',
+  };
+}
+
+/** Các món bán ở một loại quán (để chọn loại hình). */
+export function menuOf(shopId: Snapshot['shopId']): string {
+  const items: string[] = [];
+  for (const p of SHOPS[shopId].stations) {
+    const def = getStationDef(p.def);
+    if (def.kind === 'display') items.push(ITEMS[def.item].name);
+  }
+  return items.join(', ');
+}
+
+/** Tên một mục trong danh sách bán ở bảng kết toán. */
+export function sellableName(x: { shopId: Snapshot['shopId']; instanceId: string }): string {
+  const shop = SHOP_META[x.shopId].name;
+  if (x.instanceId === 'mat_bang') return `Trả mặt bằng ${shop}`;
+  const p = SHOPS[x.shopId].stations.find((st) => st.instanceId === x.instanceId);
+  return `${p ? getStationDef(p.def).name : x.instanceId} (${shop})`;
 }

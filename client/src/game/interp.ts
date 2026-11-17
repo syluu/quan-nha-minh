@@ -20,6 +20,10 @@ function blend<T extends { x: number; z: number; dir: number }>(older: T | undef
 export function createInterpolator(delayMs = 100) {
   const buf: { s: Snapshot; at: number }[] = [];
   return {
+    /** Bỏ hết snapshot cũ (khi đổi quán: không nội suy giữa hai quán khác nhau). */
+    clear() {
+      buf.length = 0;
+    },
     push(s: Snapshot, at: number) {
       buf.push({ s, at });
       while (buf.length > 20) buf.shift();

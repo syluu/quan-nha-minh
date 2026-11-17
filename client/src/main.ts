@@ -19,6 +19,7 @@ import { staffTab } from './ui/menu/staffTab';
 import { upgradesTab } from './ui/menu/upgradesTab';
 import { marketingTab } from './ui/menu/marketingTab';
 import { bankTab } from './ui/menu/bankTab';
+import { mapTab } from './ui/menu/mapTab';
 import { actionErrorText } from './ui/menu/views';
 import { showToast } from './ui/toast';
 
@@ -36,10 +37,13 @@ function enterGame(conn: GameConnection) {
   let latest: Snapshot | null = null;
   conn.onSnapshot((s) => (latest = s));
   const myName = () => latest?.players.find((p) => p.id === conn.playerId)?.name ?? '';
-  createMenu(
+  // eslint-disable-next-line prefer-const
+  let menu: ReturnType<typeof createMenu> | undefined;
+  menu = createMenu(
     ui,
     conn,
     [
+      mapTab(conn, () => latest, () => menu?.close()),
       reportTab(conn),
       staffTab(conn, () => latest),
       upgradesTab(conn, () => latest, conn.playerId),
@@ -67,6 +71,8 @@ function enterGame(conn: GameConnection) {
     if (import.meta.env.DEV) Object.assign(window, { __qnm: { snapshot: s, playerId: conn.playerId } });
   });
   conn.onEvent((e) => {
+    // Sự kiện của quán khác (người nhà đang ở quán khác): không hiện chữ nổi ở đây.
+    if ('shopId' in e && latest && e.shopId !== latest.shopId) return;
     pending.push(e);
     if (e.type === 'sale') floats.spawn(`+${formatK(e.amount)}`, 'gain', e.x, e.z);
     else if (e.type === 'customerLost') floats.spawn('-1★', 'loss', e.x, e.z);

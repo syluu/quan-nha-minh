@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { BALANCE, SHOPS } from '@qnm/shared';
-import type { Snapshot } from '@qnm/shared';
+import type { ShopId, Snapshot } from '@qnm/shared';
 import { createInputGate, createKeyboardInput } from '../input';
 import type { GameConnection } from '../net';
 import { createFollowCamera } from '../render/camera';
@@ -9,9 +9,12 @@ import { createPickRing } from '../render/pickRing';
 import { createShipperView } from '../render/shipper';
 import { staffLabel } from '../ui/menu/views';
 import type { CharacterView } from '../render/characters';
-import { createScene } from '../render/scene';
+import { createScene, createShopBackdrop } from '../render/scene';
 import { createStationView } from '../render/stations';
+import type { StationView } from '../render/stations';
 import { createTileView } from '../render/payTiles';
+import type { TileView } from '../render/payTiles';
+import { disposeTree } from '../render/materials';
 import { createInterpolator } from './interp';
 import { createPredictor } from './prediction';
 
@@ -26,16 +29,15 @@ export interface GameHandle {
 export function startGame(conn: GameConnection, container: HTMLElement): GameHandle {
   const { renderer, scene, camera } = createScene(container);
   const cam = createFollowCamera(camera, renderer.domElement);
-  const layout = SHOPS.banh_mi;
   const interp = createInterpolator(100);
   const predictor = createPredictor();
   const input = createKeyboardInput();
   const gate = createInputGate();
 
-  const stationViews = new Map(layout.stations.map((p) => [p.instanceId, createStationView(p)]));
-  const tileViews = new Map(layout.stations.map((p) => [p.instanceId, createTileView(p)]));
-  for (const v of stationViews.values()) scene.add(v.group);
-  for (const v of tileViews.values()) scene.add(v.group);
+  let stationViews = new Map<string, StationView>();
+  let tileViews = new Map<string, TileView>();
+  let backdrop: THREE.Group | null = null;
+  let shopId: ShopId | null = null;
 
   const players = new Map<string, CharacterView>();
   const customers = new Map<number, CharacterView>();
@@ -46,7 +48,31 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
   let latest: Snapshot | null = null;
   let cameraSnapped = false;
 
+  /** Dựng cảnh của quán mới (lúc vào game, khi đi sang quán khác): bỏ hết mô hình của quán cũ. */
+  function enterShop(id: ShopId) {
+    shopId = id;
+    if (backdrop) disposeTree(backdrop);
+    for (const v of stationViews.values()) disposeTree(v.group);
+    for (const v of tileViews.values()) disposeTree(v.group);
+    for (const v of [...players.values(), ...customers.values(), ...staffViews.values()]) v.dispose();
+    players.clear();
+    customers.clear();
+    staffViews.clear();
+    lastPos.clear();
+    const layout = SHOPS[id];
+    backdrop = createShopBackdrop(id);
+    scene.add(backdrop);
+    stationViews = new Map(layout.stations.map((p) => [p.instanceId, createStationView(p)]));
+    tileViews = new Map(layout.stations.map((p) => [p.instanceId, createTileView(p)]));
+    for (const v of stationViews.values()) scene.add(v.group);
+    for (const v of tileViews.values()) scene.add(v.group);
+    interp.clear();
+    predictor.reset(id);
+    cameraSnapped = false;
+  }
+
   conn.onSnapshot((s) => {
+    if (s.shopId !== shopId) enterShop(s.shopId);
     latest = s;
     interp.push(s, performance.now());
     const me = s.players.find((p) => p.id === conn.playerId);
@@ -94,7 +120,7 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
 
       const seen = new Set<string>();
       for (const p of s.players) {
-        if (!p.online) continue;
+        if (!p.online || p.location !== s.shopId) continue;
         seen.add(p.id);
         let v = players.get(p.id);
         if (!v) {
@@ -126,7 +152,8 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
         const prevPos = lastPos.get(key);
         const moving = !!prevPos && Math.hypot(c.x - prevPos.x, c.z - prevPos.z) > 0.002;
         lastPos.set(key, { x: c.x, z: c.z });
-        v.setPose(c.x, c.z, c.dir, moving, t);
+        v.setSitting(c.sitting);
+        v.setPose(c.x, c.z, c.dir, moving && !c.sitting, t);
         v.setCarry(c.holding);
       }
       for (const [id, v] of customers) if (!seenC.has(id)) (v.dispose(), customers.delete(id), lastPos.delete(`c${id}`));
