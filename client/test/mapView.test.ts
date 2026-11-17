@@ -87,3 +87,19 @@ describe('farm in the client (plan 6)', () => {
     expect(staffLabel({ name: 'Nam', role: 'farmhand', item: null })).toBe('Nam · trang trại');
   });
 });
+
+describe('costume tab (plan 7)', () => {
+  it('shows wearing / owned / buy per slot, with affordability', async () => {
+    const { costumeView } = await import('../src/ui/menu/views');
+    const s = snap({ money: 1_000_000 });
+    s.players[0].outfit = { hat: 'mu_dau_bep', shirt: 'ao_mac_dinh', pants: 'quan_nau', apron: 'khong_tap_de' };
+    s.players[0].wardrobe = ['mu_dau_bep'];
+    const v = costumeView(s, 'a');
+    expect(v.map((x) => x.title)).toEqual(['Mũ', 'Áo', 'Quần', 'Tạp dề']);
+    const hats = v[0].items;
+    expect(hats.find((h) => h.id === 'mu_dau_bep')!.state).toBe('wearing');
+    expect(hats.find((h) => h.id === 'non_la')).toMatchObject({ state: 'owned', price: 'Miễn phí' });
+    expect(hats.find((h) => h.id === 'mu_phot')).toMatchObject({ state: 'buy', affordable: false });
+    expect(hats.find((h) => h.id === 'mu_luoi_trai_do')).toMatchObject({ state: 'buy', affordable: true, price: '300K' });
+  });
+});
