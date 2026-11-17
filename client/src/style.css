@@ -84,3 +84,16 @@ table.staff td.act button + button { margin-left: 6px; }
 .loan-form select { font: inherit; padding: 4px 6px; border-radius: 8px; border: 2px solid var(--line); }
 .loan-form output { font-weight: 800; min-width: 64px; }
 .loan-form .preview { flex-basis: 100%; margin: 0; color: var(--muted); }
+.settle { pointer-events: auto; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); z-index: 5; width: min(520px, calc(100vw - 32px)); max-height: calc(100vh - 60px); overflow: auto; background: var(--card); border: 3px solid var(--accent); border-radius: 16px; padding: 18px 22px; box-shadow: 0 16px 60px rgba(0,0,0,.35); }
+.settle[hidden] { display: none; }
+.settle h2 { margin: 0 0 10px; }
+.settle h3 { margin: 14px 0 6px; font-size: 15px; }
+.settle table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.settle td { padding: 5px 0; border-bottom: 1px solid var(--line); }
+.settle td:last-child { text-align: right; font-weight: 700; }
+.settle tr.total td { font-size: 16px; border-bottom: 2px solid var(--ink); }
+.settle .neg { color: var(--accent); }
+.settle .sell { display: flex; flex-wrap: wrap; gap: 6px; }
+.settle button { font: inherit; font-weight: 700; font-size: 13px; padding: 6px 12px; border-radius: 8px; border: 2px solid #2b2118; background: #fff; cursor: pointer; }
+.settle button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.settle .close { margin-top: 12px; }

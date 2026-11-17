@@ -191,3 +191,31 @@ describe('plan 3 messages', () => {
     await a.room.leave();
   });
 });
+
+describe('month-end settlement over the network', () => {
+  it('pauses everyone until a loan covers the wages, then broadcasts monthClosed', async () => {
+    const code = await newWorld();
+    const raw = (await store.load(code)) as Record<string, any>;
+    raw.money = 200_000;
+    raw.day = 7;
+    raw.secOfDay = 359.5;
+    raw.shops.banh_mi.staff = [
+      { id: 's1', name: 'Lan', role: 'cashier', item: null, x: 0, z: -1.85, dir: 0, carry: [], task: null, timer: 0, hiredDay: 1, level: 1, wageOwed: 720_000 },
+    ];
+    await store.save(raw as never);
+    const a = await join(code, 'settle-token', 'Mẹ');
+    const events: string[] = [];
+    a.room.onMessage(MSG.event, (e: { type: string }) => events.push(e.type));
+    await sleep(1500);
+    const s = a.snapshot()!;
+    expect(s.settlement).toMatchObject({ month: 1, wages: 840_000 });
+    const clock = s.secOfDay;
+    await sleep(500);
+    expect(a.snapshot()!.secOfDay).toBe(clock); // dừng
+    a.room.send(MSG.takeLoan, { amount: 700_000, months: 1 });
+    await sleep(500);
+    expect(a.snapshot()!.settlement).toBeNull();
+    expect(events).toContain('monthClosed');
+    await a.room.leave();
+  });
+});

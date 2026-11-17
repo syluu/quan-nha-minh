@@ -10,6 +10,7 @@ import { showDaySummary } from './ui/daySummary';
 import { createEventLog } from './ui/eventLog';
 import { createFloatText } from './ui/floatText';
 import { createHud } from './ui/hud';
+import { createSettlementModal } from './ui/settlementModal';
 import { createMenu } from './ui/menu/menu';
 import { pricesTab } from './ui/menu/pricesTab';
 import { reportTab } from './ui/menu/reportTab';
@@ -50,6 +51,7 @@ function enterGame(conn: GameConnection) {
     (open) => game.setInputEnabled(!open),
   );
   conn.onActionError((e) => showToast(ui, actionErrorText(e)));
+  createSettlementModal(ui, conn, (on) => game.setInputEnabled(on));
   applyDisplaySettings();
 
   let prevCarry = 0;
