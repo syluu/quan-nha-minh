@@ -68,7 +68,8 @@ export function createAudio() {
         applyVolumes();
         if (wantMusic) this.startMusic();
       }
-      if (ctx.state === 'suspended') void ctx.resume();
+      // iPhone/iPad có thể để ở 'interrupted' (sau cuộc gọi, khoá màn hình): resume mọi trạng thái khác 'running'.
+      if (ctx.state !== 'running') void ctx.resume();
     },
     play(c: Cue) {
       if (!ctx || volumes.muted) return;
@@ -94,8 +95,12 @@ export function createAudio() {
           tone(320, t, 0.45, 'sine', 0.35, 170);
           break;
         case 'dayEnd':
-          tone(880, t, 1.0, 'sine', 0.35);
-          tone(1320, t + 0.15, 1.0, 'sine', 0.25);
+          tone(880, t, 0.5, 'sine', 0.35);
+          tone(1320, t + 0.1, 0.45, 'sine', 0.25);
+          break;
+        case 'monthEnd':
+          tone(659, t, 0.25, 'triangle', 0.4);
+          tone(523, t + 0.25, 0.35, 'triangle', 0.4);
           break;
       }
     },

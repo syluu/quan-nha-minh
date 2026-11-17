@@ -1,6 +1,6 @@
 import type { SimEvent } from '@qnm/shared';
 
-export type Cue = 'pick' | 'drop' | 'trash' | 'cash' | 'unlock' | 'lost' | 'dayEnd';
+export type Cue = 'pick' | 'drop' | 'trash' | 'cash' | 'unlock' | 'lost' | 'dayEnd' | 'monthEnd';
 
 /** Chọn âm thanh cần phát từ thay đổi số món đang cầm và các sự kiện vừa nhận. */
 export function cuesFor(prevCarry: number, nextCarry: number, events: SimEvent[], myId: string): Cue[] {
@@ -14,6 +14,7 @@ export function cuesFor(prevCarry: number, nextCarry: number, events: SimEvent[]
     else if (e.type === 'unlock') cues.push('unlock');
     else if (e.type === 'customerLost') cues.push('lost');
     else if (e.type === 'dayEnd') cues.push('dayEnd');
+    else if (e.type === 'monthEnd') cues.push('monthEnd');
   }
   return cues;
 }

@@ -10,7 +10,7 @@ const unlock = () => {
   audio.unlock();
   audio.startMusic();
 };
-window.addEventListener('pointerdown', unlock);
-window.addEventListener('keydown', unlock);
+// iPhone/iPad chỉ cho bật âm trong 'click'/'touchend'; máy tính dùng pointerdown/keydown.
+for (const ev of ['pointerdown', 'keydown', 'click', 'touchend']) window.addEventListener(ev, unlock);
 
 if (import.meta.env.DEV) Object.assign(window, { __qnmAudio: audio });

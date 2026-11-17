@@ -23,6 +23,10 @@ describe('cuesFor', () => {
     ];
     expect(cuesFor(0, 0, ev, 'me')).toEqual(['cash', 'unlock', 'lost']);
   });
+  it('rings for the month-end settlement', () => {
+    const st = { month: 1, revenue: 0, ingredientCost: 0, marketing: 0, wages: 0, rent: 0, loanDue: 0, totalDue: 0 };
+    expect(cuesFor(0, 0, [{ type: 'monthEnd', settlement: st }], 'me')).toEqual(['monthEnd']);
+  });
 });
 
 describe('settings', () => {
