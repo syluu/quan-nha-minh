@@ -24,7 +24,7 @@ export function staffView(s: Snapshot): {
       const cook = s.staff.find((x) => x.role === 'cook' && x.item === item);
       return { item, itemName: ITEMS[item].name, staffName: cook?.name ?? null, staffId: cook?.id ?? null };
     }),
-    wagePerDay: formatK(BALANCE.WAGE),
+    wagePerDay: formatK(BALANCE.STAFF_LEVELS[0].wage),
   };
 }
 

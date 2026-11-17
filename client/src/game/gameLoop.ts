@@ -133,7 +133,7 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
         const moving = !!prevPos && Math.hypot(st.x - prevPos.x, st.z - prevPos.z) > 0.002;
         lastPos.set(key, { x: st.x, z: st.z });
         v.setPose(st.x, st.z, st.dir, moving, t);
-        v.setCarry(st.carry, BALANCE.STAFF_CARRY);
+        v.setCarry(st.carry, BALANCE.STAFF_LEVELS[0].carry);
       }
       for (const [id, v] of staffViews) if (!seenS.has(id)) (v.dispose(), staffViews.delete(id), lastPos.delete(`s${id}`));
 

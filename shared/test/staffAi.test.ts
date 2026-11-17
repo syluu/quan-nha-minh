@@ -26,7 +26,7 @@ function checkStaff(w: WorldState) {
   for (const s of w.shops.banh_mi.staff) {
     expect(s.x >= b.minX && s.x <= b.maxX && s.z >= b.minZ && s.z <= b.maxZ, `${s.name} out of bounds`).toBe(true);
     expect(insideFootprint(s.x, s.z), `${s.name} inside a station`).toBeNull();
-    expect(s.carry.length).toBeLessThanOrEqual(BALANCE.STAFF_CARRY);
+    expect(s.carry.length).toBeLessThanOrEqual(BALANCE.STAFF_LEVELS[s.level - 1].carry);
   }
 }
 

@@ -30,13 +30,45 @@ export const BALANCE = {
   CASHIER_SERVICE_SEC: 1.0,
   QUEUE_SPACING: 0.8,
 
-  /** Lương khởi điểm mỗi nhân viên mỗi ngày (Kế hoạch 3: nâng cấp nhân viên sẽ tăng lương). */
-  WAGE: K(120),
   /** Nhân viên mới xuất hiện ở giữa lối bếp. */
   STAFF_DOOR: { x: 0, z: -1.85 },
   STAFF_NAMES: ['Lan', 'Hùng', 'Mai', 'Tuấn', 'Hoa', 'Nam', 'Thảo', 'Dũng'],
-  STAFF_SPEED: 2.24,
-  STAFF_CARRY: 3,
+  /** Cấp nhân viên 1–4: tốc độ (người chơi chưa nâng = 3.2), mang tối đa, lương/ngày, phí đào tạo để lên cấp này. */
+  STAFF_LEVELS: [
+    { speed: 2.24, carry: 3, wage: K(120), train: 0 },
+    { speed: 2.56, carry: 4, wage: K(150), train: K(500) },
+    { speed: 2.88, carry: 5, wage: K(180), train: K(800) },
+    { speed: 3.2, carry: 6, wage: K(210), train: K(1300) },
+  ],
+  /** 1 tháng trong game = 7 ngày (≈ 42 phút chơi). Cuối tháng kết toán lương, nợ, mặt bằng. */
+  MONTH_DAYS: 7,
+
+  PLAYER_CARRY_CAPS: [4, 6, 8, 10, 12],
+  PLAYER_CARRY_COSTS: [K(300), K(500), K(800), K(1300)],
+  /** Mỗi cấp tốc độ +10% (5 cấp). */
+  PLAYER_SPEED_STEP: 0.1,
+  PLAYER_SPEED_COSTS: [K(200), K(320), K(500), K(800), K(1300)],
+
+  MACHINE_MAX_LEVEL: 3,
+  MACHINE_CYCLE_FACTOR: 0.85,
+  MACHINE_CAP_BONUS: 0.5,
+  /** Giá trị máy có sẵn từ đầu (để tính tài sản, giá nâng cấp). */
+  STARTER_VALUES: { lo_banh_mi: K(3000), ke_banh_mi: K(500), thu_ngan: K(500), thung_rac: 0 } as Record<string, number>,
+
+  CAMPAIGNS: {
+    to_roi: { name: 'Phát tờ rơi', cost: K(200), boost: 0.2, days: 1, starBonus: 0 },
+    mxh: { name: 'Quảng cáo mạng xã hội', cost: K(1000), boost: 0.5, days: 3, starBonus: 0 },
+    review: { name: 'Mời người review đồ ăn', cost: K(5000), boost: 1.0, days: 2, starBonus: 0.3 },
+  },
+
+  /** Kỳ hạn (tháng) → tổng lãi. */
+  LOAN_TERMS: { 1: 0.05, 2: 0.09, 4: 0.15 } as Record<number, number>,
+  LOAN_MIN_CAP: K(2000),
+  LOAN_ASSET_RATIO: 0.5,
+  LOAN_STEP: K(100),
+  LOAN_MIN: K(500),
+  /** Bán máy thu về 50% (giá trị + tiền đã nâng cấp). */
+  SELL_RATIO: 0.5,
   /** Số ngày giữ trong báo cáo. */
   HISTORY_DAYS: 30,
 

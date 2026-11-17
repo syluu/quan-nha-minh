@@ -5,6 +5,15 @@ import { addLog, playerName } from './log';
 import { isOnSale } from './prices';
 import type { StaffRole, StaffState, WorldState } from './world';
 
+/** Chỉ số theo cấp của một nhân viên. */
+export function staffStats(s: Pick<StaffState, 'level'>) {
+  return BALANCE.STAFF_LEVELS[Math.min(Math.max(s.level, 1), BALANCE.STAFF_LEVELS.length) - 1];
+}
+
+export function staffWage(s: Pick<StaffState, 'level'>): number {
+  return staffStats(s).wage;
+}
+
 const ROLE_LABEL = (s: Pick<StaffState, 'role' | 'item'>) =>
   s.role === 'cashier' ? 'thu ngân' : `phụ bếp ${ITEMS[s.item!].name}`;
 
@@ -57,6 +66,8 @@ export function hireStaff(world: WorldState, shopId: ShopId, role: StaffRole, it
     task: null,
     timer: 0,
     hiredDay: world.day,
+    level: 1,
+    wageOwed: 0,
   };
   shop.staff.push(s);
   addLog(world, `${playerName(world, byPlayerId)} đã thuê ${name} (${ROLE_LABEL(s)})`);
@@ -83,15 +94,16 @@ export function payWages(world: WorldState): { paid: number; quitNames: string[]
   for (const id of Object.keys(world.shops) as ShopId[]) {
     const shop = world.shops[id];
     for (let i = 0; i < shop.firedToday; i++) {
-      if (world.money < BALANCE.WAGE) break;
-      world.money -= BALANCE.WAGE;
-      paid += BALANCE.WAGE;
+      const w0 = BALANCE.STAFF_LEVELS[0].wage;
+      if (world.money < w0) break;
+      world.money -= w0;
+      paid += w0;
     }
     shop.firedToday = 0;
     shop.staff = shop.staff.filter((s) => {
-      if (world.money >= BALANCE.WAGE) {
-        world.money -= BALANCE.WAGE;
-        paid += BALANCE.WAGE;
+      if (world.money >= staffWage(s)) {
+        world.money -= staffWage(s);
+        paid += staffWage(s);
         return true;
       }
       quitNames.push(s.name);
@@ -145,7 +157,7 @@ function walk(s: StaffState, tx: number, tz: number, dt: number): boolean {
     s.z = tz;
     return true;
   }
-  const step = Math.min(d, BALANCE.STAFF_SPEED * dt);
+  const step = Math.min(d, staffStats(s).speed * dt);
   s.x += (dx / d) * step;
   s.z += (dz / d) * step;
   s.dir = Math.atan2(dx, dz);
@@ -216,7 +228,7 @@ export function tickStaff(world: WorldState, shopId: ShopId, dt: number): void {
         break;
       case 'picking': {
         const src = shop.stations[t.from];
-        const want = Math.min(BALANCE.STAFF_CARRY, roomAt(world, shopId, t.to, t.item));
+        const want = Math.min(staffStats(s).carry, roomAt(world, shopId, t.to, t.item));
         const have = s.carry.filter((i) => i === t.item).length;
         if (have >= want || src.outputCount <= 0) {
           if (have > 0) t.phase = 'toTarget';

@@ -5,7 +5,7 @@ import { chartBars, reportRows, soldList } from '../src/ui/menu/format';
 function day(n: number, revenue: number, profit: number): DaySummary {
   return {
     day: n, revenue, ingredientCost: 100_000, unlockSpend: 0, served: 10, lost: 1, wages: 300_000, wasted: 2000,
-    sold: { banh_mi: 7, tra_da: 9 }, operatingProfit: profit, stars: 4.2,
+    sold: { banh_mi: 7, tra_da: 9 }, marketing: 0, operatingProfit: profit, stars: 4.2,
   };
 }
 

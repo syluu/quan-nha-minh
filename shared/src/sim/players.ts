@@ -31,6 +31,8 @@ export function joinPlayer(world: WorldState, playerId: string, name: string): P
     pickTimer: 0,
     pickAt: null,
     inMenu: false,
+    carryLevel: 0,
+    speedLevel: 0,
   };
   world.players[playerId] = p;
   return p;

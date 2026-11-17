@@ -12,6 +12,10 @@ export interface StationState {
   stock: number;
   progress: number;
   running: boolean;
+  /** Cấp nâng cấp máy (0 = chưa nâng). */
+  level: number;
+  /** Tổng tiền đã nâng cấp máy này (tính tài sản, hoàn tiền khi bán). */
+  upgradeSpent: number;
   blocked: null | 'no_money' | 'no_input' | 'full';
   tileOccupant: null | { playerId: string; sec: number };
 }
@@ -52,6 +56,34 @@ export interface StaffState {
   task: StaffTask | null;
   timer: number;
   hiredDay: number;
+  /** Cấp 1–4 (xem BALANCE.STAFF_LEVELS). */
+  level: number;
+  /** Lương đã làm nhưng chưa trả (trả cuối tháng hoặc khi cho nghỉ). */
+  wageOwed: number;
+}
+
+export type CampaignId = 'to_roi' | 'mxh' | 'review';
+
+export interface Loan {
+  id: string;
+  principal: number;
+  totalDue: number;
+  paid: number;
+  installment: number;
+  monthsLeft: number;
+  takenDay: number;
+}
+
+/** Bảng kết toán cuối tháng; khác null nghĩa là game đang dừng chờ trả. */
+export interface Settlement {
+  month: number;
+  revenue: number;
+  ingredientCost: number;
+  marketing: number;
+  wages: number;
+  rent: number;
+  loanDue: number;
+  totalDue: number;
 }
 
 export interface ShopState {
@@ -66,6 +98,7 @@ export interface ShopState {
   nextStaffId: number;
   /** Số người bị cho nghỉ hôm nay (vẫn phải trả lương ngày đó). */
   firedToday: number;
+  campaigns: { id: CampaignId; daysLeft: number }[];
 }
 
 export interface PlayerState {
@@ -87,6 +120,8 @@ export interface PlayerState {
   pickAt: string | null;
   /** Đang mở menu: không mua ô trả tiền, không bỏ rác (dù đứng yên). Không lưu ý nghĩa giữa các lần vào. */
   inMenu: boolean;
+  carryLevel: number;
+  speedLevel: number;
 }
 
 export interface DayStats {
@@ -99,6 +134,7 @@ export interface DayStats {
   /** Giá trị nguyên liệu của món bị bỏ vào thùng rác. */
   wasted: number;
   sold: Partial<Record<ItemId, number>>;
+  marketing: number;
 }
 
 export interface DaySummary extends DayStats {
@@ -114,7 +150,7 @@ export interface LogEntry {
 }
 
 export interface WorldState {
-  schemaVersion: 2;
+  schemaVersion: 3;
   code: string;
   money: number;
   day: number;
@@ -126,10 +162,17 @@ export interface WorldState {
   dayStats: DayStats;
   /** Tổng kết các ngày đã qua (tối đa BALANCE.HISTORY_DAYS). */
   history: DaySummary[];
+  loans: Loan[];
+  nextLoanId: number;
+  settlement: Settlement | null;
+  /** Tháng hiện tại (bắt đầu 1). */
+  month: number;
+  /** Các kỳ kết toán đã xong (tối đa 12). */
+  months: Settlement[];
 }
 
 export function emptyDayStats(): DayStats {
-  return { revenue: 0, ingredientCost: 0, unlockSpend: 0, served: 0, lost: 0, wages: 0, wasted: 0, sold: {} };
+  return { revenue: 0, ingredientCost: 0, unlockSpend: 0, served: 0, lost: 0, wages: 0, wasted: 0, sold: {}, marketing: 0 };
 }
 
 function createShop(id: ShopId): ShopState {
@@ -147,17 +190,19 @@ function createShop(id: ShopId): ShopState {
       running: false,
       blocked: null,
       tileOccupant: null,
+      level: 0,
+      upgradeSpent: 0,
     };
   }
   return {
     id, stations, customers: [], prices: {}, ratings: [], nextCustomerIn: 1, nextCustomerId: 1,
-    staff: [], nextStaffId: 1, firedToday: 0,
+    staff: [], nextStaffId: 1, firedToday: 0, campaigns: [],
   };
 }
 
 export function createWorld(code: string, seed: number): WorldState {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     code,
     money: BALANCE.START_MONEY,
     day: 1,
@@ -168,6 +213,11 @@ export function createWorld(code: string, seed: number): WorldState {
     log: [],
     dayStats: emptyDayStats(),
     history: [],
+    loans: [],
+    nextLoanId: 1,
+    settlement: null,
+    month: 1,
+    months: [],
   };
 }
 

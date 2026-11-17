@@ -28,7 +28,7 @@ describe('carryBadge', () => {
 describe('summaryRows', () => {
   it('lists the day results in Vietnamese with K money', () => {
     const d: DaySummary = {
-      day: 1, revenue: 1_250_000, ingredientCost: 480_000, unlockSpend: 800_000, served: 86, lost: 4, wages: 300_000, wasted: 6_000, sold: {},
+      day: 1, revenue: 1_250_000, ingredientCost: 480_000, unlockSpend: 800_000, served: 86, lost: 4, wages: 300_000, wasted: 6_000, sold: {}, marketing: 0,
       operatingProfit: 770_000, stars: 4.2,
     };
     expect(summaryRows(d)).toEqual([

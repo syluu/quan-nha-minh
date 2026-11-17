@@ -192,3 +192,18 @@ describe('balance', () => {
     expect(BALANCE.START_MONEY).toBe(5_000_000);
   });
 });
+
+describe('balance plan 3', () => {
+  it('staff levels match the approved table', () => {
+    expect(BALANCE.STAFF_LEVELS.map((l) => [l.speed, l.carry, l.wage, l.train])).toEqual([
+      [2.24, 3, 120_000, 0],
+      [2.56, 4, 150_000, 500_000],
+      [2.88, 5, 180_000, 800_000],
+      [3.2, 6, 210_000, 1_300_000],
+    ]);
+  });
+  it('every starter station has a value', () => {
+    for (const s of SHOPS.banh_mi.stations.filter((x) => x.unlockCost === 0))
+      expect(BALANCE.STARTER_VALUES[s.instanceId], s.instanceId).toBeTypeOf('number');
+  });
+});

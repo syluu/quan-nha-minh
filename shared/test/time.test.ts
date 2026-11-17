@@ -20,7 +20,7 @@ describe('advanceTime', () => {
   it('ends the day with a summary, then resets stats and customers', () => {
     const w = createWorld('X', 1);
     w.secOfDay = 359;
-    w.dayStats = { revenue: 100_000, ingredientCost: 40_000, unlockSpend: 800_000, served: 9, lost: 1, wages: 0, wasted: 0, sold: { banh_mi: 9 } };
+    w.dayStats = { revenue: 100_000, ingredientCost: 40_000, unlockSpend: 800_000, served: 9, lost: 1, wages: 0, wasted: 0, sold: { banh_mi: 9 }, marketing: 0 };
     w.shops.banh_mi.customers.push({
       id: 1, x: 0, z: 0, dir: 0, state: 'toShelf', wants: ['banh_mi'], bill: 0, waited: 0, payTimer: 0, holding: [], scored: false,
     });
@@ -32,7 +32,7 @@ describe('advanceTime', () => {
     expect(summary!.stars).toBe(3);
     expect(w.day).toBe(2);
     expect(w.secOfDay).toBe(0);
-    expect(w.dayStats).toEqual({ revenue: 0, ingredientCost: 0, unlockSpend: 0, served: 0, lost: 0, wages: 0, wasted: 0, sold: {} });
+    expect(w.dayStats).toEqual({ revenue: 0, ingredientCost: 0, unlockSpend: 0, served: 0, lost: 0, wages: 0, wasted: 0, sold: {}, marketing: 0 });
     expect(w.shops.banh_mi.customers).toEqual([]);
   });
 });

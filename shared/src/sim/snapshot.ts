@@ -1,7 +1,7 @@
 import { BALANCE, SHOPS } from '../content';
 import type { ShopId } from '../content';
 import type { Snapshot } from '../net/protocol';
-import { migrateV1toV2 } from './migrate';
+import { migrateV1toV2, migrateV2toV3 } from './migrate';
 import { isTileVisible } from './payTiles';
 import { stars } from './rating';
 import { createWorld } from './world';
@@ -46,8 +46,11 @@ export function toSnapshot(world: WorldState, shopId: ShopId): Snapshot {
 /** Chuẩn hoá thế giới vừa tải từ DB: nâng version, dọn trạng thái tạm, bổ sung trạm mới thêm vào nội dung. */
 export function normalizeLoaded(raw: unknown): WorldState {
   const version = raw && typeof raw === 'object' ? (raw as { schemaVersion?: unknown }).schemaVersion : undefined;
-  if (version !== 1 && version !== 2) throw new Error('UNSUPPORTED_SCHEMA');
-  const world = (version === 1 ? migrateV1toV2(raw) : raw) as WorldState;
+  if (version !== 1 && version !== 2 && version !== 3) throw new Error('UNSUPPORTED_SCHEMA');
+  let w: unknown = raw;
+  if (version === 1) w = migrateV1toV2(w);
+  if (version !== 3) w = migrateV2toV3(w);
+  const world = w as WorldState;
   const fresh = createWorld(world.code, 0);
   for (const id of Object.keys(fresh.shops) as ShopId[]) {
     const shop = (world.shops[id] ??= fresh.shops[id]);

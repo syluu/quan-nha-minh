@@ -20,6 +20,8 @@ export function putPlayer(world: WorldState, id: string, x: number, z: number, c
     pickTimer: 0,
     pickAt: null,
     inMenu: false,
+    carryLevel: 0,
+    speedLevel: 0,
   };
   world.players[id] = p;
   return p;
@@ -40,7 +42,7 @@ export function putStaff(world: WorldState, name: string, role: 'cashier' | 'coo
   const shop = world.shops.banh_mi;
   const s: StaffState = {
     id: `s${shop.nextStaffId++}`, name, role, item: role === 'cashier' ? null : item,
-    x: 0, z: -1.85, dir: 0, carry: [], task: null, timer: 0, hiredDay: world.day,
+    x: 0, z: -1.85, dir: 0, carry: [], task: null, timer: 0, hiredDay: world.day, level: 1, wageOwed: 0,
   };
   shop.staff.push(s);
   return s;

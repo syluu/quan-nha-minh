@@ -37,7 +37,7 @@ function v1Save() {
 describe('normalizeLoaded v1 → v2', () => {
   it('fills the new fields with defaults and keeps progress', () => {
     const w = normalizeLoaded(v1Save());
-    expect(w.schemaVersion).toBe(2);
+    expect(w.schemaVersion).toBe(3);
     expect(w.money).toBe(4_200_000);
     expect(w.day).toBe(3);
     expect(w.history).toEqual([]);
@@ -63,6 +63,45 @@ describe('normalizeLoaded v1 → v2', () => {
   });
 
   it('rejects unknown versions', () => {
-    expect(() => normalizeLoaded({ ...v1Save(), schemaVersion: 3 })).toThrow('UNSUPPORTED_SCHEMA');
+    expect(() => normalizeLoaded({ ...v1Save(), schemaVersion: 9 })).toThrow('UNSUPPORTED_SCHEMA');
+  });
+});
+
+describe('normalizeLoaded v2 → v3', () => {
+  function v2Save() {
+    const w = normalizeLoaded(v1Save()) as unknown as Record<string, any>;
+    // ép về đúng dạng v2: bỏ các trường v3
+    w.schemaVersion = 2;
+    delete w.loans; delete w.nextLoanId; delete w.settlement; delete w.month;
+    delete w.dayStats.marketing;
+    for (const shop of Object.values<any>(w.shops)) {
+      delete shop.campaigns;
+      for (const st of Object.values<any>(shop.stations)) { delete st.level; delete st.upgradeSpent; }
+      shop.staff = [{ id: 's1', name: 'Lan', role: 'cashier', item: null, x: 0, z: 0, dir: 0, carry: [], task: null, timer: 0, hiredDay: 1 }];
+    }
+    for (const p of Object.values<any>(w.players)) { delete p.carryLevel; delete p.speedLevel; }
+    return w;
+  }
+
+  it('fills v3 defaults and keeps progress', () => {
+    const w = normalizeLoaded(v2Save());
+    expect(w.schemaVersion).toBe(3);
+    expect(w.loans).toEqual([]);
+    expect(w.nextLoanId).toBe(1);
+    expect(w.settlement).toBeNull();
+    expect(w.month).toBe(1);
+    expect(w.dayStats.marketing).toBe(0);
+    expect(w.shops.banh_mi.campaigns).toEqual([]);
+    expect(w.shops.banh_mi.staff[0]).toMatchObject({ name: 'Lan', level: 1, wageOwed: 0 });
+    expect(w.shops.banh_mi.stations.lo_banh_mi).toMatchObject({ level: 0, upgradeSpent: 0 });
+    expect(w.players.a).toMatchObject({ carryLevel: 0, speedLevel: 0 });
+    expect(w.money).toBe(4_200_000);
+  });
+
+  it('keeps an open month-end settlement across a server restart (Review Focus 2)', () => {
+    const w = normalizeLoaded(v2Save());
+    w.settlement = { month: 1, revenue: 1, ingredientCost: 2, marketing: 0, wages: 840_000, rent: 0, loanDue: 0, totalDue: 840_000 };
+    const again = normalizeLoaded(JSON.parse(JSON.stringify(w)));
+    expect(again.settlement).toEqual(w.settlement);
   });
 });
