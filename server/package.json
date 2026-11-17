@@ -1,0 +1,13 @@
+{
+  "name": "@qnm/server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "@types/pg": "^8.23.1"
+  },
+  "dependencies": {
+    "pg": "^8.23.1",
+    "@qnm/shared": "0.0.0"
+  }
+}
