@@ -86,10 +86,11 @@ function topper(g: THREE.Group, id: string, w: number, d: number) {
       B(g, w * 0.86, 0.16, d * 0.5, 0x333333, 0, y, bz);
       B(g, w * 0.78, 0.02, d * 0.42, 0xff5a1a, 0, y + 0.16, bz, 0xff3a00);
       for (let i = 0; i < 6; i++) B(g, 0.015, 0.015, d * 0.46, 0xd0d4d8, -w * 0.36 + i * w * 0.144, y + 0.19, bz);
-      for (let i = 0; i < 2; i++) {
-        const sk = createItemMesh(id === 'lo_than' ? 'thit_nuong' : 'suon_nuong');
-        sk.position.set(-0.2 + i * 0.4, y + 0.22, bz);
-        g.add(sk);
+      // 3 xiên thịt đang nướng trên vỉ.
+      for (let i = 0; i < 3; i++) {
+        const sz = bz - d * 0.15 + i * d * 0.15;
+        B(g, w * 0.7, 0.012, 0.012, 0xe2c48a, 0, y + 0.2, sz);
+        for (let k = 0; k < 4; k++) B(g, 0.08, 0.05, 0.07, k % 2 ? 0xa54a22 : 0xb85a2a, -0.24 + k * 0.16, y + 0.19, sz);
       }
       break;
     }
@@ -178,6 +179,8 @@ export function buildDisplay(g: THREE.Group, def: Extract<StationDef, { kind: 'd
   B(g, w, baseH, d, WOOD, 0, 0, 0);
   B(g, w * 0.92, 0.32, 0.02, 0xd9a76a, 0, 0.09, d / 2);
   B(g, w * 1.02, 0.04, d * 1.02, WOOD_DARK, 0, baseH, 0);
+  // Khay inox sáng trong tủ để món nổi bật.
+  B(g, w * 0.9, 0.012, d * 0.84, 0xf6efe0, 0, baseH + 0.04, 0);
   const glassH = 0.42;
   g.add(part(unitBox, glassMat(0xdff3ff, 0.18), w * 0.96, glassH, d * 0.92, 0, baseH + 0.04 + glassH / 2, 0));
   for (const [cx, cz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) B(g, 0.03, glassH, 0.03, 0xf2f2f2, (cx * w * 0.96) / 2, baseH + 0.04, (cz * d * 0.92) / 2);
