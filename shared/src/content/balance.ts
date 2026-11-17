@@ -32,6 +32,11 @@ export const BALANCE = {
 
   /** Lương mỗi nhân viên mỗi ngày. */
   WAGE: K(300),
+  /** Nhân viên mới xuất hiện ở giữa lối bếp. */
+  STAFF_DOOR: { x: 0, z: -1.85 },
+  STAFF_NAMES: ['Lan', 'Hùng', 'Mai', 'Tuấn', 'Hoa', 'Nam', 'Thảo', 'Dũng'],
+  STAFF_SPEED: 2.24,
+  STAFF_CARRY: 3,
   /** Số ngày giữ trong báo cáo. */
   HISTORY_DAYS: 30,
 
