@@ -105,6 +105,7 @@ const ERRORS: Record<string, string> = {
   BAD_ROLE: 'Thao tác không hợp lệ',
   PAUSED: 'Đang kết toán cuối tháng — trả xong rồi mới mua được',
   NO_SETTLEMENT: 'Tháng này đã kết toán xong',
+  NAME_TAKEN: 'Tên này đã có người trong nhà dùng — chọn tên khác',
   WRONG_SHOP: 'Bạn vừa được chuyển sang quán khác — xem lại rồi thử lại',
   NOT_READY: 'Cần mở hết máy và kệ ở các quán đang có trước khi thuê mặt bằng mới',
 };

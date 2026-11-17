@@ -132,8 +132,8 @@ describe('WorldRoom', () => {
 
   it('saves the world with everyone offline when the last person leaves (Review Focus 4)', async () => {
     const code = await newWorld();
-    const a = await join(code, 'token-x');
-    const b = await join(code, 'token-y');
+    const a = await join(code, 'token-x', 'Bố');
+    const b = await join(code, 'token-y', 'Mẹ');
     await sleep(300);
     await a.room.leave();
     await b.room.leave();
@@ -330,5 +330,28 @@ describe('plan 7 review: a broken save does not lock the shop code', () => {
     await sleep(200);
     expect(a.snapshot()).not.toBeNull();
     await a.room.leave();
+  });
+});
+
+describe('same room + same name = same character (owner request)', () => {
+  it('joining with the same name from another browser reuses the character and closes the old tab', async () => {
+    const code = await newWorld();
+    const a = await join(code, 'name-token-a', 'Bố');
+    await sleep(300);
+    a.room.send(MSG.buyCostume, { id: 'mu_dau_bep' });
+    await sleep(200);
+    const c = await join(code, 'name-token-c', '  bố ');
+    await sleep(400);
+    const s = c.snapshot()!;
+    expect(s.players).toHaveLength(1);
+    expect(s.players[0]).toMatchObject({ name: 'Bố', online: true });
+    expect(s.players[0].outfit.hat).toBe('mu_dau_bep');
+    expect(a.leaveCode()).toBe(4001);
+    // Tên khác → nhân vật mới.
+    const d = await join(code, 'name-token-d', 'Mẹ');
+    await sleep(300);
+    expect(d.snapshot()!.players.map((p) => p.name).sort()).toEqual(['Bố', 'Mẹ']);
+    await c.room.leave();
+    await d.room.leave();
   });
 });

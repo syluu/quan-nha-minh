@@ -87,7 +87,7 @@ function enterGame(conn: GameConnection) {
   conn.onStatus((st, code) => {
     if (st === 'reconnecting') hud.setStatus('Mất kết nối — đang kết nối lại…');
     else if (st === 'connected') hud.setStatus(null);
-    else if (code === 4001) hud.setStatus('Bạn đã mở quán ở tab khác. Tab này đã ngắt.');
+    else if (code === 4001) hud.setStatus('Nhân vật này vừa được mở ở tab/máy khác (cùng tên). Tab này đã ngắt.');
     else hud.setStatus('Đã ngắt kết nối. Tải lại trang để vào lại.');
   });
 }

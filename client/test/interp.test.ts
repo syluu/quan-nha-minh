@@ -48,17 +48,40 @@ describe('createPredictor', () => {
     expect(p.pose().x).toBe(2);
   });
 
-  it('eases 10% toward the server on small errors', () => {
+  it('standing still: glides smoothly to the server position, then settles exactly (no jitter)', () => {
     const p = createPredictor();
-    p.reconcile({ x: 0, z: 0 });
-    p.reconcile({ x: 0.5, z: 0 });
-    expect(p.pose().x).toBeCloseTo(0.05);
+    p.reconcile({ x: 0, z: 3 });
+    p.reconcile({ x: 0.5, z: 3 });
+    expect(p.pose().x).toBe(0); // không nhảy ngay khi có snapshot
+    const xs: number[] = [];
+    for (let i = 0; i < 60; i++) xs.push(p.step({ mx: 0, mz: 0 }, 1 / 60, () => true).x);
+    for (let i = 1; i < xs.length; i++) expect(xs[i]).toBeGreaterThanOrEqual(xs[i - 1]); // đi một chiều, không giật qua lại
+    expect(xs.at(-1)).toBe(0.5);
+    // Snapshot lặp lại cùng vị trí: đứng im tuyệt đối.
+    for (let i = 0; i < 30; i++) {
+      if (i % 6 === 0) p.reconcile({ x: 0.5, z: 3 });
+      expect(p.step({ mx: 0, mz: 0 }, 1 / 60, () => true).x).toBe(0.5);
+    }
+  });
+
+  it('uses the upgraded speed passed in, matching the server', () => {
+    const p = createPredictor();
+    p.reconcile({ x: 0, z: 3 });
+    // Máy chủ đi cùng tốc độ → đích luôn trùng vị trí dự đoán.
+    for (let i = 0; i < 30; i++) {
+      p.step({ mx: 1, mz: 0 }, 1 / 60, () => true, 3.2 * 1.5);
+      p.reconcile({ x: p.pose().x, z: 3 });
+    }
+    expect(p.pose().x).toBeCloseTo(2.4, 1);
   });
 
   it('moves locally with the shared movement rules', () => {
     const p = createPredictor();
     p.reconcile({ x: 0, z: 3 });
-    p.step({ mx: 1, mz: 0 }, 0.5, () => true);
-    expect(p.pose().x).toBeCloseTo(1.6);
+    for (let i = 0; i < 30; i++) {
+      p.step({ mx: 1, mz: 0 }, 1 / 60, () => true);
+      p.reconcile({ x: p.pose().x, z: 3 });
+    }
+    expect(p.pose().x).toBeCloseTo(1.6, 1);
   });
 });
