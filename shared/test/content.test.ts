@@ -207,3 +207,23 @@ describe('balance plan 3', () => {
       expect(BALANCE.STARTER_VALUES[s.instanceId], s.instanceId).toBeTypeOf('number');
   });
 });
+
+describe('pickup point (plan 4)', () => {
+  it('exists, costs 2.000K, and the shipper route from the street is clear', () => {
+    const shop = SHOPS.banh_mi;
+    const p = shop.stations.find((s) => getStationDef(s.def).kind === 'pickup')!;
+    expect(p).toBeDefined();
+    expect(p.unlockCost).toBe(2_000_000);
+    expect(p.shipperPoint).toBeDefined();
+    for (const s of shop.stations) {
+      const def = getStationDef(s.def);
+      const b = { minX: s.x - def.footprint.w / 2 - 0.2, maxX: s.x + def.footprint.w / 2 + 0.2, minZ: s.z - def.footprint.d / 2 - 0.2, maxZ: s.z + def.footprint.d / 2 + 0.2 };
+      expect(segmentHitsBox(shop.shipperSpawn, p.shipperPoint!, b), s.instanceId).toBe(false);
+    }
+  });
+  it('online balance numbers', () => {
+    expect(BALANCE.ONLINE).toMatchObject({ commission: 0.2, baseIntervalSec: 20, maxPending: 6, carUpgradeCost: 5_000_000 });
+    expect(BALANCE.ONLINE.bike).toMatchObject({ patience: 60, batch: 1 });
+    expect(BALANCE.ONLINE.car).toMatchObject({ patience: 90, batchMin: 2, batchMax: 5, waitOldest: 30 });
+  });
+});

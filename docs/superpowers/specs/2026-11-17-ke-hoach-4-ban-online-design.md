@@ -12,7 +12,7 @@ Ngày: 2026-11-17 · Trạng thái: **ĐÃ DUYỆT** (spec gốc §8.1 đã duy�
 - Có nút **tạm ngưng nhận đơn online** (không mất phí đăng ký).
 
 ## Quyết định của người viết [Đề xuất, chỉnh được]
-- **Đăng ký = mở ô trả tiền "Điểm giao hàng" 2.000K** (giống mở máy), đặt ở góc trước-trái quán gần vỉa hè; mở được ngay khi có kệ bánh mì. Shipper đi tới từ vỉa hè bên trái, đứng phía ngoài điểm giao.
+- **Đăng ký = mở ô trả tiền "Điểm giao hàng" 2.000K** (giống mở máy), đặt ở **cuối lối bếp bên phải** (cạnh cửa hông); mở được ngay khi có kệ bánh mì. Shipper đi từ đường bên phải tới, đứng ngay ngoài mép phải quán. (Ban đầu định đặt góc trước-trái nhưng như vậy nhân viên phải đi xuyên kệ.)
 - Đơn: 1–3 món (giống khách tại quán, có lọc theo giá), tối đa **6 đơn chờ**; nhịp đơn trung bình **20 giây/đơn** ở 3 sao, nhân theo giờ trong ngày, (hệ số sao)² và quảng cáo; chỉ nhận đơn khi quán đang mở (trước 21:30) và không tạm ngưng.
 - **Xe máy**: chờ **60 giây**, nhận 1 đơn. **Ô tô** (nâng cấp 5.000K): tới khi có ≥ 2 đơn (hoặc đơn cũ nhất đã chờ 30 giây), gom tối đa **5 đơn**, chờ **90 giây**.
 - Điểm giao nhận món khi shipper đang đứng chờ và còn đơn cần món đó. Người chơi nhặt từ máy (như cũ); **nhân viên giao đơn** lấy từ đầu ra của máy hoặc từ kệ.

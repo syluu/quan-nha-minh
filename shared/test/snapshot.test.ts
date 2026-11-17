@@ -39,7 +39,7 @@ describe('toSnapshot', () => {
     const w = createWorld('ABC-DEF', 3);
     joinPlayer(w, 'a', 'Bố');
     const s = toSnapshot(w, 'banh_mi');
-    expect(s.tiles.map((t) => t.instanceId).sort()).toEqual(['binh_tra', 'chao_op_la']);
+    expect(s.tiles.map((t) => t.instanceId).sort()).toEqual(['binh_tra', 'chao_op_la', 'diem_giao']);
     expect(s.tiles.find((t) => t.instanceId === 'chao_op_la')).toEqual({ instanceId: 'chao_op_la', cost: 800_000, paid: 0, occupantSec: 0 });
     expect(s.players).toHaveLength(1);
     expect(s.players[0]).toMatchObject({ id: 'a', name: 'Bố', online: true, carry: [] });

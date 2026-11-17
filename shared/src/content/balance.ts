@@ -67,6 +67,17 @@ export const BALANCE = {
   LOAN_ASSET_RATIO: 0.5,
   LOAN_STEP: K(100),
   LOAN_MIN: K(500),
+  /** Bán online qua app giao đồ ăn. */
+  ONLINE: {
+    commission: 0.2,
+    baseIntervalSec: 20,
+    maxPending: 6,
+    lastOrderHour: 21.5,
+    bike: { patience: 60, batch: 1, speed: 4 },
+    car: { patience: 90, batchMin: 2, batchMax: 5, waitOldest: 30, speed: 5 },
+    carUpgradeCost: K(5000),
+  },
+
   /** Bán máy thu về 50% (giá trị + tiền đã nâng cấp). */
   SELL_RATIO: 0.5,
   /** Số ngày giữ trong báo cáo. */

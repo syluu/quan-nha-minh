@@ -30,7 +30,8 @@ export type StationDef =
     }
   | { kind: 'display'; id: string; name: string; item: ItemId; cap: number; footprint: Footprint }
   | { kind: 'cashier'; id: string; name: string; footprint: Footprint }
-  | { kind: 'trash'; id: string; name: string; footprint: Footprint };
+  | { kind: 'trash'; id: string; name: string; footprint: Footprint }
+  | { kind: 'pickup'; id: string; name: string; footprint: Footprint };
 
 export interface PlacedStation {
   instanceId: string;
@@ -43,6 +44,8 @@ export interface PlacedStation {
   customerPoint?: { x: number; z: number };
   /** Chỗ người chơi/nhân viên đứng để dùng trạm (phía bếp). */
   workPoint: { x: number; z: number };
+  /** Chỗ shipper đứng chờ (chỉ điểm giao hàng). */
+  shipperPoint?: { x: number; z: number };
 }
 
 export interface ShopLayout {
@@ -52,6 +55,8 @@ export interface ShopLayout {
   entrance: { x: number; z: number };
   exit: { x: number; z: number };
   queueDir: { x: number; z: number };
+  /** Nơi shipper xuất hiện (ngoài đường). */
+  shipperSpawn: { x: number; z: number };
   stations: PlacedStation[];
   baseCustomerIntervalSec: number;
   /** [từ giờ, đến giờ, hệ số] */
@@ -83,6 +88,7 @@ const list: StationDef[] = [
   { kind: 'display', id: 'ke_bm_thit', name: 'Kệ bánh mì thịt', item: 'banh_mi_thit', cap: 8, footprint: SHELF },
   { kind: 'cashier', id: 'thu_ngan', name: 'Quầy thu ngân', footprint: SHELF },
   { kind: 'trash', id: 'thung_rac', name: 'Thùng rác', footprint: { w: 0.6, d: 0.6 } },
+  { kind: 'pickup', id: 'diem_giao', name: 'Điểm giao hàng', footprint: { w: 0.8, d: 0.6 } },
 ];
 
 export const STATIONS: Record<string, StationDef> = Object.fromEntries(list.map((d) => [d.id, d]));

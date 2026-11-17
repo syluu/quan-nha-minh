@@ -23,6 +23,7 @@ export const BANH_MI_SHOP: ShopLayout = {
   entrance: { x: 7.5, z: 5.2 },
   exit: { x: -7.5, z: 5.3 },
   queueDir: { x: 0, z: 1 },
+  shipperSpawn: { x: 10.5, z: 4.6 },
   baseCustomerIntervalSec: 4,
   hourCurve: [
     [6, 9, 1.8],
@@ -47,6 +48,12 @@ export const BANH_MI_SHOP: ShopLayout = {
 
     { instanceId: 'ban_bm_thit', def: 'ban_bm_thit', ...kitchen(3.75), unlockCost: K(2000), requires: ['ke_thit_nuong'] },
     { instanceId: 'ke_bm_thit', def: 'ke_bm_thit', ...shelf(1.25), unlockCost: K(300), requires: ['ban_bm_thit'] },
+
+    // Bán online: điểm giao ở cuối lối bếp bên phải, shipper đứng ngoài mép phải quán.
+    {
+      instanceId: 'diem_giao', def: 'diem_giao', x: 7.6, z: -1.85, workPoint: { x: 6.85, z: -1.85 },
+      shipperPoint: { x: 8.6, z: -1.85 }, unlockCost: K(2000), requires: ['ke_banh_mi'],
+    },
 
     { instanceId: 'binh_tra', def: 'binh_tra', ...kitchen(6.25), unlockCost: K(300), requires: ['ke_banh_mi'] },
     { instanceId: 'ke_tra_da', def: 'ke_tra_da', ...shelf(3.75), unlockCost: K(200), requires: ['binh_tra'] },
