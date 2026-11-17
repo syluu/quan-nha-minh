@@ -15,6 +15,7 @@ import { pricesTab } from './ui/menu/pricesTab';
 import { reportTab } from './ui/menu/reportTab';
 import { applyDisplaySettings, settingsTab } from './ui/menu/settingsTab';
 import { staffTab } from './ui/menu/staffTab';
+import { upgradesTab } from './ui/menu/upgradesTab';
 import { actionErrorText } from './ui/menu/views';
 import { showToast } from './ui/toast';
 
@@ -35,7 +36,13 @@ function enterGame(conn: GameConnection) {
   createMenu(
     ui,
     conn,
-    [reportTab(conn), staffTab(conn, () => latest), pricesTab(conn, () => latest), settingsTab(conn, myName)],
+    [
+      reportTab(conn),
+      staffTab(conn, () => latest),
+      upgradesTab(conn, () => latest, conn.playerId),
+      pricesTab(conn, () => latest),
+      settingsTab(conn, myName),
+    ],
     (open) => game.setInputEnabled(!open),
   );
   conn.onActionError((e) => showToast(ui, actionErrorText(e)));

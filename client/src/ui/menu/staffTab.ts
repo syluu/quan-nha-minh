@@ -1,45 +1,65 @@
 import type { Snapshot } from '@qnm/shared';
 import type { GameConnection } from '../../net';
 import type { MenuTab } from './menu';
+import type { StaffDetail } from './views';
 import { staffView } from './views';
 
-/** Tab Nhân sự: 1 thu ngân + mỗi món đang bán 1 phụ bếp; thuê / cho nghỉ. */
+/** Tab Nhân sự: 1 thu ngân + mỗi món đang bán 1 phụ bếp; thuê, nâng cấp từng người, cho nghỉ (có hỏi lại). */
 export function staffTab(conn: GameConnection, latest: () => Snapshot | null): MenuTab {
   return {
     id: 'staff',
     title: '👥 Nhân sự',
     mount(body) {
       let key = '';
+      let confirmId: string | null = null;
       const render = () => {
         const s = latest();
         if (!s) return;
         const v = staffView(s);
-        const k = JSON.stringify(v);
+        const k = JSON.stringify(v) + confirmId;
         if (k === key) return;
         key = k;
-        const row = (job: string, name: string | null, hire: string, fire: string | null) => `
-          <tr><td>${job}</td><td>${name ? `<b>${name}</b>` : '<span class="muted">Chưa có</span>'}</td>
-          <td class="act">${name ? `<button data-fire="${fire}">Cho nghỉ</button>` : `<button class="primary" data-hire="${hire}">Thuê</button>`}</td></tr>`;
+        const info = (d: StaffDetail | null) =>
+          d
+            ? `<div class="muted">Cấp ${d.level} · đi ${d.speedPct}% · mang ${d.carry} · lương ${d.wage}/ngày · đang nợ ${d.owed}</div>`
+            : '';
+        const actions = (name: string | null, id: string | null, d: StaffDetail | null, hire: string) => {
+          if (!name || !id) return `<button class="primary" data-hire="${hire}">Thuê</button>`;
+          if (confirmId === id)
+            return `<span class="confirm">Cho ${name} nghỉ? Trả ngay ${d?.owed ?? '0K'} lương.
+              <button class="primary" data-fire="${id}">Đồng ý</button><button data-cancel>Thôi</button></span>`;
+          return `${d?.nextTrain ? `<button data-train="${id}">Nâng cấp (${d.nextTrain})</button>` : '<span class="muted">Cấp tối đa</span>'}
+            <button data-ask="${id}">Cho nghỉ</button>`;
+        };
+        const row = (job: string, name: string | null, id: string | null, d: StaffDetail | null, hire: string) => `
+          <tr><td>${job}</td><td>${name ? `<b>${name}</b>${info(d)}` : '<span class="muted">Chưa có</span>'}</td>
+          <td class="act">${actions(name, id, d, hire)}</td></tr>`;
         body.innerHTML = `
           <h3>Nhân viên</h3>
           <table class="staff">
             <thead><tr><th>Việc</th><th>Người làm</th><th></th></tr></thead>
             <tbody>
-              ${row('Thu ngân — đứng quầy tính tiền', v.cashier.name, 'cashier', v.cashier.staffId)}
-              ${v.lines.map((l) => row(`Phụ bếp ${l.itemName} — bê từ máy ra kệ`, l.staffName, `cook:${l.item}`, l.staffId)).join('')}
+              ${row('Thu ngân — đứng quầy tính tiền', v.cashier.name, v.cashier.staffId, v.cashier.detail, 'cashier')}
+              ${v.lines.map((l) => row(`Phụ bếp ${l.itemName} — bê từ máy ra kệ`, l.staffName, l.staffId, l.detail, `cook:${l.item}`)).join('')}
             </tbody>
           </table>
-          <p class="note">Lương ${v.wagePerDay}/ngày/người, trả cuối ngày (thuê hay cho nghỉ giữa ngày vẫn tính cả ngày).
-          Nhân viên đi chậm hơn bạn (≈70%) và cầm tối đa 3 món. Mở thêm kệ để có thêm chỗ phụ bếp.
-          Cuối ngày không đủ tiền trả lương thì người chưa được trả sẽ nghỉ việc.</p>`;
+          <p class="note">Lương khởi điểm ${v.wagePerDay}/ngày, cộng dồn mỗi ngày và <b>trả cuối tháng</b> (7 ngày). Cho nghỉ thì trả ngay số ngày đã làm.
+          Nâng cấp từng người: đi nhanh hơn, mang nhiều hơn, lương +30K/ngày mỗi cấp. Cho nghỉ là mất cấp.</p>`;
         body.querySelectorAll<HTMLButtonElement>('[data-hire]').forEach((b) => {
           b.onclick = () => {
             const [role, item] = b.dataset.hire!.split(':');
             conn.hire(role as 'cashier' | 'cook', (item as never) ?? null);
           };
         });
+        body.querySelectorAll<HTMLButtonElement>('[data-train]').forEach((b) => (b.onclick = () => conn.upgradeStaff(b.dataset.train!)));
+        body.querySelectorAll<HTMLButtonElement>('[data-ask]').forEach((b) => (b.onclick = () => ((confirmId = b.dataset.ask!), render())));
+        body.querySelectorAll<HTMLButtonElement>('[data-cancel]').forEach((b) => (b.onclick = () => ((confirmId = null), render())));
         body.querySelectorAll<HTMLButtonElement>('[data-fire]').forEach((b) => {
-          b.onclick = () => conn.fire(b.dataset.fire!);
+          b.onclick = () => {
+            conn.fire(b.dataset.fire!);
+            confirmId = null;
+            render();
+          };
         });
       };
       render();

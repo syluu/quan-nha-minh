@@ -1,6 +1,6 @@
 import { Client } from '@colyseus/sdk';
 import { MSG } from '@qnm/shared';
-import type { ItemId, JoinOptions, Report, SimEvent, Snapshot, StaffRole, WelcomeMsg } from '@qnm/shared';
+import type { CampaignId, ItemId, JoinOptions, Report, SimEvent, Snapshot, StaffRole, WelcomeMsg } from '@qnm/shared';
 
 export type ConnStatus = 'connected' | 'reconnecting' | 'left';
 
@@ -21,6 +21,13 @@ export interface GameConnection {
   fire(staffId: string): void;
   setPrice(item: ItemId, price: number): void;
   rename(name: string): void;
+  upgradePlayer(kind: 'carry' | 'speed'): void;
+  upgradeStaff(staffId: string): void;
+  upgradeMachine(instanceId: string): void;
+  runCampaign(campaign: CampaignId): void;
+  takeLoan(amount: number, months: number): void;
+  repayLoan(loanId: string): void;
+  sellStation(instanceId: string): void;
 }
 
 export function serverEndpoint(): string {
@@ -76,5 +83,12 @@ export async function connect(opts: JoinOptions): Promise<GameConnection> {
     fire: (staffId) => room.send(MSG.fire, { staffId }),
     setPrice: (item, price) => room.send(MSG.setPrice, { item, price }),
     rename: (name) => room.send(MSG.rename, { name }),
+    upgradePlayer: (kind) => room.send(MSG.upgradePlayer, { kind }),
+    upgradeStaff: (staffId) => room.send(MSG.upgradeStaff, { staffId }),
+    upgradeMachine: (instanceId) => room.send(MSG.upgradeMachine, { instanceId }),
+    runCampaign: (campaign) => room.send(MSG.runCampaign, { campaign }),
+    takeLoan: (amount, months) => room.send(MSG.takeLoan, { amount, months }),
+    repayLoan: (loanId) => room.send(MSG.repayLoan, { loanId }),
+    sellStation: (instanceId) => room.send(MSG.sellStation, { instanceId }),
   };
 }

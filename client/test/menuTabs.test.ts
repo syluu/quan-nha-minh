@@ -18,9 +18,9 @@ function snap(): Snapshot {
 describe('staffView', () => {
   it('shows the cashier slot and one line per open shelf', () => {
     const v = staffView(snap());
-    expect(v.cashier).toEqual({ name: 'Lan', staffId: 's1', canHire: false });
+    expect(v.cashier).toMatchObject({ name: 'Lan', staffId: 's1', canHire: false });
     expect(v.lines.map((l) => l.item)).toEqual(['banh_mi', 'banh_mi_trung']);
-    expect(v.lines[0]).toEqual({ item: 'banh_mi', itemName: 'Bánh mì', staffName: null, staffId: null });
+    expect(v.lines[0]).toEqual({ item: 'banh_mi', itemName: 'Bánh mì', staffName: null, staffId: null, detail: null });
     expect(v.wagePerDay).toBe('120K');
   });
 });
@@ -39,7 +39,8 @@ describe('actionErrorText', () => {
     expect(actionErrorText('NO_SLOT')).toBe('Đã đủ người cho việc này');
     expect(actionErrorText('LINE_TAKEN')).toBe('Món này đã có người phụ trách');
     expect(actionErrorText('BAD_ITEM')).toBe('Món này chưa bán');
-    expect(actionErrorText('NOT_FOUND')).toBe('Không tìm thấy nhân viên');
+    expect(actionErrorText('NOT_FOUND')).toBe('Không tìm thấy');
+    expect(actionErrorText('NO_MONEY')).toBe('Không đủ tiền');
     expect(actionErrorText('???')).toBe('Không thực hiện được');
   });
 });
