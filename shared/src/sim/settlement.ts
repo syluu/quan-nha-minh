@@ -5,6 +5,7 @@ import { maxLoan, stationValue } from './bank';
 import { formatK } from '../money';
 import type { SimEvent } from './events';
 import { addLog, playerName } from './log';
+import { clearOnline } from './online';
 import { createWorld } from './world';
 import type { Loan, Settlement, WorldState } from './world';
 
@@ -105,9 +106,11 @@ export function sellableStations(world: WorldState, shopId: ShopId): { instanceI
   const layout = SHOPS[shopId];
   // Kệ và máy làm món của một dây chuyền đang có phụ bếp: không bán (phụ bếp sẽ mất việc mà vẫn ăn lương).
   const staffedLines = new Set(shop.staff.filter((s) => s.role === 'cook' && s.item).map((s) => s.item));
+  const hasCourier = shop.staff.some((s) => s.role === 'courier');
   const busy = (def: ReturnType<typeof getStationDef>) =>
     (def.kind === 'display' && staffedLines.has(def.item)) ||
-    ((def.kind === 'producer' || def.kind === 'assembler') && staffedLines.has(def.output));
+    ((def.kind === 'producer' || def.kind === 'assembler') && staffedLines.has(def.output)) ||
+    (def.kind === 'pickup' && hasCourier);
   return layout.stations
     .filter((p) => p.unlockCost > 0 && shop.stations[p.instanceId].unlocked && !busy(getStationDef(p.def)))
     .filter((p) => !layout.stations.some((o) => shop.stations[o.instanceId].unlocked && o.requires.includes(p.instanceId)))
@@ -136,6 +139,7 @@ export function sellStation(world: WorldState, shopId: ShopId, instanceId: unkno
   });
   world.money += refund;
   const placed = SHOPS[shopId].stations.find((p) => p.instanceId === instanceId)!;
+  if (getStationDef(placed.def).kind === 'pickup') clearOnline(world, shopId);
   addLog(world, `${playerName(world, byPlayerId)} đã bán ${getStationDef(placed.def).name}, thu ${formatK(refund)}`);
   trySettleAfterAction(world);
   return { ok: true };

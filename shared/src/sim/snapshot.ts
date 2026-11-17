@@ -3,6 +3,7 @@ import type { ShopId } from '../content';
 import type { Snapshot } from '../net/protocol';
 import { maxLoan } from './bank';
 import { migrateV1toV2, migrateV2toV3, migrateV3toV4 } from './migrate';
+import { onlineSnapshot } from './online';
 import { sellableStations } from './settlement';
 import { isTileVisible } from './payTiles';
 import { effectiveStars } from './marketing';
@@ -38,6 +39,7 @@ export function toSnapshot(world: WorldState, shopId: ShopId): Snapshot {
     maxLoan: maxLoan(world),
     settlement: world.settlement ? { ...world.settlement } : null,
     sellable: world.settlement ? sellableStations(world, shopId) : [],
+    online: onlineSnapshot(world, shopId),
     prices: { ...shop.prices },
     customers: shop.customers.map((c) => ({ id: c.id, x: c.x, z: c.z, dir: c.dir, holding: [...c.holding] })),
     stations: layout.stations.map((placed) => {

@@ -164,3 +164,59 @@ describe('shipper and delivery', async () => {
     expect(w.money).toBe(money + 4000);
   });
 });
+
+describe('online actions and snapshot', async () => {
+  const { setOnlinePaused, upgradePickup } = await import('../src/sim/online');
+  const { sellStation, buildSettlement, sellableStations } = await import('../src/sim/settlement');
+  const { toSnapshot } = await import('../src/sim/snapshot');
+  const { hireStaff } = await import('../src/sim/staff');
+
+  it('pause / resume taking orders', () => {
+    const w = onlineWorld();
+    expect(setOnlinePaused(w, 'banh_mi', true, 'a')).toEqual({ ok: true });
+    expect(w.shops.banh_mi.onlinePaused).toBe(true);
+    expect(w.log.at(-1)?.text).toBe('Bố tạm ngưng nhận đơn online');
+    expect(setOnlinePaused(w, 'banh_mi', 'yes', 'a')).toEqual({ ok: false, error: 'BAD_AMOUNT' });
+    w.shops.banh_mi.stations.diem_giao.unlocked = false;
+    expect(setOnlinePaused(w, 'banh_mi', false, 'a')).toEqual({ ok: false, error: 'BAD_ITEM' });
+  });
+
+  it('upgrade to a car pick-up for 5.000K, once', () => {
+    const w = onlineWorld();
+    const before = w.money;
+    expect(upgradePickup(w, 'banh_mi', 'a')).toEqual({ ok: true });
+    expect(w.money).toBe(before - 5_000_000);
+    expect(w.shops.banh_mi.stations.diem_giao).toMatchObject({ level: 1, upgradeSpent: 5_000_000 });
+    expect(upgradePickup(w, 'banh_mi', 'a')).toEqual({ ok: false, error: 'MAXED' });
+  });
+
+  it('selling the pickup point clears waiting orders and the shipper (Review Focus 3)', () => {
+    const w = onlineWorld();
+    w.shops.banh_mi.orders.push({ id: 1, items: ['banh_mi'], delivered: [], total: 5000, createdSec: 0 });
+    w.shops.banh_mi.shipper = { vehicle: 'bike', x: 8.6, z: -1.85, dir: 0, state: 'waiting', orderIds: [1], waited: 5 };
+    w.settlement = buildSettlement(w);
+    expect(sellStation(w, 'banh_mi', 'diem_giao', 'a')).toEqual({ ok: true });
+    expect(w.shops.banh_mi.orders).toEqual([]);
+    expect(w.shops.banh_mi.shipper).toBeNull();
+  });
+
+  it('is not sellable while a courier works there', () => {
+    const w = onlineWorld();
+    hireStaff(w, 'banh_mi', 'courier', null, 'a');
+    expect(sellableStations(w, 'banh_mi').map((s) => s.instanceId)).not.toContain('diem_giao');
+  });
+
+  it('snapshot shows online status, pending orders and what the shipper needs', () => {
+    const w = onlineWorld();
+    w.shops.banh_mi.orders.push(
+      { id: 1, items: ['banh_mi', 'banh_mi'], delivered: ['banh_mi'], total: 10_000, createdSec: 0 },
+      { id: 2, items: ['banh_mi'], delivered: [], total: 5000, createdSec: 0 },
+    );
+    w.shops.banh_mi.shipper = { vehicle: 'bike', x: 8.6, z: -1.85, dir: 0, state: 'waiting', orderIds: [1], waited: 12 };
+    const s = toSnapshot(w, 'banh_mi');
+    expect(s.online).toMatchObject({
+      registered: true, paused: false, vehicle: 'bike', pending: 1, ordersToday: 0, cancelledToday: 0,
+      shipper: { vehicle: 'bike', state: 'waiting', needs: ['banh_mi'], waited: 12, patience: 60 },
+    });
+  });
+});

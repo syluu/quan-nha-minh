@@ -1,6 +1,9 @@
 import { BALANCE, SHOPS, getStationDef, itemCost } from '../content';
 import type { ItemId, PlacedStation, ShopId } from '../content';
+import { formatK } from '../money';
+import type { ActionResult } from './actions';
 import type { SimEvent } from './events';
+import { addLog, playerName } from './log';
 import { pushRating } from './rating';
 import { chooseWants, hourMultiplier, priceOf, trafficMultiplier } from './customers';
 import { effectiveStars, marketingMultiplier } from './marketing';
@@ -173,4 +176,56 @@ export function tickShipper(world: WorldState, shopId: ShopId, dt: number): SimE
     shop.shipper = null;
   }
   return events;
+}
+
+// ───────────────────────── Thao tác người chơi ─────────────────────────
+
+export function setOnlinePaused(world: WorldState, shopId: ShopId, paused: unknown, byPlayerId: string): ActionResult {
+  if (typeof paused !== 'boolean') return { ok: false, error: 'BAD_AMOUNT' };
+  const p = pickupOf(shopId);
+  if (!p || !world.shops[shopId].stations[p.instanceId].unlocked) return { ok: false, error: 'BAD_ITEM' };
+  if (world.shops[shopId].onlinePaused === paused) return { ok: true };
+  world.shops[shopId].onlinePaused = paused;
+  addLog(world, `${playerName(world, byPlayerId)} ${paused ? 'tạm ngưng' : 'mở lại'} nhận đơn online`);
+  return { ok: true };
+}
+
+/** Nâng điểm giao lên "điểm đón ô tô": shipper ô tô gom nhiều đơn một lúc. */
+export function upgradePickup(world: WorldState, shopId: ShopId, byPlayerId: string): ActionResult {
+  if (world.settlement) return { ok: false, error: 'PAUSED' };
+  const p = pickupOf(shopId);
+  const st = p && world.shops[shopId].stations[p.instanceId];
+  if (!st || !st.unlocked) return { ok: false, error: 'BAD_ITEM' };
+  if (st.level >= 1) return { ok: false, error: 'MAXED' };
+  const cost = BALANCE.ONLINE.carUpgradeCost;
+  if (world.money < cost) return { ok: false, error: 'NO_MONEY' };
+  world.money -= cost;
+  st.level = 1;
+  st.upgradeSpent += cost;
+  addLog(world, `${playerName(world, byPlayerId)} nâng điểm giao lên điểm đón ô tô (${formatK(cost)})`);
+  return { ok: true };
+}
+
+/** Bán điểm giao: huỷ sạch đơn đang chờ và shipper. */
+export function clearOnline(world: WorldState, shopId: ShopId): void {
+  world.shops[shopId].orders = [];
+  world.shops[shopId].shipper = null;
+}
+
+export function onlineSnapshot(world: WorldState, shopId: ShopId) {
+  const shop = world.shops[shopId];
+  const p = pickupOf(shopId);
+  const s = shop.shipper;
+  const cfg = s ? (s.vehicle === 'bike' ? BALANCE.ONLINE.bike : BALANCE.ONLINE.car) : null;
+  return {
+    registered: !!p && shop.stations[p.instanceId].unlocked,
+    paused: shop.onlinePaused,
+    vehicle: vehicleOf(world, shopId),
+    pending: shop.orders.filter((o) => !s?.orderIds.includes(o.id)).length,
+    shipper: s
+      ? { vehicle: s.vehicle, x: s.x, z: s.z, dir: s.dir, state: s.state, needs: pickupNeeds(shop), waited: s.waited, patience: cfg!.patience }
+      : null,
+    ordersToday: world.dayStats.onlineOrders,
+    cancelledToday: world.dayStats.onlineCancelled,
+  };
 }

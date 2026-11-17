@@ -20,7 +20,13 @@ export const MSG = {
   takeLoan: 'takeLoan',
   repayLoan: 'repayLoan',
   sellStation: 'sellStation',
+  setOnlinePaused: 'setOnlinePaused',
+  upgradePickup: 'upgradePickup',
 } as const;
+
+export interface SetOnlinePausedMsg {
+  paused: boolean;
+}
 
 export interface UpgradePlayerMsg {
   kind: 'carry' | 'speed';
@@ -118,6 +124,19 @@ export interface Snapshot {
   settlement: Settlement | null;
   /** Máy bán được (chỉ có khi đang kết toán). */
   sellable: { instanceId: string; refund: number }[];
+  online: {
+    registered: boolean;
+    paused: boolean;
+    vehicle: 'bike' | 'car';
+    /** Đơn chưa có shipper nhận. */
+    pending: number;
+    shipper: {
+      vehicle: 'bike' | 'car'; x: number; z: number; dir: number; state: 'arriving' | 'waiting' | 'leaving';
+      needs: ItemId[]; waited: number; patience: number;
+    } | null;
+    ordersToday: number;
+    cancelledToday: number;
+  };
   prices: Partial<Record<ItemId, number>>;
   customers: { id: number; x: number; z: number; dir: number; holding: ItemId[] }[];
   stations: {
