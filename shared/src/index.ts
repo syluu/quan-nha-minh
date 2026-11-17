@@ -23,3 +23,4 @@ export * from './sim/settlement';
 export * from './sim/bank';
 export * from './sim/upgrades';
 export * from './sim/marketing';
+export * from './sim/online';

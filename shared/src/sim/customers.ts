@@ -60,17 +60,18 @@ function pickWeighted<T>(world: WorldState, list: T[], weight: (t: T) => number)
   return list[list.length - 1];
 }
 
-/** Sinh một khách ở lối vào và quyết định họ muốn mua gì theo giá. */
-export function spawnCustomer(world: WorldState, shopId: ShopId): Customer | null {
+/**
+ * Chọn món một người mua muốn (1–3 món đang bán, theo độ thích từng món), rồi bỏ món đắt hơn giá họ chấp nhận.
+ * Dùng chung cho khách tại quán và đơn online.
+ */
+export function chooseWants(world: WorldState, shopId: ShopId): { candidates: ItemId[]; kept: ItemId[] } {
   const shop = world.shops[shopId];
-  const layout = SHOPS[shopId];
   const candidates = (Object.keys(ITEMS) as ItemId[]).filter((it) => {
     if (!ITEMS[it].sellable) return false;
     const d = displayFor(shopId, it);
     return d !== undefined && shop.stations[d.instanceId].unlocked;
   });
-  if (candidates.length === 0) return null;
-
+  if (candidates.length === 0) return { candidates, kept: [] };
   const weights = BALANCE.ITEMS_PER_CUSTOMER_WEIGHTS;
   const n = Math.min(pickWeighted(world, [1, 2, 3], (k) => weights[k - 1]), candidates.length);
   const pool = [...candidates];
@@ -81,6 +82,15 @@ export function spawnCustomer(world: WorldState, shopId: ShopId): Customer | nul
     const wtp = ITEMS[item].basePrice * (BALANCE.WTP_MIN + nextRandom(world) * (BALANCE.WTP_MAX - BALANCE.WTP_MIN));
     if (priceOf(shop, item) <= wtp) kept.push(item);
   }
+  return { candidates, kept };
+}
+
+/** Sinh một khách ở lối vào và quyết định họ muốn mua gì theo giá. */
+export function spawnCustomer(world: WorldState, shopId: ShopId): Customer | null {
+  const shop = world.shops[shopId];
+  const layout = SHOPS[shopId];
+  const { candidates, kept } = chooseWants(world, shopId);
+  if (candidates.length === 0) return null;
 
   const c: Customer = {
     id: shop.nextCustomerId++,
