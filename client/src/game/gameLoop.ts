@@ -6,6 +6,7 @@ import type { GameConnection } from '../net';
 import { createFollowCamera } from '../render/camera';
 import { createCharacter } from '../render/characters';
 import { createPickRing } from '../render/pickRing';
+import { createShipperView } from '../render/shipper';
 import type { CharacterView } from '../render/characters';
 import { createScene } from '../render/scene';
 import { createStationView } from '../render/stations';
@@ -39,6 +40,7 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
   const customers = new Map<number, CharacterView>();
   const staffViews = new Map<string, CharacterView>();
   const pickRing = createPickRing(scene);
+  const shipperView = createShipperView(scene);
   const lastPos = new Map<string, { x: number; z: number }>();
   let latest: Snapshot | null = null;
   let cameraSnapped = false;
@@ -137,6 +139,8 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
         v.setCarry(st.carry, BALANCE.STAFF_LEVELS[st.level - 1]?.carry ?? BALANCE.STAFF_LEVELS[0].carry);
       }
       for (const [id, v] of staffViews) if (!seenS.has(id)) (v.dispose(), staffViews.delete(id), lastPos.delete(`s${id}`));
+
+      shipperView.update(latest?.online.shipper ?? null, dt);
 
       // Vòng tiến trình nhặt món của chính mình
       const meSnap = latest?.players.find((p) => p.id === conn.playerId);

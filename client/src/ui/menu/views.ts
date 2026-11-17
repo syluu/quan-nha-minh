@@ -161,3 +161,11 @@ export function bankView(s: Snapshot) {
     daysToMonthEnd: s.daysToMonthEnd,
   };
 }
+
+/** Bong bóng trên đầu shipper: "Cần: 2 Bánh mì, 1 Trà đá". */
+export function needsText(items: ItemId[]): string {
+  if (!items.length) return 'Đủ rồi, cảm ơn!';
+  const counts = new Map<ItemId, number>();
+  for (const it of items) counts.set(it, (counts.get(it) ?? 0) + 1);
+  return `Cần: ${[...counts].map(([it, n]) => `${n} ${ITEMS[it].name}`).join(', ')}`;
+}

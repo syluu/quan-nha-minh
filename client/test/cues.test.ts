@@ -48,3 +48,15 @@ describe('settings', () => {
     expect(loadSettings()).toEqual({ music: 1, sfx: 0.7, muted: false, showHint: true });
   });
 });
+
+describe('online sounds and text', async () => {
+  const { needsText } = await import('../src/ui/menu/views');
+  it('orders done ring the till, cancelled orders sound sad', () => {
+    expect(cuesFor(0, 0, [{ type: 'orderDone', shopId: 'banh_mi', net: 4000, x: 0, z: 0 }], 'me')).toEqual(['cash']);
+    expect(cuesFor(0, 0, [{ type: 'orderCancelled', shopId: 'banh_mi', x: 0, z: 0 }], 'me')).toEqual(['lost']);
+  });
+  it('describes what the shipper still needs', () => {
+    expect(needsText(['banh_mi', 'tra_da', 'banh_mi'])).toBe('Cần: 2 Bánh mì, 1 Trà đá');
+    expect(needsText([])).toBe('Đủ rồi, cảm ơn!');
+  });
+});

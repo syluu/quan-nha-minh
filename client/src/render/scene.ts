@@ -42,6 +42,12 @@ export function createScene(container: HTMLElement) {
   walk.position.set(0, -0.01, b.maxZ + 3.5);
   scene.add(walk);
 
+  // Đường bên phải quán (shipper đi tới điểm giao hàng).
+  const road = new THREE.Mesh(new THREE.PlaneGeometry(4, d + 7), new THREE.MeshLambertMaterial({ color: 0x8e8a82 }));
+  road.rotation.x = -Math.PI / 2;
+  road.position.set(b.maxX + 2, -0.012, (b.minZ + b.maxZ) / 2 + 3.5);
+  scene.add(road);
+
   const wall = box(w, 2.2, 0.3, 0xc9a27a);
   wall.position.set(0, 1.1, b.minZ - 0.15);
   scene.add(wall);

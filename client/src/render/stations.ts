@@ -67,6 +67,16 @@ export function createStationView(placed: PlacedStation): StationView {
     const glass = box(w * 0.96, 0.05, d * 0.96, 0x8a5426);
     glass.position.y = 0.87;
     group.add(body, glass);
+  } else if (def.kind === 'pickup') {
+    topY = 0.8;
+    const desk = box(w, 0.8, d, 0x1fa34a);
+    desk.position.y = 0.4;
+    const top = box(w * 1.05, 0.06, d * 1.05, 0xf2f2f2);
+    top.position.y = 0.82;
+    group.add(desk, top);
+    const sign = makeLabel('🛵 Giao hàng', { bg: '#1f8a3a', size: 30, scale: 0.006 });
+    sign.position.set(0, 1.5, 0);
+    group.add(sign);
   } else if (def.kind === 'trash') {
     topY = 0.7;
     const bin = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.23, 0.62, 12), mat(0x6b7a6e));
