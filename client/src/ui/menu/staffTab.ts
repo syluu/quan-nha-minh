@@ -40,6 +40,7 @@ export function staffTab(conn: GameConnection, latest: () => Snapshot | null): M
             <thead><tr><th>Việc</th><th>Người làm</th><th></th></tr></thead>
             <tbody>
               ${row('Thu ngân — đứng quầy tính tiền', v.cashier.name, v.cashier.staffId, v.cashier.detail, 'cashier')}
+              ${v.courier ? row('Giao đơn — bê món ra cho shipper', v.courier.name, v.courier.staffId, v.courier.detail, 'courier') : ''}
               ${v.lines.map((l) => row(`Phụ bếp ${l.itemName} — bê từ máy ra kệ`, l.staffName, l.staffId, l.detail, `cook:${l.item}`)).join('')}
             </tbody>
           </table>

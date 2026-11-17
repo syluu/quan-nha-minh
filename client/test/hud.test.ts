@@ -37,10 +37,12 @@ describe('summaryRows', () => {
       ['Doanh thu', '1.250K'],
       ['Tiền nguyên liệu', '-480K'],
       ['Lương nhân viên', '-300K'],
+      ['Hoa hồng app', '0K'],
       ['Lãi hoạt động', '770K'],
       ['Hàng bỏ thùng rác', '-6K'],
       ['Chi mở rộng', '-800K'],
       ['Khách đã phục vụ', '86'],
+      ['Đơn online (huỷ)', '0 (0)'],
       ['Khách bỏ về', '4'],
       ['Đánh giá', '★ 4,2'],
     ]);

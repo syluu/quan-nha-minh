@@ -33,10 +33,12 @@ export function upgradesTab(conn: GameConnection, latest: () => Snapshot | null,
             ${v.machines
               .map((m) => row(m.name, bar(m.level, m.max), `${m.cycle} · ${m.cap}`, null, m.cost, `data-machine="${m.instanceId}"`))
               .join('')}
+            ${v.pickup ? row('Điểm giao hàng', v.pickup.vehicle, v.pickup.cost ? 'Xe máy: 1 đơn/lần' : 'Ô tô: gom nhiều đơn', v.pickup.cost ? 'Ô tô gom 2–5 đơn' : null, v.pickup.cost, 'data-pickup') : ''}
           </tbody></table>
           <p class="note">Mỗi cấp máy làm nhanh hơn 15% và chứa thêm 50% món. Nhân viên nâng cấp trong tab Nhân sự. Tiền lấy từ ví chung của quán.</p>`;
         body.querySelectorAll<HTMLButtonElement>('[data-me]').forEach((b) => (b.onclick = () => conn.upgradePlayer(b.dataset.me as 'carry' | 'speed')));
         body.querySelectorAll<HTMLButtonElement>('[data-machine]').forEach((b) => (b.onclick = () => conn.upgradeMachine(b.dataset.machine!)));
+        body.querySelectorAll<HTMLButtonElement>('[data-pickup]').forEach((b) => (b.onclick = () => conn.upgradePickup()));
       };
       render();
       const t = setInterval(render, 300);

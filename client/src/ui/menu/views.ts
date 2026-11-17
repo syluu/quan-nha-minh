@@ -43,12 +43,19 @@ function staffDetail(x: Snapshot['staff'][number] | undefined): StaffDetail | nu
 
 export function staffView(s: Snapshot): {
   cashier: { name: string | null; staffId: string | null; canHire: boolean; detail: StaffDetail | null };
+  courier: { name: string | null; staffId: string | null; canHire: boolean; detail: StaffDetail | null } | null;
   lines: { item: ItemId; itemName: string; staffName: string | null; staffId: string | null; detail: StaffDetail | null }[];
   wagePerDay: string;
 } {
   const cashier = s.staff.find((x) => x.role === 'cashier');
   return {
     cashier: { name: cashier?.name ?? null, staffId: cashier?.id ?? null, canHire: !cashier, detail: staffDetail(cashier) },
+    courier: s.online.registered
+      ? (() => {
+          const c = s.staff.find((x) => x.role === 'courier');
+          return { name: c?.name ?? null, staffId: c?.id ?? null, canHire: !c, detail: staffDetail(c) };
+        })()
+      : null,
     lines: openItems(s).map((item) => {
       const cook = s.staff.find((x) => x.role === 'cook' && x.item === item);
       return { item, itemName: ITEMS[item].name, staffName: cook?.name ?? null, staffId: cook?.id ?? null, detail: staffDetail(cook) };
@@ -126,6 +133,12 @@ export function upgradeView(s: Snapshot, myId: string) {
       },
     },
     machines,
+    pickup: s.online.registered
+      ? {
+          vehicle: s.online.vehicle === 'car' ? 'Ô tô' : 'Xe máy',
+          cost: s.online.vehicle === 'car' ? null : formatK(BALANCE.ONLINE.carUpgradeCost),
+        }
+      : null,
   };
 }
 
@@ -168,4 +181,20 @@ export function needsText(items: ItemId[]): string {
   const counts = new Map<ItemId, number>();
   for (const it of items) counts.set(it, (counts.get(it) ?? 0) + 1);
   return `Cần: ${[...counts].map(([it, n]) => `${n} ${ITEMS[it].name}`).join(', ')}`;
+}
+
+/** Mục "Bán online" trong tab Quảng cáo. */
+export function onlineView(s: Snapshot) {
+  const o = s.online;
+  return {
+    registered: o.registered,
+    paused: o.paused,
+    status: !o.registered ? 'Chưa đăng ký' : o.paused ? 'Đang tạm ngưng' : 'Đang nhận đơn',
+    vehicle: o.vehicle === 'car' ? `Ô tô (gom ${BALANCE.ONLINE.car.batchMin}–${BALANCE.ONLINE.car.batchMax} đơn)` : 'Xe máy (1 đơn/lần)',
+    pending: o.pending,
+    ordersToday: o.ordersToday,
+    cancelledToday: o.cancelledToday,
+    commission: `${Math.round(BALANCE.ONLINE.commission * 100)}%`,
+    hint: o.registered ? '' : 'Mở ô "Điểm giao hàng" (2.000K) ở cuối lối bếp bên phải để bắt đầu nhận đơn.',
+  };
 }

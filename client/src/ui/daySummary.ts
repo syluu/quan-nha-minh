@@ -7,10 +7,12 @@ export function summaryRows(d: DaySummary): [string, string][] {
     ['Doanh thu', formatK(d.revenue)],
     ['Tiền nguyên liệu', formatK(-d.ingredientCost)],
     ['Lương nhân viên', formatK(-d.wages)],
+    ['Hoa hồng app', formatK(-(d.commission ?? 0))],
     ['Lãi hoạt động', formatK(d.operatingProfit)],
     ['Hàng bỏ thùng rác', formatK(-d.wasted)],
     ['Chi mở rộng', formatK(-d.unlockSpend)],
     ['Khách đã phục vụ', String(d.served)],
+    ['Đơn online (huỷ)', `${d.onlineOrders ?? 0} (${d.onlineCancelled ?? 0})`],
     ['Khách bỏ về', String(d.lost)],
     ['Đánh giá', formatStars(d.stars)],
   ];

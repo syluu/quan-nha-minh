@@ -28,6 +28,8 @@ export interface GameConnection {
   takeLoan(amount: number, months: number, forMonth?: number): void;
   repayLoan(loanId: string): void;
   sellStation(instanceId: string, forMonth?: number): void;
+  setOnlinePaused(paused: boolean): void;
+  upgradePickup(): void;
 }
 
 export function serverEndpoint(): string {
@@ -90,5 +92,7 @@ export async function connect(opts: JoinOptions): Promise<GameConnection> {
     takeLoan: (amount, months, forMonth) => room.send(MSG.takeLoan, { amount, months, forMonth }),
     repayLoan: (loanId) => room.send(MSG.repayLoan, { loanId }),
     sellStation: (instanceId, forMonth) => room.send(MSG.sellStation, { instanceId, forMonth }),
+    setOnlinePaused: (paused) => room.send(MSG.setOnlinePaused, { paused }),
+    upgradePickup: () => room.send(MSG.upgradePickup, {}),
   };
 }

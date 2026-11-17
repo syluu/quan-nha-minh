@@ -14,8 +14,8 @@ describe('reportRows', () => {
     const r: Report = { history: [day(1, 500_000, 100_000), day(2, 800_000, 400_000)], today: day(3, 50_000, -350_000), months: [] };
     const rows = reportRows(r);
     expect(rows.map((x) => x.day)).toEqual(['Hôm nay (ngày 3)', 'Ngày 2', 'Ngày 1']);
-    expect(rows[1].cells).toEqual(['800K', '-100K', '-300K', '-2K', '400K', '0K', '10', '1', '★ 4,2']);
-    expect(rows[0].cells[4]).toBe('-350K');
+    expect(rows[1].cells).toEqual(['800K', '-100K', '-300K', '-2K', '0K', '400K', '0K', '10', '0', '1', '★ 4,2']);
+    expect(rows[0].cells[5]).toBe('-350K'); // cột Lãi hoạt động (sau cột Hoa hồng)
   });
 });
 
