@@ -10,6 +10,8 @@ import {
   repayLoan,
   runCampaign,
   sellStation,
+  setOnlinePaused,
+  upgradePickup,
   takeLoan,
   upgradeMachine,
   upgradePlayer,
@@ -27,7 +29,7 @@ import {
 } from '@qnm/shared';
 import type {
   ActionResult, FireMsg, HireMsg, InputMsg, JoinOptions, RenameMsg, RepayLoanMsg, RunCampaignMsg, SellStationMsg, SetPriceMsg,
-  TakeLoanMsg, UpgradeMachineMsg, UpgradePlayerMsg, UpgradeStaffMsg, WorldState,
+  SetOnlinePausedMsg, TakeLoanMsg, UpgradeMachineMsg, UpgradePlayerMsg, UpgradeStaffMsg, WorldState,
 } from '@qnm/shared';
 import type { WorldStore } from '../persistence';
 
@@ -114,6 +116,8 @@ export class WorldRoom extends Room {
     act<TakeLoanMsg>(MSG.takeLoan, (pid, m) => takeLoan(this.world, m.amount, m.months, pid, m.forMonth));
     act<RepayLoanMsg>(MSG.repayLoan, (pid, m) => repayLoan(this.world, m.loanId, pid));
     act<SellStationMsg>(MSG.sellStation, (pid, m) => sellStation(this.world, 'banh_mi', m.instanceId, pid, m.forMonth));
+    act<SetOnlinePausedMsg>(MSG.setOnlinePaused, (pid, m) => setOnlinePaused(this.world, 'banh_mi', m.paused, pid));
+    act<Record<string, never>>(MSG.upgradePickup, (pid) => upgradePickup(this.world, 'banh_mi', pid));
     this.onMessage(MSG.getReport, (client: Client) => {
       if (this.ownedPlayer(client)) client.send(MSG.report, buildReport(this.world));
     });

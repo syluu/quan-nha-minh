@@ -219,3 +219,21 @@ describe('month-end settlement over the network', () => {
     await a.room.leave();
   });
 });
+
+describe('plan 4 messages', () => {
+  it('pausing online orders and upgrading the pickup go through', async () => {
+    const code = await newWorld();
+    const raw = (await store.load(code)) as Record<string, any>;
+    raw.shops.banh_mi.stations.diem_giao.unlocked = true;
+    raw.money = 10_000_000;
+    await store.save(raw as never);
+    const a = await join(code, 'p4-token', 'Bố');
+    await sleep(300);
+    expect(a.snapshot()!.online.registered).toBe(true);
+    a.room.send(MSG.setOnlinePaused, { paused: true });
+    a.room.send(MSG.upgradePickup, {});
+    await sleep(400);
+    expect(a.snapshot()!.online).toMatchObject({ paused: true, vehicle: 'car' });
+    await a.room.leave();
+  });
+});
