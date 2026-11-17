@@ -9,16 +9,16 @@ function endDay(w: ReturnType<typeof createWorld>) {
 }
 
 describe('day end v2', () => {
-  it('pays 300K per staff member and subtracts wages from operating profit', () => {
+  it('pays 120K per staff member and subtracts wages from operating profit', () => {
     const w = createWorld('X', 1);
     putStaff(w, 'Lan', 'cashier');
     putStaff(w, 'Hùng');
     w.dayStats.revenue = 1_000_000;
     w.dayStats.ingredientCost = 200_000;
     const s = endDay(w);
-    expect(w.money).toBe(5_000_000 - 600_000);
-    expect(s.wages).toBe(600_000);
-    expect(s.operatingProfit).toBe(1_000_000 - 200_000 - 600_000);
+    expect(w.money).toBe(5_000_000 - 240_000);
+    expect(s.wages).toBe(240_000);
+    expect(s.operatingProfit).toBe(1_000_000 - 200_000 - 240_000);
     expect(w.history).toEqual([s]);
   });
 
@@ -32,12 +32,12 @@ describe('day end v2', () => {
 
   it('never lets money go negative: unpaid staff quit (Review Focus 2)', () => {
     const w = createWorld('X', 1);
-    w.money = 400_000;
+    w.money = 200_000;
     putStaff(w, 'Lan', 'cashier');
     putStaff(w, 'Hùng');
     const s = endDay(w);
-    expect(w.money).toBe(100_000);
-    expect(s.wages).toBe(300_000);
+    expect(w.money).toBe(80_000);
+    expect(s.wages).toBe(120_000);
     expect(w.shops.banh_mi.staff.map((x) => x.name)).toEqual(['Lan']);
     expect(w.log.at(-1)?.text).toBe('Hùng nghỉ việc vì không được trả lương');
   });
@@ -46,7 +46,7 @@ describe('day end v2', () => {
     const w = createWorld('X', 1);
     w.shops.banh_mi.firedToday = 1;
     const s = endDay(w);
-    expect(s.wages).toBe(300_000);
+    expect(s.wages).toBe(120_000);
     expect(w.shops.banh_mi.firedToday).toBe(0);
   });
 });

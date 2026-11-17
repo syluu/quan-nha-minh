@@ -20,8 +20,8 @@ describe('buildReport', () => {
     const r = buildReport(w);
     expect(r.history).toHaveLength(2);
     expect(r.today.day).toBe(3);
-    expect(r.today.wages).toBe(300_000);
-    expect(r.today.operatingProfit).toBe(50_000 - 20_000 - 300_000);
+    expect(r.today.wages).toBe(120_000);
+    expect(r.today.operatingProfit).toBe(50_000 - 20_000 - 120_000);
   });
 });
 

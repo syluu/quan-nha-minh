@@ -30,8 +30,8 @@ export const BALANCE = {
   CASHIER_SERVICE_SEC: 1.0,
   QUEUE_SPACING: 0.8,
 
-  /** Lương mỗi nhân viên mỗi ngày. */
-  WAGE: K(300),
+  /** Lương khởi điểm mỗi nhân viên mỗi ngày (Kế hoạch 3: nâng cấp nhân viên sẽ tăng lương). */
+  WAGE: K(120),
   /** Nhân viên mới xuất hiện ở giữa lối bếp. */
   STAFF_DOOR: { x: 0, z: -1.85 },
   STAFF_NAMES: ['Lan', 'Hùng', 'Mai', 'Tuấn', 'Hoa', 'Nam', 'Thảo', 'Dũng'],

@@ -19,7 +19,7 @@ describe('staffView', () => {
     expect(v.cashier).toEqual({ name: 'Lan', staffId: 's1', canHire: false });
     expect(v.lines.map((l) => l.item)).toEqual(['banh_mi', 'banh_mi_trung']);
     expect(v.lines[0]).toEqual({ item: 'banh_mi', itemName: 'Bánh mì', staffName: null, staffId: null });
-    expect(v.wagePerDay).toBe('300K');
+    expect(v.wagePerDay).toBe('120K');
   });
 });
 

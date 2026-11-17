@@ -13,10 +13,10 @@ Sau khi chơi thử Kế hoạch 1, chủ dự án cần: bỏ đồ thừa, tr�
 5. **Âm thanh** tự tạo bằng Web Audio (không file, không bản quyền): pop (nhặt), tách (đặt), ting ting (thu tiền), tada (mở máy), trầm (khách bỏ về), chuông (hết ngày), loạt xoẹt (bỏ rác) + nhạc nền nhẹ, tắt được.
 6. **Menu** (nút ☰ hoặc phím M, Esc đóng):
    - **Báo cáo**: bảng từng ngày (doanh thu, nguyên liệu, lương, hàng bỏ đi, lãi hoạt động, chi mở rộng, khách phục vụ/bỏ về, sao) + "hôm nay đang chạy" + biểu đồ cột 14 ngày + số món bán được mỗi loại.
-   - **Nhân sự**: thuê/sa thải. Thu ngân tối đa 1; phụ bếp mỗi người phụ trách 1 món (tự bê máy → kệ, món ghép thì bê cả nguyên liệu vào bàn ghép), tối đa = số kệ đang mở. Lương 300K/ngày trả cuối ngày. Nhân viên đi ~70% tốc độ người chơi, mang tối đa 3 món.
+   - **Nhân sự**: thuê/sa thải. Thu ngân tối đa 1; phụ bếp mỗi người phụ trách 1 món (tự bê máy → kệ, món ghép thì bê cả nguyên liệu vào bàn ghép), tối đa = số kệ đang mở. Lương **120K/ngày** trả cuối ngày (ban đầu 300K; chủ dự án hạ xuống sau khi chơi thử vì 2 người × 300K lỗ nặng ở đầu game). Nhân viên đi ~70% tốc độ người chơi, mang tối đa 3 món.
    - **Giá bán**: tăng/giảm giá từng món đang bán, hiện giá thị trường để so (khoảng cho phép 50–200%).
    - **Cài đặt**: âm lượng nhạc/hiệu ứng, tắt tiếng, đổi tên nhân vật.
-7. Nâng cấp nhân vật/nhân viên/máy + marketing → Kế hoạch 3.
+7. Nâng cấp nhân vật/nhân viên/máy + marketing → Kế hoạch 3. **[Đã chốt cho Kế hoạch 3]** Lương nhân viên rẻ lúc đầu; nâng cấp nhân viên làm họ nhanh hơn (đi nhanh / mang nhiều hơn) **và tăng lương** theo cấp.
 
 ## Phương án đã cân nhắc
 | Việc | Lựa chọn | Chọn | Lý do |
