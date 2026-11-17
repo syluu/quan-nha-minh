@@ -157,7 +157,7 @@ describe.each(shops.map((s) => [s.id, s] as const))('shop %s', (_id, shop) => {
   });
 
   it('staff route between any two kitchen/shelf workPoints does not cross a footprint', () => {
-    const pts = shop.stations.filter((s) => getStationDef(s.def).kind !== 'trash').map((s) => s.workPoint);
+    const pts = shop.stations.filter((s) => !['trash', 'table'].includes(getStationDef(s.def).kind)).map((s) => s.workPoint);
     const boxes = shop.stations.map((s) => footprintOf(s, BALANCE.PLAYER_RADIUS));
     for (let i = 0; i < pts.length; i++)
       for (let j = i + 1; j < pts.length; j++)
@@ -203,7 +203,7 @@ describe('balance plan 3', () => {
     ]);
   });
   it('every starter station has a value', () => {
-    for (const s of SHOPS.banh_mi.stations.filter((x) => x.unlockCost === 0))
+    for (const s of Object.values(SHOPS).flatMap((sh) => sh.stations).filter((x) => x.unlockCost === 0))
       expect(BALANCE.STARTER_VALUES[s.instanceId], s.instanceId).toBeTypeOf('number');
   });
 });
@@ -225,5 +225,40 @@ describe('pickup point (plan 4)', () => {
     expect(BALANCE.ONLINE).toMatchObject({ commission: 0.2, baseIntervalSec: 20, maxPending: 6, carUpgradeCost: 5_000_000 });
     expect(BALANCE.ONLINE.bike).toMatchObject({ patience: 60, batch: 1 });
     expect(BALANCE.ONLINE.car).toMatchObject({ patience: 90, batchMin: 2, batchMax: 5, waitOldest: 30 });
+  });
+});
+
+
+describe('plan 5 content', () => {
+  it('has the three shop types with meta (deposit, rent, tables)', async () => {
+    const { SHOP_META } = await import('../src/content');
+    expect(Object.keys(SHOPS).sort()).toEqual(['banh_mi', 'com_tam', 'pho_cafe']);
+    expect(SHOP_META.banh_mi).toMatchObject({ deposit: 0, rentPerMonth: 0, hasTables: false });
+    expect(SHOP_META.com_tam).toMatchObject({ deposit: 8_000_000, rentPerMonth: 4_000_000, hasTables: true });
+    expect(SHOP_META.pho_cafe).toMatchObject({ deposit: 12_000_000, rentPerMonth: 6_000_000, hasTables: true });
+  });
+
+  it('costs of the new dishes follow the recipes', async () => {
+    const { itemCost } = await import('../src/content');
+    expect(itemCost('com_tam_suon')).toBe(10_000);
+    expect(itemCost('com_tam_suon_cha')).toBe(19_000);
+    expect(itemCost('pho_bo')).toBe(27_000);
+    expect(itemCost('ca_phe_sua_da')).toBe(6_000);
+  });
+
+  it.each(['com_tam', 'pho_cafe'] as const)('%s has 4 tables whose seats are reachable from the cashier and the exit', (id) => {
+    const shop = SHOPS[id];
+    const tables = shop.stations.filter((s) => getStationDef(s.def).kind === 'table');
+    expect(tables).toHaveLength(4);
+    const cashier = shop.stations.find((s) => getStationDef(s.def).kind === 'cashier')!;
+    const boxes = shop.stations.map((s) => footprintOf(s, 0.05));
+    for (const t of tables) {
+      expect(t.seatPoints).toHaveLength(2);
+      for (const seat of t.seatPoints!)
+        for (const box of boxes) {
+          expect(segmentHitsBox(cashier.customerPoint!, seat, box), `${t.instanceId} from cashier`).toBe(false);
+          expect(segmentHitsBox(seat, shop.exit, box), `${t.instanceId} to exit`).toBe(false);
+        }
+    }
   });
 });
