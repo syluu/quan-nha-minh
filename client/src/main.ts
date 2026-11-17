@@ -16,6 +16,8 @@ import { reportTab } from './ui/menu/reportTab';
 import { applyDisplaySettings, settingsTab } from './ui/menu/settingsTab';
 import { staffTab } from './ui/menu/staffTab';
 import { upgradesTab } from './ui/menu/upgradesTab';
+import { marketingTab } from './ui/menu/marketingTab';
+import { bankTab } from './ui/menu/bankTab';
 import { actionErrorText } from './ui/menu/views';
 import { showToast } from './ui/toast';
 
@@ -41,6 +43,8 @@ function enterGame(conn: GameConnection) {
       staffTab(conn, () => latest),
       upgradesTab(conn, () => latest, conn.playerId),
       pricesTab(conn, () => latest),
+      marketingTab(conn, () => latest),
+      bankTab(conn, () => latest),
       settingsTab(conn, myName),
     ],
     (open) => game.setInputEnabled(!open),

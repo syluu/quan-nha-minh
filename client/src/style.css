@@ -76,3 +76,11 @@ table.staff td.act { text-align: right; }
 .confirm { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; }
 table.staff td.act { white-space: nowrap; }
 table.staff td.act button + button { margin-left: 6px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+.card { border: 2px solid var(--line); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+.loan-form { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; font-size: 14px; }
+.loan-form label { display: flex; gap: 8px; align-items: center; }
+.loan-form input[type=range] { width: 200px; }
+.loan-form select { font: inherit; padding: 4px 6px; border-radius: 8px; border: 2px solid var(--line); }
+.loan-form output { font-weight: 800; min-width: 64px; }
+.loan-form .preview { flex-basis: 100%; margin: 0; color: var(--muted); }

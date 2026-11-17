@@ -1,5 +1,8 @@
-import { BALANCE, ITEMS, SHOPS, effectiveCycle, effectiveOutputCap, formatK, getStationDef, machineUpgradeCost, priceRange } from '@qnm/shared';
-import type { ItemId, Snapshot, StationState } from '@qnm/shared';
+import {
+  BALANCE, ITEMS, SHOPS, effectiveCycle, effectiveOutputCap, formatK, getStationDef, loanTerms, machineUpgradeCost,
+  marketingMultiplier, priceRange,
+} from '@qnm/shared';
+import type { CampaignId, ItemId, ShopState, Snapshot, StationState } from '@qnm/shared';
 
 /** Các món có kệ đang mở, theo thứ tự trong bố cục quán. */
 function openItems(s: Snapshot): ItemId[] {
@@ -118,5 +121,38 @@ export function upgradeView(s: Snapshot, myId: string) {
       },
     },
     machines,
+  };
+}
+
+/** Tổng phải trả và góp mỗi tháng cho một khoản vay (cùng công thức với máy chủ). */
+export function loanPreview(amount: number, months: number): { total: number; installment: number } {
+  const t = loanTerms(amount, months);
+  return { total: t.totalDue, installment: t.installment };
+}
+
+export function marketingView(s: Snapshot) {
+  const cards = (Object.entries(BALANCE.CAMPAIGNS) as [CampaignId, (typeof BALANCE.CAMPAIGNS)[CampaignId]][]).map(([id, c]) => ({
+    id,
+    name: c.name,
+    cost: formatK(c.cost),
+    effect: `+${Math.round(c.boost * 100)}% khách${c.starBonus ? `, +${String(c.starBonus).replace('.', ',')} sao` : ''}`,
+    days: `${c.days} ngày`,
+  }));
+  const mult = marketingMultiplier({ campaigns: s.campaigns } as ShopState);
+  return {
+    cards,
+    running: s.campaigns.map((c) => ({ name: BALANCE.CAMPAIGNS[c.id].name, daysLeft: c.daysLeft })),
+    multiplier: `×${(Math.round(mult * 100) / 100).toString().replace('.', ',')}`,
+  };
+}
+
+export function bankView(s: Snapshot) {
+  return {
+    loans: s.loans.map((l) => ({
+      id: l.id, principal: formatK(l.principal), remaining: formatK(l.remaining), installment: formatK(l.installment), monthsLeft: l.monthsLeft,
+    })),
+    maxLoan: formatK(s.maxLoan),
+    maxLoanValue: s.maxLoan,
+    daysToMonthEnd: s.daysToMonthEnd,
   };
 }
