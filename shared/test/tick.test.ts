@@ -13,6 +13,10 @@ describe('players', () => {
     joinPlayer(w, 'a', 'Bố');
     setInput(w, 'a', { mx: NaN, mz: Infinity });
     expect(w.players.a.input).toEqual({ mx: 0, mz: 0 });
+    setInput(w, 'a', { mx: 0, mz: 0, menu: true });
+    expect(w.players.a.inMenu).toBe(true);
+    setInput(w, 'a', { mx: 0, mz: 0 });
+    expect(w.players.a.inMenu).toBe(false);
     setInput(w, 'a', { mx: 3, mz: 4 });
     expect(Math.hypot(w.players.a.input.mx, w.players.a.input.mz)).toBeCloseTo(1);
   });

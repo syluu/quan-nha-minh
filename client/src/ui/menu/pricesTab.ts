@@ -12,10 +12,17 @@ export function pricesTab(conn: GameConnection, latest: () => Snapshot | null): 
     mount(body) {
       let key = '';
       let dragging = false;
+      // Giá vừa bấm nhưng máy chủ chưa xác nhận: bấm nhanh nhiều lần vẫn cộng dồn đúng.
+      const pending = new Map<string, { value: number; at: number }>();
+      const PENDING_MS = 1500;
       const render = () => {
         const s = latest();
         if (!s || dragging) return;
         const v = priceView(s);
+        for (const p of v) {
+          const pend = pending.get(p.item);
+          if (pend && (pend.value === p.value || Date.now() - pend.at > PENDING_MS)) pending.delete(p.item);
+        }
         const k = JSON.stringify(v);
         if (k === key) return;
         key = k;
@@ -46,12 +53,19 @@ export function pricesTab(conn: GameConnection, latest: () => Snapshot | null): 
           };
           range.onchange = () => {
             dragging = false;
-            conn.setPrice(item, Number(range.value));
+            send(Number(range.value));
+          };
+          const send = (value: number) => {
+            const next = Math.min(p.max, Math.max(p.min, value));
+            pending.set(p.item, { value: next, at: Date.now() });
+            range.value = String(next);
+            out.textContent = formatK(next);
+            conn.setPrice(item, next);
           };
           row.querySelectorAll<HTMLButtonElement>('[data-step]').forEach((b) => {
-            b.onclick = () => conn.setPrice(item, p.value + Number(b.dataset.step));
+            b.onclick = () => send((pending.get(p.item)?.value ?? p.value) + Number(b.dataset.step));
           });
-          row.querySelector<HTMLButtonElement>('[data-reset]')!.onclick = () => conn.setPrice(item, p.base);
+          row.querySelector<HTMLButtonElement>('[data-reset]')!.onclick = () => send(p.base);
         });
       };
       render();

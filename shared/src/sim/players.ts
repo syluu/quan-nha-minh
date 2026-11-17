@@ -11,6 +11,7 @@ export function joinPlayer(world: WorldState, playerId: string, name: string): P
     existing.online = true;
     existing.name = name;
     existing.input = { mx: 0, mz: 0 };
+    existing.inMenu = false;
     return existing;
   }
   const entrance = SHOPS.banh_mi.entrance;
@@ -29,6 +30,7 @@ export function joinPlayer(world: WorldState, playerId: string, name: string): P
     dropCd: 0,
     pickTimer: 0,
     pickAt: null,
+    inMenu: false,
   };
   world.players[playerId] = p;
   return p;
@@ -39,6 +41,7 @@ export function leavePlayer(world: WorldState, playerId: string): void {
   if (!p) return;
   p.online = false;
   p.input = { mx: 0, mz: 0 };
+  p.inMenu = false;
   for (const id of Object.keys(world.shops) as ShopId[])
     for (const st of Object.values(world.shops[id].stations))
       if (st.tileOccupant?.playerId === playerId) st.tileOccupant = null;
@@ -52,7 +55,7 @@ export function renamePlayer(world: WorldState, playerId: string, name: unknown)
   if (clean) p.name = clean;
 }
 
-export function setInput(world: WorldState, playerId: string, input: { mx: number; mz: number }): void {
+export function setInput(world: WorldState, playerId: string, input: { mx: number; mz: number; menu?: unknown }): void {
   const p = world.players[playerId];
   if (!p) return;
   let mx = Number.isFinite(input?.mx) ? input.mx : 0;
@@ -63,4 +66,5 @@ export function setInput(world: WorldState, playerId: string, input: { mx: numbe
     mz /= len;
   }
   p.input = { mx, mz };
+  p.inMenu = input?.menu === true;
 }

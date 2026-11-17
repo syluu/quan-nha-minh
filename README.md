@@ -70,4 +70,6 @@ TEST_DATABASE_URL=postgres://postgres:test@localhost:55432/postgres npm test
    (Hoặc dùng **New + → Blueprint** với file `render.yaml` có sẵn, rồi điền `DATABASE_URL`.)
 3. Mỗi lần đẩy code lên `main`, Render tự build lại.
 
+**Lưu ý khi cập nhật phiên bản:** bản mới tự nâng file lưu cũ lên định dạng mới khi mở quán. Sau đó **không quay lại bản cũ được** (bản cũ sẽ báo không đọc được quán). Muốn quay lại thì phải khôi phục cả dữ liệu Neon (Neon có tính năng *restore* theo thời điểm).
+
 **Lưu ý gói Free:** máy chủ ngủ sau 15 phút không ai chơi, người vào đầu tiên chờ ~1 phút. Game tự lưu mỗi 30 giây, cuối mỗi ngày trong game và khi mọi người thoát; khi không ai online, thời gian trong quán dừng lại.

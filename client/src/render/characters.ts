@@ -22,6 +22,8 @@ export interface CharacterView {
   group: THREE.Group;
   setPose(x: number, z: number, dir: number, moving: boolean, t: number): void;
   setCarry(items: ItemId[], cap?: number): void;
+  /** Đổi chữ trên đầu (khi người chơi đổi tên). */
+  setName(name: string): void;
   dispose(): void;
 }
 
@@ -69,11 +71,19 @@ export function createCharacter(color: number, opts: { look: CharacterLook; name
   }
 
   let label: THREE.Sprite | null = null;
-  if (opts.name) {
-    label = makeLabel(opts.name, { bg: opts.look === 'staff' ? 'rgba(90,90,90,.85)' : 'rgba(43,33,24,.8)', size: 34, scale: 0.0075 });
+  let currentName = '';
+  function setName(name: string) {
+    if (name === currentName) return;
+    currentName = name;
+    if (label) {
+      group.remove(label);
+      disposeLabel(label);
+    }
+    label = makeLabel(name, { bg: opts.look === 'staff' ? 'rgba(90,90,90,.85)' : 'rgba(43,33,24,.8)', size: 34, scale: 0.0075 });
     label.position.y = 1.75;
     group.add(label);
   }
+  if (opts.name) setName(opts.name);
 
   const stack = new THREE.Group();
   stack.position.set(0, 0.62, 0.36);
@@ -106,6 +116,7 @@ export function createCharacter(color: number, opts: { look: CharacterLook; name
       inner.rotation.y = dir;
       inner.position.y = moving ? Math.abs(Math.sin(t * 10)) * 0.07 : 0;
     },
+    setName,
     setCarry(items, cap = 4) {
       setBadge(items.length, cap);
       const key = items.join(',');

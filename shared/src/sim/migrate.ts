@@ -16,6 +16,7 @@ export function migrateV1toV2(raw: any): any {
     p.dropCd = 0;
     p.pickTimer = 0;
     p.pickAt = null;
+    p.inMenu = false;
   }
   return w;
 }

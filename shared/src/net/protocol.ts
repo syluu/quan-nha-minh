@@ -52,6 +52,8 @@ export interface WelcomeMsg {
 export interface InputMsg {
   mx: number;
   mz: number;
+  /** true khi người chơi đang mở menu. */
+  menu?: boolean;
 }
 
 export interface Snapshot {

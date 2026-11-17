@@ -10,7 +10,8 @@ export interface GameConnection {
   onSnapshot(cb: (s: Snapshot) => void): void;
   onEvent(cb: (e: SimEvent) => void): void;
   onStatus(cb: (s: ConnStatus, code?: number) => void): void;
-  sendInput(mx: number, mz: number): void;
+  /** menu = true khi đang mở menu (máy chủ không cho mua ô / bỏ rác lúc đó). */
+  sendInput(mx: number, mz: number, menu?: boolean): void;
   leave(): void;
   requestReport(): void;
   /** Đăng ký nhận báo cáo; trả về hàm huỷ đăng ký. */
@@ -60,7 +61,7 @@ export async function connect(opts: JoinOptions): Promise<GameConnection> {
     onSnapshot: (cb) => snapshotCbs.push(cb),
     onEvent: (cb) => eventCbs.push(cb),
     onStatus: (cb) => statusCbs.push(cb),
-    sendInput: (mx, mz) => room.send(MSG.input, { mx, mz }),
+    sendInput: (mx, mz, menu = false) => room.send(MSG.input, { mx, mz, menu }),
     leave: () => void room.leave(),
     requestReport: () => room.send(MSG.getReport, {}),
     onReport: (cb) => {

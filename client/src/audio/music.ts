@@ -30,6 +30,8 @@ export function createMusic(ctx: AudioContext, out: GainNode) {
   }
 
   function schedule() {
+    // Tab bị trình duyệt làm chậm: bỏ qua các nốt đã lỡ, không phát dồn một lúc.
+    nextAt = Math.max(nextAt, ctx.currentTime + 0.05);
     while (nextAt < ctx.currentTime + 0.5) {
       const m = MELODY[step % MELODY.length];
       if (m) note(m, nextAt, STEP * 1.6, 0.25);

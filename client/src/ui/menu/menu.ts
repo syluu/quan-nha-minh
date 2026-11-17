@@ -54,15 +54,21 @@ export function createMenu(root: HTMLElement, _conn: GameConnection, tabs: MenuT
     panel.hidden = !open;
     onOpenChange(open);
     if (open) show(current);
-    else if (cleanup) cleanup = void cleanup();
+    else {
+      if (cleanup) cleanup = void cleanup();
+      // Trả tiêu điểm về trang để phím di chuyển hoạt động ngay.
+      (document.activeElement as HTMLElement | null)?.blur?.();
+    }
   }
 
   button.onclick = () => setOpen(panel.hidden);
   panel.querySelector<HTMLButtonElement>('.menu-close')!.onclick = () => setOpen(false);
   window.addEventListener('keydown', (e) => {
-    if ((e.target as HTMLElement | null)?.tagName === 'INPUT') return;
-    if (e.code === 'KeyM') setOpen(panel.hidden);
-    else if (e.code === 'Escape') setOpen(false);
+    // Esc luôn đóng; M chỉ bị bỏ qua khi đang gõ chữ (ô đổi tên), không phải khi đang chỉnh thanh trượt/ô tích.
+    const t = e.target as HTMLInputElement | null;
+    const typing = t?.tagName === 'TEXTAREA' || (t?.tagName === 'INPUT' && (t.type === 'text' || t.type === 'search'));
+    if (e.code === 'Escape') setOpen(false);
+    else if (e.code === 'KeyM' && !typing) setOpen(panel.hidden);
   });
 
   return { open: (tab?: string) => (setOpen(true), tab && show(tab)), close: () => setOpen(false), isOpen: () => !panel.hidden };

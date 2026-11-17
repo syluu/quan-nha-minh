@@ -44,6 +44,7 @@ export function makeLabel(text: string, opts: { color?: string; bg?: string; siz
   const scale = opts.scale ?? 0.006;
   sprite.scale.set(w * scale, c.height * scale, 1);
   sprite.renderOrder = 10;
+  sprite.userData.text = text;
   return sprite;
 }
 

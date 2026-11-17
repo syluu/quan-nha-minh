@@ -101,4 +101,13 @@ describe('tickPayTiles', () => {
     expect(chao.paid).toBe(0);
     expect(w.money).toBe(5_000_000);
   });
+
+  it('does not charge a player whose menu is open (input 0 but not really standing there to buy)', () => {
+    const { w, tick, chao } = setup();
+    const p = putPlayer(w, 'a', CHAO.x, CHAO.z);
+    p.inMenu = true;
+    repeat(5, tick);
+    expect(chao.paid).toBe(0);
+    expect(w.money).toBe(5_000_000);
+  });
 });

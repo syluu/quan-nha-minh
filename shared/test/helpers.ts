@@ -19,6 +19,7 @@ export function putPlayer(world: WorldState, id: string, x: number, z: number, c
     dropCd: 0,
     pickTimer: 0,
     pickAt: null,
+    inMenu: false,
   };
   world.players[id] = p;
   return p;

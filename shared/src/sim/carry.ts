@@ -82,7 +82,7 @@ export function tickCarry(world: WorldState, shopId: ShopId, dt: number): SimEve
       p.pickTimer = 0;
       p.pickAt = null;
       const still = Math.hypot(p.input.mx, p.input.mz) <= BALANCE.STILL_INPUT;
-      if (!still || p.dropCd > 0 || p.carry.length === 0) continue;
+      if (!still || p.inMenu || p.dropCd > 0 || p.carry.length === 0) continue;
       const item = p.carry.pop()!;
       const value = itemCost(item);
       world.dayStats.wasted += value;

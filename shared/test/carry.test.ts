@@ -109,4 +109,13 @@ describe('tickCarry', () => {
     repeat(1.0, (dt) => tickCarry(w, 'banh_mi', dt));
     expect(p.carry).toEqual([]);
   });
+
+  it('keeps items at the trash bin while the menu is open', () => {
+    const w = createWorld('X', 1);
+    const bin = standAt('thung_rac');
+    const p = putPlayer(w, 'a', bin.x, bin.z, ['banh_mi']);
+    p.inMenu = true;
+    repeat(1.0, (dt) => tickCarry(w, 'banh_mi', dt));
+    expect(p.carry).toEqual(['banh_mi']);
+  });
 });

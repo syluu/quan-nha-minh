@@ -52,6 +52,8 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
   const solid = (id: string) => latest?.stations.find((st) => st.instanceId === id)?.unlocked ?? false;
 
   let lastSent = { mx: 0, mz: 0 };
+  let menuOpen = false;
+  let menuChanged = false;
   let sendTimer = 0;
   let prev = performance.now();
 
@@ -62,8 +64,9 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
 
     const local = input.read();
     sendTimer -= dt;
-    if (local.mx !== lastSent.mx || local.mz !== lastSent.mz || sendTimer <= 0) {
-      conn.sendInput(local.mx, local.mz);
+    if (local.mx !== lastSent.mx || local.mz !== lastSent.mz || menuChanged || sendTimer <= 0) {
+      conn.sendInput(local.mx, local.mz, menuOpen);
+      menuChanged = false;
       lastSent = local;
       sendTimer = 0.1;
     }
@@ -92,6 +95,7 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
         lastPos.set(p.id, { x: pose.x, z: pose.z });
         v.setPose(pose.x, pose.z, pose.dir, moving, t);
         v.setCarry(p.carry, p.cap);
+        v.setName(p.name);
       }
       for (const [id, v] of players) if (!seen.has(id)) (v.dispose(), players.delete(id));
 
@@ -156,6 +160,8 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
   return {
     setInputEnabled(on) {
       input.setEnabled(on);
+      menuOpen = !on;
+      menuChanged = true;
     },
     project(x, y, z) {
       v.set(x, y, z).project(camera);

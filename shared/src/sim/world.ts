@@ -85,6 +85,8 @@ export interface PlayerState {
   /** Thời gian đã đứng nhặt ở trạm `pickAt`. */
   pickTimer: number;
   pickAt: string | null;
+  /** Đang mở menu: không mua ô trả tiền, không bỏ rác (dù đứng yên). Không lưu ý nghĩa giữa các lần vào. */
+  inMenu: boolean;
 }
 
 export interface DayStats {
