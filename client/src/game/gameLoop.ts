@@ -111,7 +111,11 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
       lastSent = local;
       sendTimer = 0.1;
     }
-    const myPose = predictor.ready() ? predictor.step(local, dt, solid) : null;
+    // Tốc độ thật của mình (đã nâng cấp) để dự đoán khớp với máy chủ.
+    const meNow = latest?.players.find((p) => p.id === conn.playerId);
+    const mySpeed = BALANCE.PLAYER_SPEED * (1 + BALANCE.PLAYER_SPEED_STEP * (meNow?.speedLevel ?? 0));
+    const myPose = predictor.ready() ? predictor.step(local, dt, solid, mySpeed) : null;
+    const iAmWalking = Math.hypot(local.mx, local.mz) > BALANCE.STILL_INPUT;
 
     const s = interp.sample(now);
     if (s) {
@@ -132,7 +136,8 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
         const isMe = p.id === conn.playerId && myPose;
         const pose = isMe ? myPose! : p;
         const prevPos = lastPos.get(p.id);
-        const moving = !!prevPos && Math.hypot(pose.x - prevPos.x, pose.z - prevPos.z) > 0.002;
+        // Nhân vật của mình: "đang đi" theo phím bấm (không theo độ lệch vị trí, tránh nhún khi đang khớp vị trí).
+        const moving = isMe ? iAmWalking : !!prevPos && Math.hypot(pose.x - prevPos.x, pose.z - prevPos.z) > 0.01;
         lastPos.set(p.id, { x: pose.x, z: pose.z });
         v.setPose(pose.x, pose.z, pose.dir, moving, t);
         v.setCarry(p.carry, p.cap);

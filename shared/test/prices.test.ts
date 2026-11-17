@@ -75,3 +75,18 @@ describe('renamePlayer', () => {
     expect(w.players.a.name).toBe('Ông Bố Siêu Đẹp');
   });
 });
+
+describe('one name = one character (owner request)', () => {
+  it('finds players by name ignoring case and extra spaces; renaming to a taken name is refused', async () => {
+    const { findPlayerByName, joinPlayer, renamePlayer } = await import('../src/sim/players');
+    const { createWorld } = await import('../src/sim/world');
+    const w = createWorld('X', 1);
+    joinPlayer(w, 'a', 'Bố');
+    joinPlayer(w, 'b', 'Mẹ');
+    expect(findPlayerByName(w, '  bố ')?.id).toBe('a');
+    expect(findPlayerByName(w, 'Con')).toBeNull();
+    expect(renamePlayer(w, 'b', 'BỐ')).toEqual({ ok: false, error: 'NAME_TAKEN' });
+    expect(w.players.b.name).toBe('Mẹ');
+    expect(renamePlayer(w, 'a', 'bố')).toEqual({ ok: true }); // đổi hoa/thường tên của chính mình được
+  });
+});

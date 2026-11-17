@@ -1,5 +1,6 @@
 import { BALANCE, DEFAULT_OUTFIT, SHOPS } from '../content';
 import type { ShopId } from '../content';
+import type { ActionResult } from './actions';
 import type { PlayerState, WorldState } from './world';
 
 export const PLAYER_COLORS = [0x2f6db5, 0xd8573d, 0x5aa34a, 0x9b59b6, 0xe0a020, 0x2aa3a3];
@@ -57,12 +58,28 @@ export function leavePlayer(world: WorldState, playerId: string): void {
       if (st.tileOccupant?.playerId === playerId) st.tileOccupant = null;
 }
 
-/** Đổi tên nhân vật: bỏ khoảng trắng thừa, tối đa 16 ký tự; tên rỗng thì giữ tên cũ. */
-export function renamePlayer(world: WorldState, playerId: string, name: unknown): void {
+/** Khoá so tên: bỏ khoảng trắng thừa, không phân biệt hoa/thường ("bố" = " Bố "). */
+export function nameKey(name: string): string {
+  return name.normalize('NFC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('vi');
+}
+
+/** Nhân vật trong thế giới có cùng tên (cùng phòng + cùng tên = cùng một người). */
+export function findPlayerByName(world: WorldState, name: string): PlayerState | null {
+  const key = nameKey(name);
+  if (!key) return null;
+  return Object.values(world.players).find((p) => nameKey(p.name) === key) ?? null;
+}
+
+/** Đổi tên nhân vật: bỏ khoảng trắng thừa, tối đa 16 ký tự; tên rỗng giữ tên cũ; trùng tên người khác thì từ chối. */
+export function renamePlayer(world: WorldState, playerId: string, name: unknown): ActionResult {
   const p = world.players[playerId];
-  if (!p) return;
+  if (!p) return { ok: false, error: 'NOT_FOUND' };
   const clean = String(name ?? '').trim().slice(0, 16).trim();
-  if (clean) p.name = clean;
+  if (!clean) return { ok: true };
+  const other = findPlayerByName(world, clean);
+  if (other && other.id !== playerId) return { ok: false, error: 'NAME_TAKEN' };
+  p.name = clean;
+  return { ok: true };
 }
 
 export function setInput(world: WorldState, playerId: string, input: { mx: number; mz: number; menu?: unknown }): void {

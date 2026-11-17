@@ -19,6 +19,7 @@ import {
   upgradeStaff,
   hireStaff,
   joinPlayer,
+  findPlayerByName,
   rentShop,
   buyCostume,
   wearCostume,
@@ -162,14 +163,23 @@ export class WorldRoom extends Room {
     this.clock.setInterval(() => void this.save(), BALANCE.AUTOSAVE_SEC * 1000);
   }
 
+  /**
+   * Nhân vật của người vào phòng: trùng tên (không phân biệt hoa/thường) với một nhân vật có sẵn → dùng lại nhân vật đó
+   * (cùng phòng + cùng tên = cùng một người, kể cả vào từ máy khác); không trùng thì theo mã trình duyệt.
+   */
+  private resolvePlayerId(options: JoinOptions, fallback: string): string {
+    const byName = findPlayerByName(this.world, cleanName(options?.name));
+    return byName?.id ?? playerIdFromToken(options?.token ?? fallback);
+  }
+
   onAuth(_client: Client, options: JoinOptions) {
-    const pid = playerIdFromToken(options?.token ?? '');
+    const pid = this.resolvePlayerId(options, '');
     if (!this.owners.has(pid) && this.owners.size >= BALANCE.MAX_PLAYERS) throw new Error('WORLD_FULL');
     return true;
   }
 
   onJoin(client: Client, options: JoinOptions) {
-    const playerId = playerIdFromToken(options?.token ?? client.sessionId);
+    const playerId = this.resolvePlayerId(options, client.sessionId);
     const previous = this.owners.get(playerId);
     if (previous) {
       // Cùng trình duyệt mở tab mới / F5: tab cũ (nếu còn sống) bị đá; nếu đang giữ chỗ thì bị đá khi kết nối lại.
@@ -177,7 +187,9 @@ export class WorldRoom extends Room {
     }
     this.owners.set(playerId, client.sessionId);
     client.userData = { playerId } satisfies ClientData;
-    joinPlayer(this.world, playerId, cleanName(options?.name));
+    // Vào bằng tên của nhân vật có sẵn: giữ nguyên cách viết tên cũ ("bố" vào lại vẫn là "Bố").
+    const sameName = findPlayerByName(this.world, cleanName(options?.name));
+    joinPlayer(this.world, playerId, sameName?.id === playerId ? sameName.name : cleanName(options?.name));
     client.send(MSG.welcome, { playerId, code: this.world.code });
   }
 
