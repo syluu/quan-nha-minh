@@ -51,6 +51,7 @@ export function takeLoan(world: WorldState, amount: unknown, months: unknown, by
     installment,
     monthsLeft: months,
     takenDay: world.day,
+    firstDueMonth: world.settlement ? world.month + 1 : world.month,
   });
   world.money += amount;
   addLog(world, `${playerName(world, byPlayerId)} vay ${formatK(amount)}, kỳ ${months} tháng (tổng trả ${formatK(totalDue)})`);

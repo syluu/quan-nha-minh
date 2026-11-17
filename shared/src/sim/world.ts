@@ -72,6 +72,8 @@ export interface Loan {
   installment: number;
   monthsLeft: number;
   takenDay: number;
+  /** Tháng đầu tiên phải góp (vay lúc đang kết toán thì góp từ tháng sau). */
+  firstDueMonth: number;
 }
 
 /** Bảng kết toán cuối tháng; khác null nghĩa là game đang dừng chờ trả. */
