@@ -1,5 +1,6 @@
 import { BALANCE, ITEMS, SHOPS, getStationDef } from '../content';
 import type { ItemId, ShopId } from '../content';
+import { formatK } from '../money';
 import type { ActionResult } from './actions';
 import { addLog, playerName } from './log';
 import { isOnSale } from './prices';
@@ -78,41 +79,26 @@ export function fireStaff(world: WorldState, shopId: ShopId, staffId: string, by
   const shop = world.shops[shopId];
   const s = shop.staff.find((x) => x.id === staffId);
   if (!s) return { ok: false, error: 'NOT_FOUND' };
+  if (world.money < s.wageOwed) return { ok: false, error: 'NO_MONEY' };
+  world.money -= s.wageOwed;
   shop.staff = shop.staff.filter((x) => x !== s);
-  shop.firedToday += 1;
-  addLog(world, `${playerName(world, byPlayerId)} đã cho ${s.name} nghỉ`);
+  const paid = s.wageOwed ? `, trả ${formatK(s.wageOwed)} lương` : '';
+  addLog(world, `${playerName(world, byPlayerId)} đã cho ${s.name} nghỉ${paid}`);
   return { ok: true };
 }
 
-/**
- * Trả lương cuối ngày. Người bị cho nghỉ hôm nay vẫn được trả trước (nếu đủ tiền);
- * nhân viên đang làm được trả theo thứ tự thuê, ai không trả được thì nghỉ việc. Tiền không bao giờ âm.
- */
-export function payWages(world: WorldState): { paid: number; quitNames: string[] } {
-  let paid = 0;
-  const quitNames: string[] = [];
+/** Cuối ngày: mỗi nhân viên được ghi thêm lương ngày vào "lương còn nợ" (trả cuối tháng). */
+export function accrueWages(world: WorldState): number {
+  let total = 0;
   for (const id of Object.keys(world.shops) as ShopId[]) {
-    const shop = world.shops[id];
-    for (let i = 0; i < shop.firedToday; i++) {
-      const w0 = BALANCE.STAFF_LEVELS[0].wage;
-      if (world.money < w0) break;
-      world.money -= w0;
-      paid += w0;
+    for (const s of world.shops[id].staff) {
+      const w = staffWage(s);
+      s.wageOwed += w;
+      total += w;
     }
-    shop.firedToday = 0;
-    shop.staff = shop.staff.filter((s) => {
-      if (world.money >= staffWage(s)) {
-        world.money -= staffWage(s);
-        paid += staffWage(s);
-        return true;
-      }
-      quitNames.push(s.name);
-      addLog(world, `${s.name} nghỉ việc vì không được trả lương`);
-      return false;
-    });
   }
-  world.dayStats.wages += paid;
-  return { paid, quitNames };
+  world.dayStats.wages += total;
+  return total;
 }
 
 // ───────────────────────── Nhân viên tự làm việc ─────────────────────────

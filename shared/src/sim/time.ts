@@ -1,7 +1,8 @@
 import { BALANCE } from '../content';
 import type { ShopId } from '../content';
 import { stars } from './rating';
-import { payWages } from './staff';
+import { buildSettlement } from './settlement';
+import { accrueWages } from './staff';
 import { emptyDayStats } from './world';
 import type { DaySummary, WorldState } from './world';
 
@@ -26,7 +27,7 @@ export function advanceTime(world: WorldState, dt: number): DaySummary | null {
   world.secOfDay += dt;
   if (world.secOfDay < BALANCE.DAY_REAL_SEC) return null;
 
-  payWages(world);
+  accrueWages(world);
   const s = world.dayStats;
   const summary: DaySummary = {
     ...s,
@@ -37,6 +38,8 @@ export function advanceTime(world: WorldState, dt: number): DaySummary | null {
   };
   world.history.push(summary);
   while (world.history.length > BALANCE.HISTORY_DAYS) world.history.shift();
+  // Hết tháng (mỗi MONTH_DAYS ngày): mở bảng kết toán; tick sẽ thử trả ngay.
+  if (summary.day % BALANCE.MONTH_DAYS === 0) world.settlement = buildSettlement(world);
   world.day += 1;
   world.secOfDay = 0;
   world.dayStats = emptyDayStats();

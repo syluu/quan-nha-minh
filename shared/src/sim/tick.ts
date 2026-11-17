@@ -7,14 +7,17 @@ import { movePlayer } from './movement';
 import { tickPayTiles } from './payTiles';
 import { tickStations } from './production';
 import { addLog } from './log';
+import { trySettle } from './settlement';
 import { tickStaff } from './staff';
 import { advanceTime } from './time';
-import type { WorldState } from './world';
+import type { Settlement, WorldState } from './world';
 
 /** Một bước mô phỏng. Không ai online → không làm gì (thời gian dừng). */
 export function tick(world: WorldState, dt: number): SimEvent[] {
   const online = Object.values(world.players).filter((p) => p.online);
   if (online.length === 0) return [];
+  // Đang kết toán cuối tháng mà thiếu tiền: cả quán dừng chờ (vay / bán máy).
+  if (world.settlement) return [];
 
   const total = Math.min(Math.max(dt, 0), BALANCE.MAX_TICK_DT);
   const steps = Math.max(1, Math.ceil(total / BALANCE.SUBSTEP_DT - 1e-9));
@@ -46,6 +49,13 @@ export function tick(world: WorldState, dt: number): SimEvent[] {
     }
     const summary = advanceTime(world, sdt);
     if (summary) events.push({ type: 'dayEnd', summary });
+    // (đọc lại qua biến: TS đã thu hẹp world.settlement về null ở đầu hàm)
+    const opened = world.settlement as Settlement | null;
+    if (opened) {
+      events.push({ type: 'monthEnd', settlement: { ...opened } });
+      events.push(...trySettle(world));
+      if (world.settlement as Settlement | null) break;
+    }
   }
   return events;
 }

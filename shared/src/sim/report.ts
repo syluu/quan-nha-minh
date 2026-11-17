@@ -8,7 +8,7 @@ import type { WorldState } from './world';
 export function buildReport(world: WorldState): Report {
   const s = world.dayStats;
   const wages = Object.values(world.shops).reduce(
-    (n, shop) => n + shop.staff.reduce((m, s) => m + staffWage(s), 0) + shop.firedToday * BALANCE.STAFF_LEVELS[0].wage,
+    (n, shop) => n + shop.staff.reduce((m, s) => m + staffWage(s), 0),
     0,
   );
   return {
