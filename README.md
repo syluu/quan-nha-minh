@@ -29,6 +29,18 @@ Mở `http://localhost:5173` ở 2 cửa sổ (hoặc 2 máy cùng wifi qua `htt
 
 Điều khiển: **WASD / phím mũi tên** để đi, **lăn chuột** để phóng to/nhỏ, đứng gần máy/kệ để tự nhặt/đặt, đứng **ô vàng sau quầy** để thu ngân, đứng **2 giây** trên ô trả tiền để mua máy mới.
 
+### Cách chơi (Kế hoạch 2)
+
+- **Nhặt món**: đứng cạnh máy, cứ 0,45 giây được 1 món (vòng xanh quanh chân chạy dần); đủ thì bước đi. Nhãn **"3/4"** trên đầu = đang cầm 3, tối đa 4.
+- **Đặt món**: đứng cạnh kệ hoặc bàn ghép, món tự đặt xuống (nhanh).
+- **Thùng rác** (góc trái lối bếp): đứng yên cạnh thùng để bỏ món trên tay — mất tiền nguyên liệu của món đó.
+- **Menu**: phím **M** hoặc nút ☰ (Esc để đóng). Khi menu mở nhân vật đứng yên.
+  - **Báo cáo**: biểu đồ 14 ngày, bảng từng ngày (doanh thu, nguyên liệu, lương, hàng bỏ đi, lãi), món bán được hôm nay.
+  - **Nhân sự**: thuê/cho nghỉ thu ngân và phụ bếp (mỗi món đang bán 1 người). Lương 300K/ngày, trả cuối ngày; không đủ tiền thì người chưa được trả nghỉ việc.
+  - **Giá bán**: chỉnh giá từng món 50–200% giá thị trường; khách thường chấp nhận 80–130%.
+  - **Cài đặt**: âm lượng nhạc/hiệu ứng, tắt tiếng, đổi tên, ẩn dòng hướng dẫn.
+- **Âm thanh** bật sau lần bấm chuột/gõ phím đầu tiên (trình duyệt bắt buộc vậy).
+
 ## Test
 
 ```bash
