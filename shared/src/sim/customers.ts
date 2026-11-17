@@ -1,4 +1,4 @@
-import { BALANCE, ITEMS, SHOPS, getStationDef } from '../content';
+import { BALANCE, ITEMS, SHOP_META, SHOPS, getStationDef } from '../content';
 import type { ItemId, PlacedStation, ShopId, ShopLayout } from '../content';
 import { distanceToFootprint } from './carry';
 import type { SimEvent } from './events';
@@ -132,6 +132,34 @@ function walk(c: Customer, tx: number, tz: number, dt: number): boolean {
   return step >= d - ARRIVE;
 }
 
+function seatPoint(shopId: ShopId, c: Customer): { x: number; z: number } | null {
+  if (!c.table) return null;
+  return SHOPS[shopId].stations.find((p) => p.instanceId === c.table)?.seatPoints?.[c.seat] ?? null;
+}
+
+/**
+ * Khách vừa trả tiền ở quán có bàn: 60% muốn ăn tại chỗ. Còn chỗ sạch → giữ chỗ, đi tới ngồi.
+ * Hết chỗ → mang về (chấm tối đa 4 sao). Chưa mở bàn nào → mang về bình thường.
+ */
+export function seatCustomer(world: WorldState, shopId: ShopId, c: Customer): 'seated' | 'takeaway' | 'none' {
+  if (!SHOP_META[shopId].hasTables) return 'none';
+  const shop = world.shops[shopId];
+  const tables = SHOPS[shopId].stations.filter((p) => p.seatPoints && shop.stations[p.instanceId].unlocked);
+  if (!tables.length) return 'none';
+  if (nextRandom(world) >= BALANCE.DINE_IN_CHANCE) return 'none';
+  for (const t of tables) {
+    const st = shop.stations[t.instanceId];
+    const i = st.seats.indexOf('free');
+    if (i < 0) continue;
+    st.seats[i] = 'taken';
+    c.table = t.instanceId;
+    c.seat = i;
+    c.eatTimer = 0;
+    return 'seated';
+  }
+  return 'takeaway';
+}
+
 function scoreFor(waited: number): number {
   if (waited <= BALANCE.SCORE_FAST_SEC) return 5;
   if (waited <= BALANCE.SCORE_OK_SEC) return 4;
@@ -208,12 +236,31 @@ export function tickCustomers(world: WorldState, shopId: ShopId, dt: number): Si
             world.dayStats.revenue += c.bill;
             world.dayStats.served += 1;
             for (const it of c.holding) world.dayStats.sold[it] = (world.dayStats.sold[it] ?? 0) + 1;
-            pushRating(shop, scoreFor(c.waited));
+            const seat = seatCustomer(world, shopId, c);
+            const score = scoreFor(c.waited);
+            pushRating(shop, seat === 'takeaway' ? Math.min(score, BALANCE.TAKEAWAY_MAX_SCORE) : score);
             c.scored = true;
-            c.state = 'leaving';
+            c.state = seat === 'seated' ? 'toTable' : 'leaving';
             events.push({ type: 'sale', shopId, amount: c.bill, x: c.x, z: c.z });
           }
         } else c.waited += dt;
+        break;
+      }
+      case 'toTable': {
+        const pt = seatPoint(shopId, c);
+        if (!pt) c.state = 'leaving';
+        else if (walk(c, pt.x, pt.z, dt)) c.state = 'eating';
+        break;
+      }
+      case 'eating': {
+        c.eatTimer += dt;
+        if (c.eatTimer >= BALANCE.EAT_SEC - 1e-6) {
+          const st = c.table ? shop.stations[c.table] : null;
+          if (st && st.seats[c.seat] === 'taken') st.seats[c.seat] = 'dirty';
+          c.table = null;
+          c.holding = [];
+          c.state = 'leaving';
+        }
         break;
       }
       case 'leaving': {

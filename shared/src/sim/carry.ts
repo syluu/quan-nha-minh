@@ -91,6 +91,26 @@ export function tickCarry(world: WorldState, shopId: ShopId, dt: number): SimEve
       continue;
     }
 
+    // 1c) Bàn ăn: đứng yên cạnh bàn bẩn → dọn 1 chỗ mỗi CLEAN_SEC
+    if (def.kind === 'table') {
+      const still = Math.hypot(p.input.mx, p.input.mz) <= BALANCE.STILL_INPUT;
+      const dirty = st.seats.indexOf('dirty');
+      if (!still || p.inMenu || dirty < 0) {
+        p.pickTimer = 0;
+        p.pickAt = null;
+        continue;
+      }
+      if (p.pickAt !== placed.instanceId) p.pickTimer = 0;
+      p.pickAt = placed.instanceId;
+      p.pickTimer += dt;
+      if (p.pickTimer >= BALANCE.CLEAN_SEC - 1e-6) {
+        p.pickTimer = 0;
+        st.seats[dirty] = 'free';
+        events.push({ type: 'clean', shopId, instanceId: placed.instanceId, x: placed.x, z: placed.z });
+      }
+      continue;
+    }
+
     // 2) Thùng rác (chỉ khi đứng yên)
     if (def.kind === 'trash') {
       p.pickTimer = 0;

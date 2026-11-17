@@ -19,7 +19,12 @@ export function staffWage(s: Pick<StaffState, 'level'>): number {
 }
 
 const ROLE_LABEL = (s: Pick<StaffState, 'role' | 'item'>) =>
-  s.role === 'cashier' ? 'thu ngân' : s.role === 'courier' ? 'giao đơn' : `phụ bếp ${ITEMS[s.item!].name}`;
+  s.role === 'cashier' ? 'thu ngân' : s.role === 'courier' ? 'giao đơn' : s.role === 'cleaner' ? 'dọn bàn' : `phụ bếp ${ITEMS[s.item!].name}`;
+
+/** Quán có bàn ăn đã mở → có chỗ cho 1 nhân viên dọn bàn. */
+function tablesOpen(world: WorldState, shopId: ShopId): boolean {
+  return SHOPS[shopId].stations.some((p) => p.seatPoints && world.shops[shopId].stations[p.instanceId].unlocked);
+}
 
 /** Các món có kệ đang mở (mỗi món = 1 chỗ phụ bếp). */
 function openLines(world: WorldState, shopId: ShopId): ItemId[] {
@@ -35,12 +40,15 @@ export function staffSlots(world: WorldState, shopId: ShopId): {
   cashier: { max: 1; used: number };
   /** Chỉ có khi điểm giao hàng đã mở. */
   courier: { max: 1; used: number } | null;
+  /** Chỉ có khi quán đã mở bàn ăn. */
+  cleaner: { max: 1; used: number } | null;
   cookLines: { item: ItemId; taken: string | null }[];
 } {
   const staff = world.shops[shopId].staff;
   return {
     cashier: { max: 1, used: staff.filter((s) => s.role === 'cashier').length },
     courier: pickupOpen(world, shopId) ? { max: 1, used: staff.filter((s) => s.role === 'courier').length } : null,
+    cleaner: tablesOpen(world, shopId) ? { max: 1, used: staff.filter((s) => s.role === 'cleaner').length } : null,
     cookLines: openLines(world, shopId).map((item) => ({
       item,
       taken: staff.find((s) => s.role === 'cook' && s.item === item)?.id ?? null,
@@ -56,6 +64,10 @@ export function hireStaff(world: WorldState, shopId: ShopId, role: StaffRole, it
   } else if (role === 'courier') {
     if (!pickupOpen(world, shopId)) return { ok: false, error: 'BAD_ITEM' };
     if (shop.staff.some((s) => s.role === 'courier')) return { ok: false, error: 'NO_SLOT' };
+    item = null;
+  } else if (role === 'cleaner') {
+    if (!tablesOpen(world, shopId)) return { ok: false, error: 'BAD_ITEM' };
+    if (shop.staff.some((s) => s.role === 'cleaner')) return { ok: false, error: 'NO_SLOT' };
     item = null;
   } else if (role === 'cook') {
     if (!item || !isOnSale(world, shopId, item)) return { ok: false, error: 'BAD_ITEM' };
@@ -153,6 +165,7 @@ function roomAt(world: WorldState, shopId: ShopId, instanceId: string, item: Ite
   const st = world.shops[shopId].stations[instanceId];
   if (!st.unlocked) return 0;
   if (def.kind === 'display') return def.item === item ? def.cap - st.stock : 0;
+  if (def.kind === 'assembler' && !st.enabled) return 0;
   if (def.kind === 'assembler' && def.inputs.some((i) => i.item === item)) return def.inputCap - (st.inputs[item] ?? 0);
   return 0;
 }
@@ -310,12 +323,67 @@ function tickCourier(world: WorldState, shopId: ShopId, s: StaffState, dt: numbe
   return events;
 }
 
+/** Khe giữa các kệ (z=0): nhân viên dọn bàn đi qua đây để sang khu bàn ăn, không đi xuyên kệ. */
+const SHELF_GAPS = [-5, -2.5, 0, 2.5, 5];
+const KITCHEN_SIDE_Z = -0.85;
+const DINING_SIDE_Z = 1.7;
+
+function routeTo(from: { x: number; z: number }, to: { x: number; z: number }): { x: number; z: number }[] {
+  const front = (p: { z: number }) => p.z > 0.6;
+  if (front(from) === front(to)) return [to];
+  const gx = SHELF_GAPS.reduce((best, g) => (Math.abs(from.x - g) + Math.abs(g - to.x) < Math.abs(from.x - best) + Math.abs(best - to.x) ? g : best));
+  const a = { x: gx, z: front(from) ? DINING_SIDE_Z : KITCHEN_SIDE_Z };
+  const b = { x: gx, z: front(to) ? DINING_SIDE_Z : KITCHEN_SIDE_Z };
+  return [a, b, to];
+}
+
+/** Dọn bàn: tới bàn bẩn nhất, dọn từng chỗ; hết việc thì đứng chờ ở bàn vừa dọn. */
+function tickCleaner(world: WorldState, shopId: ShopId, s: StaffState, dt: number): SimEvent[] {
+  const shop = world.shops[shopId];
+  const tables = SHOPS[shopId].stations.filter((p) => p.seatPoints && shop.stations[p.instanceId].unlocked);
+  const dirtyCount = (id: string) => shop.stations[id].seats.filter((x) => x === 'dirty').length;
+  if (s.target && (!shop.stations[s.target]?.unlocked || dirtyCount(s.target) === 0)) {
+    s.target = null;
+    s.path = [];
+  }
+  if (!s.target) {
+    let best: (typeof tables)[number] | null = null;
+    for (const t of tables) {
+      const n = dirtyCount(t.instanceId);
+      if (n === 0) continue;
+      if (!best || n > dirtyCount(best.instanceId) || (n === dirtyCount(best.instanceId) && Math.hypot(t.x - s.x, t.z - s.z) < Math.hypot(best.x - s.x, best.z - s.z)))
+        best = t;
+    }
+    if (!best) return [];
+    s.target = best.instanceId;
+    s.path = routeTo(s, best.workPoint);
+    s.timer = 0;
+  }
+  const path = (s.path ??= []);
+  if (path.length) {
+    if (walk(s, path[0].x, path[0].z, dt)) path.shift();
+    return [];
+  }
+  const placed = placedOf(shopId, s.target);
+  s.timer += dt;
+  const cleanSec = (BALANCE.CLEAN_SEC * BALANCE.PLAYER_SPEED) / staffStats(s).speed;
+  if (s.timer < cleanSec - 1e-6) return [];
+  s.timer = 0;
+  const st = shop.stations[s.target];
+  st.seats[st.seats.indexOf('dirty')] = 'free';
+  return [{ type: 'clean', shopId, instanceId: s.target, x: placed.x, z: placed.z }];
+}
+
 export function tickStaff(world: WorldState, shopId: ShopId, dt: number): SimEvent[] {
   const events: SimEvent[] = [];
   const shop = world.shops[shopId];
   for (const s of shop.staff) {
     if (s.role === 'courier') {
       events.push(...tickCourier(world, shopId, s, dt));
+      continue;
+    }
+    if (s.role === 'cleaner') {
+      events.push(...tickCleaner(world, shopId, s, dt));
       continue;
     }
     if (s.role === 'cashier') {

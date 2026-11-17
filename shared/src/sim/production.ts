@@ -15,6 +15,11 @@ export function tickStations(world: WorldState, shopId: ShopId, dt: number): voi
     if (!st.unlocked) continue;
 
     if (!st.running) {
+      // Tắt máy: làm xong mẻ đang chạy rồi mới dừng (không bắt đầu mẻ mới).
+      if (!st.enabled) {
+        st.blocked = 'off';
+        continue;
+      }
       if (st.outputCount >= effectiveOutputCap(def, st)) {
         st.blocked = 'full';
         continue;

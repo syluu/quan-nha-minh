@@ -157,8 +157,15 @@ export function sellStation(world: WorldState, shopId: ShopId, instanceId: unkno
   const st = world.shops[shopId].stations[instanceId];
   Object.assign(st, {
     unlocked: false, paid: 0, level: 0, upgradeSpent: 0, outputCount: 0, inputs: {}, stock: 0,
-    progress: 0, running: false, blocked: null, tileOccupant: null,
+    progress: 0, running: false, blocked: null, tileOccupant: null, enabled: true,
+    seats: st.seats.map(() => 'free' as const),
   });
+  // Bán bàn ăn: khách đang ngồi / đang tới bàn đó đứng dậy ra về.
+  for (const c of world.shops[shopId].customers)
+    if (c.table === instanceId) {
+      c.table = null;
+      c.state = 'leaving';
+    }
   world.money += refund;
   const placed = SHOPS[shopId].stations.find((p) => p.instanceId === instanceId)!;
   if (getStationDef(placed.def).kind === 'pickup') clearOnline(world, shopId);

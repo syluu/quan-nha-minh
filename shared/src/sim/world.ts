@@ -70,6 +70,9 @@ export interface StaffState {
   level: number;
   /** Lương đã làm nhưng chưa trả (trả cuối tháng hoặc khi cho nghỉ). */
   wageOwed: number;
+  /** Nhân viên dọn bàn: bàn đang tới dọn và các điểm đi qua (vòng qua khe giữa các kệ). */
+  target?: string | null;
+  path?: { x: number; z: number }[];
 }
 
 export type CampaignId = 'to_roi' | 'mxh' | 'review';

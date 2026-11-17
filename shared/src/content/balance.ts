@@ -101,6 +101,12 @@ export const BALANCE = {
   SCORE_PRICEY: 3,
   SCORE_ABANDON: 1,
 
+  /** Bàn ăn (quán có bàn): tỉ lệ khách muốn ngồi, thời gian ăn, dọn 1 chỗ; mang về vì hết chỗ → tối đa 4 sao. */
+  DINE_IN_CHANCE: 0.6,
+  EAT_SEC: 20,
+  CLEAN_SEC: 0.5,
+  TAKEAWAY_MAX_SCORE: 4,
+
   PAY_TILE_DELAY_SEC: 2,
   PAY_TILE_DRAIN_SEC: 1.5,
   PAY_TILE_RADIUS: 0.7,
