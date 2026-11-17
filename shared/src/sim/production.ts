@@ -42,6 +42,7 @@ export function tickStations(world: WorldState, shopId: ShopId, dt: number): voi
       ingredients.forEach((ing, i) => {
         if (fromStore[i] > 0) world.warehouse[ing.id] = (world.warehouse[ing.id] ?? 0) - fromStore[i];
       });
+      if (fromStore.some((n) => n > 0) && !world.deliveredTo.includes(shopId)) world.deliveredTo.push(shopId);
       world.money -= cost;
       world.dayStats.ingredientCost += cost;
       if (def.kind === 'assembler') for (const i of def.inputs) st.inputs[i.item] = (st.inputs[i.item] ?? 0) - i.qty;

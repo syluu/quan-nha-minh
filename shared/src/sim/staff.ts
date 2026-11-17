@@ -408,7 +408,9 @@ function tickFarmhand(world: WorldState, shopId: ShopId, s: StaffState, dt: numb
         if (getStationDef(p.def).kind !== 'plot' || !st.unlocked || st.outputCount <= 0) continue;
         // Người làm khác đang tới lô này thì chọn lô khác (nếu có).
         const taken = shop.staff.some((o) => o !== s && o.task?.from === p.instanceId);
-        if (!best || (!taken && st.outputCount > shop.stations[best.instanceId].outputCount)) best = p;
+        const score = (taken ? 0 : 100) + st.outputCount;
+        const bestTaken = best && shop.staff.some((o) => o !== s && o.task?.from === best!.instanceId);
+        if (!best || score > (bestTaken ? 0 : 100) + shop.stations[best.instanceId].outputCount) best = p;
       }
       if (!best) {
         walk(s, truck.workPoint.x, truck.workPoint.z, dt);

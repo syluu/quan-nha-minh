@@ -99,6 +99,7 @@ export function migrateV5toV6(raw: any, freshShops: Record<string, any>): any {
   const w = structuredClone(raw);
   w.schemaVersion = 6;
   w.warehouse ??= {};
+  w.deliveredTo ??= [];
   for (const [id, fresh] of Object.entries<any>(freshShops)) w.shops[id] ??= structuredClone(fresh);
   return w;
 }

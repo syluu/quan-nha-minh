@@ -102,11 +102,11 @@ const list: StationDef[] = [
 
   // Trang trại
   { kind: 'plot', id: 'ruong_rau', name: 'Ruộng rau', seedCost: K(4), output: 'thung_rau', cycleSec: 40, outputCap: 3, animal: false, footprint: PLOT },
-  { kind: 'plot', id: 'ruong_lua_mi', name: 'Ruộng lúa mì', seedCost: K(8), output: 'bao_bot_mi', cycleSec: 60, outputCap: 3, animal: false, footprint: PLOT },
-  { kind: 'plot', id: 'ruong_lua', name: 'Ruộng lúa', seedCost: K(12), output: 'bao_gao', cycleSec: 60, outputCap: 3, animal: false, footprint: PLOT },
+  { kind: 'plot', id: 'ruong_lua_mi', name: 'Ruộng lúa mì', seedCost: K(10), output: 'bao_bot_mi', cycleSec: 60, outputCap: 3, animal: false, footprint: PLOT },
+  { kind: 'plot', id: 'ruong_lua', name: 'Ruộng lúa', seedCost: K(14), output: 'bao_gao', cycleSec: 60, outputCap: 3, animal: false, footprint: PLOT },
   { kind: 'plot', id: 'chuong_ga', name: 'Chuồng gà', seedCost: K(12), output: 'khay_trung', cycleSec: 50, outputCap: 3, animal: true, footprint: PLOT },
-  { kind: 'plot', id: 'chuong_lon', name: 'Chuồng lợn', seedCost: K(25), output: 'thung_thit_lon', cycleSec: 90, outputCap: 3, animal: true, footprint: PLOT },
-  { kind: 'plot', id: 'chuong_bo', name: 'Chuồng bò', seedCost: K(60), output: 'thung_thit_bo', cycleSec: 120, outputCap: 3, animal: true, footprint: PLOT },
+  { kind: 'plot', id: 'chuong_lon', name: 'Chuồng lợn', seedCost: K(16), output: 'thung_thit_lon', cycleSec: 90, outputCap: 3, animal: true, footprint: PLOT },
+  { kind: 'plot', id: 'chuong_bo', name: 'Chuồng bò', seedCost: K(45), output: 'thung_thit_bo', cycleSec: 120, outputCap: 3, animal: true, footprint: PLOT },
   { kind: 'truck', id: 'xe_cho_hang', name: 'Xe chở hàng', footprint: { w: 1.0, d: 1.8 } },
 
   // Quán cơm tấm

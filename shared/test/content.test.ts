@@ -268,7 +268,7 @@ describe('plan 5 content', () => {
 describe('farm content (plan 6)', () => {
   it('farm meta: deposit 5.000K, rent 1.500K/month + 300K per plot', async () => {
     const { SHOP_META } = await import('../src/content');
-    expect(SHOP_META.farm).toMatchObject({ kind: 'farm', deposit: 5_000_000, rentPerMonth: 1_500_000, plotRent: 300_000 });
+    expect(SHOP_META.farm).toMatchObject({ kind: 'farm', deposit: 5_000_000, rentPerMonth: 700_000, plotRent: 150_000 });
     for (const id of ['banh_mi', 'com_tam', 'pho_cafe'] as const) expect(SHOP_META[id].kind).toBe('shop');
   });
 
@@ -279,7 +279,7 @@ describe('farm content (plan 6)', () => {
     expect(farm.stations.filter((p) => p.unlockCost === 0).map((p) => p.instanceId).sort()).toEqual(['ruong_rau', 'thung_rac', 'xe_cho_hang']);
   });
 
-  it('home-grown ingredients cost 30–70% of the market price', () => {
+  it('home-grown ingredients: seed cost is 15–35% of the market price (rent, wages and delivery come on top)', () => {
     for (const p of SHOPS.farm.stations) {
       const def = getStationDef(p.def);
       if (def.kind !== 'plot') continue;
@@ -288,8 +288,8 @@ describe('farm content (plan 6)', () => {
       expect(ITEMS[def.output].sellable).toBe(false);
       const market = bundle.reduce((n, b) => n + INGREDIENTS[b.id].marketPrice * b.qty, 0);
       const ratio = def.seedCost / market;
-      expect(ratio, def.id).toBeGreaterThanOrEqual(0.3);
-      expect(ratio, def.id).toBeLessThanOrEqual(0.7);
+      expect(ratio, def.id).toBeGreaterThanOrEqual(0.15);
+      expect(ratio, def.id).toBeLessThanOrEqual(0.35);
     }
   });
 });

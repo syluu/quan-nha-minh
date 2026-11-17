@@ -1,4 +1,5 @@
-import { BALANCE, SHOP_IDS, SHOP_META, SHOPS, getStationDef, isFarm } from '../content';
+import { BALANCE, ITEMS, SHOP_IDS, SHOP_META, SHOPS, getStationDef, isFarm, itemCost } from '../content';
+import { loadCrate } from './carry';
 import type { ShopId } from '../content';
 import { formatK } from '../money';
 import type { ActionResult } from './actions';
@@ -19,7 +20,7 @@ export function isShopComplete(world: WorldState, shopId: ShopId): boolean {
   const shop = world.shops[shopId];
   return SHOPS[shopId].stations.every((p) => {
     const kind = getStationDef(p.def).kind;
-    if (kind !== 'producer' && kind !== 'assembler' && kind !== 'display') return true;
+    if (kind !== 'producer' && kind !== 'assembler' && kind !== 'display' && kind !== 'plot') return true;
     return shop.stations[p.instanceId].unlocked;
   });
 }
@@ -80,6 +81,12 @@ export function returnShop(world: WorldState, shopId: unknown, byPlayerId: strin
   const refund = returnRefund(world, shopId);
   const old = world.shops[shopId];
   world.extraWagesOwed += old.staff.reduce((n, s) => n + s.wageOwed, 0);
+  // Thùng hàng người làm trang trại đang cầm: bốc vào kho; món khác coi như bỏ đi.
+  for (const s of old.staff)
+    for (const it of s.carry) {
+      if (ITEMS[it].bundle) loadCrate(world, it);
+      else world.dayStats.wasted += itemCost(it);
+    }
   world.shops[shopId] = createShop(shopId, false);
   for (const p of Object.values(world.players)) {
     if (p.location !== shopId) continue;

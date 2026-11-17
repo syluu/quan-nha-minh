@@ -24,14 +24,14 @@ export function formatClock(secOfDay: number): string {
 }
 
 /**
- * Sáng sớm: xe chở hàng từ kho tổng tới mỗi quán (khi có trang trại và kho còn hàng).
- * Không đủ tiền thì trả hết số đang có (không âm ví).
+ * Cuối ngày: phí xe chở hàng từ kho tổng cho mỗi quán hôm nay đã dùng hàng trong kho.
+ * Không đủ tiền thì bỏ qua (không rút cạn ví).
  */
 export function chargeDelivery(world: WorldState): number {
-  if (!world.shops.farm?.owned) return 0;
-  if (!Object.values(world.warehouse).some((n) => (n ?? 0) > 0)) return 0;
-  const shops = (Object.keys(world.shops) as ShopId[]).filter((id) => world.shops[id].owned && !isFarm(id)).length;
-  const fee = Math.min(world.money, shops * BALANCE.DELIVERY_FEE_PER_SHOP);
+  const shops = world.deliveredTo.filter((id) => world.shops[id]?.owned && !isFarm(id)).length;
+  world.deliveredTo = [];
+  const fee = shops * BALANCE.DELIVERY_FEE_PER_SHOP;
+  if (fee <= 0 || world.money < fee) return 0;
   world.money -= fee;
   world.dayStats.ingredientCost += fee;
   return fee;
@@ -43,6 +43,8 @@ export function advanceTime(world: WorldState, dt: number): DaySummary | null {
   if (world.secOfDay < BALANCE.DAY_REAL_SEC) return null;
 
   accrueWages(world);
+  // Trước khi lập bảng tổng kết/kết toán: phí chở hàng của hôm nay.
+  chargeDelivery(world);
   tickCampaignsDaily(world);
   const s = world.dayStats;
   const summary: DaySummary = {
@@ -59,7 +61,6 @@ export function advanceTime(world: WorldState, dt: number): DaySummary | null {
   world.day += 1;
   world.secOfDay = 0;
   world.dayStats = emptyDayStats();
-  chargeDelivery(world);
   for (const id of Object.keys(world.shops) as ShopId[]) {
     const shop = world.shops[id];
     // Đóng cửa: khách đang ăn để lại chỗ bẩn; chỗ giữ cho khách chưa kịp ngồi thì trả lại.

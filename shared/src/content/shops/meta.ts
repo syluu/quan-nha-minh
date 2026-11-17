@@ -22,8 +22,8 @@ export const SHOP_META: Record<ShopId, ShopMeta> = {
   com_tam: { name: 'Quán cơm tấm', sign: 'CƠM TẤM SƯỜN CHẢ', deposit: K(8000), rentPerMonth: K(4000), hasTables: true, signColor: '#2f6b3a', kind: 'shop', plotRent: 0 },
   pho_cafe: { name: 'Quán phở & cà phê', sign: 'PHỞ BÒ · CÀ PHÊ', deposit: K(12000), rentPerMonth: K(6000), hasTables: true, signColor: '#2b4c7e', kind: 'shop', plotRent: 0 },
   farm: {
-    name: 'Trang trại', sign: 'TRANG TRẠI NHÀ MÌNH', deposit: K(5000), rentPerMonth: K(1500), hasTables: false, signColor: '#5a7a2a',
-    kind: 'farm', plotRent: K(300),
+    name: 'Trang trại', sign: 'TRANG TRẠI NHÀ MÌNH', deposit: K(5000), rentPerMonth: K(700), hasTables: false, signColor: '#5a7a2a',
+    kind: 'farm', plotRent: K(150),
   },
 };
 

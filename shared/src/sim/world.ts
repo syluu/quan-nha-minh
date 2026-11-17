@@ -226,6 +226,8 @@ export interface WorldState {
   extraWagesOwed: number;
   /** Kho tổng: nguyên liệu từ trang trại, dùng chung mọi quán (máy lấy kho trước, thiếu mới mua chợ). */
   warehouse: Partial<Record<IngredientId, number>>;
+  /** Các quán hôm nay đã lấy hàng từ kho tổng (tính phí chở cuối ngày). */
+  deliveredTo: ShopId[];
 }
 
 export function emptyDayStats(): DayStats {
@@ -282,6 +284,7 @@ export function createWorld(code: string, seed: number): WorldState {
     months: [],
     extraWagesOwed: 0,
     warehouse: {},
+    deliveredTo: [],
   };
 }
 

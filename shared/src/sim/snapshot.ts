@@ -84,6 +84,7 @@ export function normalizeLoaded(raw: unknown): WorldState {
   if (version !== 5 && version !== 6) w = migrateV4toV5(w, fresh.shops);
   if (version !== 6) w = migrateV5toV6(w, fresh.shops);
   const world = w as WorldState;
+  world.deliveredTo ??= [];
   for (const id of Object.keys(fresh.shops) as ShopId[]) {
     const shop = (world.shops[id] ??= fresh.shops[id]);
     for (const [instanceId, st] of Object.entries(fresh.shops[id].stations)) shop.stations[instanceId] ??= st;

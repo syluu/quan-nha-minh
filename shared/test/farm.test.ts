@@ -60,7 +60,7 @@ describe('farm plots and the truck', () => {
     p.carry.push('banh_mi'); // món không phải thùng hàng: không bốc lên xe
     repeat(1, (dt) => tickCarry(w, 'farm', dt));
     expect(p.carry).toEqual(['banh_mi']);
-    expect(w.warehouse.rau).toBe(20);
+    expect(w.warehouse.rau).toBe(40);
   });
 });
 
@@ -106,7 +106,7 @@ describe('renting the farm (plan 6, Review Focus 2)', () => {
     w.shops.farm.stations.ruong_lua_mi.unlocked = true;
     w.shops.farm.stations.chuong_ga.unlocked = true;
     w.day = 7;
-    expect(buildSettlement(w).rent).toBe(1_500_000 + 2 * 300_000);
+    expect(buildSettlement(w).rent).toBe(700_000 + 2 * 150_000);
   });
 });
 
@@ -140,24 +140,57 @@ describe('farm runs without shop systems (Review Focus 3)', () => {
     w.shops.farm.stations.chuong_ga.unlocked = true;
     w.shops.farm.stations.chuong_ga.outputCount = 2;
     repeat(30, (dt) => tickStaff(w, 'farm', dt));
-    expect(w.warehouse.rau).toBe(30);
-    expect(w.warehouse.trung).toBe(20);
+    expect(w.warehouse.rau).toBe(60);
+    expect(w.warehouse.trung).toBe(30);
   });
 });
 
 describe('delivery fee and returning the farm', () => {
-  it('each morning: 50K per shop when the farm is rented and the warehouse has stock', async () => {
+  it('end of day: 50K for each shop that used warehouse stock today; unused stock costs nothing; never drains the wallet', async () => {
     const { advanceTime } = await import('../src/sim/time');
     const w = farmWorld();
     w.shops.com_tam.owned = true;
-    w.secOfDay = 359.99;
-    advanceTime(w, 0.1); // kho rỗng → không tốn
-    expect(w.money).toBe(5_000_000);
-    w.warehouse.rau = 5;
+    w.warehouse = { xuong_bo: 6 }; // không quán nào dùng
     w.secOfDay = 359.99;
     advanceTime(w, 0.1);
-    expect(w.money).toBe(5_000_000 - 100_000);
-    expect(w.dayStats.ingredientCost).toBe(100_000);
+    expect(w.money).toBe(5_000_000);
+    w.warehouse = { bot_mi: 5, gao: 5 };
+    tickStations(w, 'banh_mi', 0.05);
+    tickStations(w, 'com_tam', 0.05);
+    const before = w.money;
+    const costBefore = w.dayStats.ingredientCost; // lò sườn mua thịt ở chợ (kho không có)
+    w.secOfDay = 359.99;
+    const summary = advanceTime(w, 0.1)!;
+    expect(before - w.money).toBe(100_000);
+    expect(summary.ingredientCost - costBefore).toBe(100_000);
+    w.warehouse = { bot_mi: 5 };
+    tickStations(w, 'banh_mi', 3.1);
+    tickStations(w, 'banh_mi', 0.05);
+    w.money = 30_000;
+    w.secOfDay = 359.99;
+    advanceTime(w, 0.1);
+    expect(w.money).toBe(30_000);
+  });
+
+  it('two farmhands go to different plots; returning the farm keeps the crates they carry', async () => {
+    const { hireStaff, tickStaff } = await import('../src/sim/staff');
+    const { sellStation } = await import('../src/sim/settlement');
+    const w = farmWorld();
+    putPlayer(w, 'a', 0, -1.25, [], 'banh_mi');
+    hireStaff(w, 'farm', 'farmhand', null, 'a');
+    hireStaff(w, 'farm', 'farmhand', null, 'a');
+    w.shops.farm.stations.chuong_ga.unlocked = true;
+    w.shops.farm.stations.ruong_rau.outputCount = 1;
+    w.shops.farm.stations.chuong_ga.outputCount = 1;
+    tickStaff(w, 'farm', 0.05);
+    const [a, b] = w.shops.farm.staff;
+    expect(a.task!.from).not.toBe(b.task!.from);
+    b.carry = ['thung_thit_bo'];
+    w.money = 0;
+    w.day = 7;
+    w.settlement = { month: 1, revenue: 0, ingredientCost: 0, marketing: 0, commission: 0, wages: 0, rent: 1e12, loanDue: 0, totalDue: 1e12 };
+    expect(sellStation(w, 'farm', 'mat_bang', 'a', 1)).toEqual({ ok: true });
+    expect(w.warehouse).toMatchObject({ thit_bo: 8, xuong_bo: 8 });
   });
 
   it('returning the farm sends people home and keeps the warehouse (Review Focus 5)', async () => {
