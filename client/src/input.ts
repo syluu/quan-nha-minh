@@ -5,15 +5,18 @@ export interface Keys {
   right: boolean;
 }
 
-const S = Math.SQRT1_2;
+/** Góc camera quanh trục đứng: camera đặt ở hướng (sin yaw, cos yaw) so với nhân vật. */
+export const CAMERA_YAW = (25 * Math.PI) / 180;
 
-/** Camera nhìn chéo 45°: "lên" trên màn hình = (-√½,-√½) trong thế giới, "phải" = (√½,-√½). */
-export function keysToWorld(k: Keys): { mx: number; mz: number } {
+/** "Lên" trên màn hình = đi ra xa camera = -(sin yaw, cos yaw); "phải" = (cos yaw, -sin yaw). */
+export function keysToWorld(k: Keys, yaw = CAMERA_YAW): { mx: number; mz: number } {
   const sy = (k.up ? 1 : 0) - (k.down ? 1 : 0);
   const sx = (k.right ? 1 : 0) - (k.left ? 1 : 0);
   if (sx === 0 && sy === 0) return { mx: 0, mz: 0 };
-  let mx = sy * -S + sx * S;
-  let mz = sy * -S + sx * -S;
+  const sin = Math.sin(yaw);
+  const cos = Math.cos(yaw);
+  let mx = sy * -sin + sx * cos;
+  let mz = sy * -cos + sx * -sin;
   const len = Math.hypot(mx, mz);
   mx /= len;
   mz /= len;
