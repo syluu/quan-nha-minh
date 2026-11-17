@@ -1,25 +1,12 @@
 import * as THREE from 'three';
 import { getStationDef } from '@qnm/shared';
 import type { ItemId, PlacedStation, Snapshot } from '@qnm/shared';
-import { ITEM_STACK_H, createItemMesh } from './items';
+import { ITEM_STACK_H } from './items';
+import { buildAssembler, buildDisplay, buildProducer, itemsOnTray } from './machineModels';
+import type { Tray } from './machineModels';
 import { box, makeLabel, markSharedGeometry, mat } from './materials';
 
 type StationSnap = Snapshot['stations'][number];
-
-const LOOK: Record<string, { color: number; h: number }> = {
-  lo_banh_mi: { color: 0x9aa3ad, h: 1.0 },
-  chao_op_la: { color: 0x5a5a5a, h: 0.85 },
-  lo_than: { color: 0x3b3b3b, h: 0.7 },
-  binh_tra: { color: 0x6aa0c8, h: 0.8 },
-  noi_com: { color: 0xc9ccd0, h: 0.9 },
-  lo_suon: { color: 0x3b3b3b, h: 0.7 },
-  chao_cha: { color: 0x5a5a5a, h: 0.85 },
-  noi_nuoc_dung: { color: 0xa9b0b8, h: 1.05 },
-  may_banh_pho: { color: 0xe6e0d0, h: 0.95 },
-  thot_bo: { color: 0x9a6a3a, h: 0.8 },
-  may_pha_phin: { color: 0x6b4a32, h: 0.95 },
-};
-const HOT_TOP = new Set(['lo_than', 'lo_suon']);
 
 const plateGeo = new THREE.CylinderGeometry(0.15, 0.13, 0.03, 10);
 const stoolGeo = new THREE.CylinderGeometry(0.17, 0.15, 0.45, 8);
@@ -28,18 +15,7 @@ const wheelGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.12, 10);
 markSharedGeometry(plateGeo, stoolGeo, sproutGeo, wheelGeo);
 
 function itemGrid(items: ItemId[], w: number, d: number, y: number): THREE.Group {
-  const g = new THREE.Group();
-  const cols = Math.max(1, Math.floor(w / 0.32));
-  const rows = Math.max(1, Math.floor(d / 0.26));
-  const perLayer = cols * rows;
-  items.forEach((it, i) => {
-    const layer = Math.floor(i / perLayer);
-    const k = i % perLayer;
-    const m = createItemMesh(it);
-    m.position.set((k % cols - (cols - 1) / 2) * 0.32, y + 0.06 + layer * ITEM_STACK_H, (Math.floor(k / cols) - (rows - 1) / 2) * 0.26);
-    g.add(m);
-  });
-  return g;
+  return itemsOnTray(items, { w, d, z: 0, y }, ITEM_STACK_H);
 }
 
 export interface StationView {
@@ -55,32 +31,15 @@ export function createStationView(placed: PlacedStation): StationView {
   const { w, d } = def.footprint;
   let topY = 0.9;
 
+  let tray: Tray | null = null;
   if (def.kind === 'producer') {
-    const look = LOOK[def.id] ?? { color: 0x888888, h: 0.9 };
-    topY = look.h;
-    const body = box(w, look.h, d, look.color);
-    body.position.y = look.h / 2;
-    group.add(body);
-    const top = box(w * 0.95, 0.05, d * 0.95, HOT_TOP.has(def.id) ? 0xc0392b : 0x5b4636, HOT_TOP.has(def.id) ? 0xff3010 : 0);
-    top.position.y = look.h + 0.02;
-    group.add(top);
-    if (def.id === 'lo_banh_mi') {
-      const glow = box(0.7, 0.35, 0.03, 0xffa040, 0xff7a00);
-      glow.position.set(0, 0.55, d / 2 + 0.01);
-      group.add(glow);
-    }
+    tray = buildProducer(group, def);
+    topY = 1.3;
   } else if (def.kind === 'assembler') {
-    const legs = box(w * 0.9, 0.85, d * 0.9, 0xb5793f);
-    legs.position.y = 0.42;
-    const board = box(w, 0.07, d, 0x8a5426);
-    board.position.y = 0.88;
-    group.add(legs, board);
+    tray = buildAssembler(group, def);
   } else if (def.kind === 'display') {
-    const body = box(w, 0.85, d, 0xd29a5c);
-    body.position.y = 0.42;
-    const glass = box(w * 0.96, 0.05, d * 0.96, 0x8a5426);
-    glass.position.y = 0.87;
-    group.add(body, glass);
+    tray = buildDisplay(group, def);
+    topY = 1.0;
   } else if (def.kind === 'pickup') {
     topY = 0.8;
     const desk = box(w, 0.8, d, 0x1fa34a);
@@ -242,7 +201,7 @@ export function createStationView(placed: PlacedStation): StationView {
       if (k === key) return;
       key = k;
       contents.clear();
-      contents.add(itemGrid(items, w, d, topY));
+      contents.add(tray ? itemsOnTray(items, tray, ITEM_STACK_H) : itemGrid(items, w, d, topY));
     },
   };
 }

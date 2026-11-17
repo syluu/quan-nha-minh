@@ -10,6 +10,10 @@ const loafGeo = new THREE.SphereGeometry(1, 8, 6);
 const discGeo = new THREE.CylinderGeometry(0.16, 0.16, 0.04, 10);
 const yolkGeo = new THREE.SphereGeometry(0.06, 8, 6);
 const skewerGeo = new THREE.BoxGeometry(0.42, 0.08, 0.1);
+const stickGeo = new THREE.CylinderGeometry(0.012, 0.012, 0.46, 6);
+const chunkGeo = new THREE.DodecahedronGeometry(0.05, 0);
+const charGeo = new THREE.BoxGeometry(0.06, 0.012, 0.05);
+const onionGeo = new THREE.BoxGeometry(0.025, 0.012, 0.025);
 const cupGeo = new THREE.CylinderGeometry(0.09, 0.07, 0.2, 10);
 const fillingGeo = new THREE.BoxGeometry(0.4, 0.05, 0.13);
 const plateGeo = new THREE.CylinderGeometry(0.17, 0.15, 0.03, 12);
@@ -24,7 +28,7 @@ const crateGeo = new THREE.BoxGeometry(0.32, 0.12, 0.22);
 const crateTopGeo = new THREE.BoxGeometry(0.28, 0.03, 0.18);
 /** Hình dùng chung giữa các món — không được giải phóng khi dọn cảnh. */
 export const SHARED_ITEM_GEOS = new Set<THREE.BufferGeometry>([
-  loafGeo, discGeo, yolkGeo, skewerGeo, cupGeo, fillingGeo, plateGeo, moundGeo, bowlGeo, brothGeo, potGeo, sliceGeo, glassGeo, lumpGeo, crateGeo, crateTopGeo,
+  loafGeo, discGeo, yolkGeo, skewerGeo, stickGeo, chunkGeo, charGeo, onionGeo, cupGeo, fillingGeo, plateGeo, moundGeo, bowlGeo, brothGeo, potGeo, sliceGeo, glassGeo, lumpGeo, crateGeo, crateTopGeo,
 ]);
 markSharedGeometry(...SHARED_ITEM_GEOS);
 
@@ -49,9 +53,27 @@ export function createItemMesh(item: ItemId): THREE.Object3D {
       g.add(white, yolk);
       break;
     }
-    case 'thit_nuong':
-      g.add(new THREE.Mesh(skewerGeo, mat(ITEMS.thit_nuong.color)));
+    case 'thit_nuong': {
+      // Xiên thịt nướng: que tre + 4 miếng thịt cháy cạnh xen màu, rắc hành lá.
+      const stick = new THREE.Mesh(stickGeo, mat(0xe2c48a));
+      stick.rotation.z = Math.PI / 2;
+      g.add(stick);
+      for (let i = 0; i < 4; i++) {
+        const chunk = new THREE.Mesh(chunkGeo, mat(i % 2 ? 0x7a2f12 : ITEMS.thit_nuong.color));
+        chunk.position.set(-0.135 + i * 0.09, 0, 0);
+        chunk.rotation.set(0.3 * i, 0.5 * i, 0.2);
+        g.add(chunk);
+        const char = new THREE.Mesh(charGeo, mat(0x3a1a0a));
+        char.position.set(-0.135 + i * 0.09, 0.035, 0);
+        g.add(char);
+      }
+      for (const x of [-0.09, 0.0, 0.09]) {
+        const onion = new THREE.Mesh(onionGeo, mat(0x5aa34a));
+        onion.position.set(x, 0.05, 0.02);
+        g.add(onion);
+      }
       break;
+    }
     case 'banh_mi_trung':
     case 'banh_mi_thit': {
       const l = loaf();
