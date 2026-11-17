@@ -1,10 +1,11 @@
 import * as THREE from 'three';
-import { SHOPS } from '@qnm/shared';
+import { BALANCE, ITEMS, SHOPS } from '@qnm/shared';
 import type { Snapshot } from '@qnm/shared';
 import { createKeyboardInput } from '../input';
 import type { GameConnection } from '../net';
 import { createFollowCamera } from '../render/camera';
 import { createCharacter } from '../render/characters';
+import { createPickRing } from '../render/pickRing';
 import type { CharacterView } from '../render/characters';
 import { createScene } from '../render/scene';
 import { createStationView } from '../render/stations';
@@ -33,6 +34,8 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
 
   const players = new Map<string, CharacterView>();
   const customers = new Map<number, CharacterView>();
+  const staffViews = new Map<string, CharacterView>();
+  const pickRing = createPickRing(scene);
   const lastPos = new Map<string, { x: number; z: number }>();
   let latest: Snapshot | null = null;
   let cameraSnapped = false;
@@ -76,7 +79,7 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
         seen.add(p.id);
         let v = players.get(p.id);
         if (!v) {
-          v = createCharacter(p.color, { hat: true, name: p.name });
+          v = createCharacter(p.color, { look: 'player', name: p.name });
           players.set(p.id, v);
           scene.add(v.group);
         }
@@ -86,7 +89,7 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
         const moving = !!prevPos && Math.hypot(pose.x - prevPos.x, pose.z - prevPos.z) > 0.002;
         lastPos.set(p.id, { x: pose.x, z: pose.z });
         v.setPose(pose.x, pose.z, pose.dir, moving, t);
-        v.setCarry(p.carry);
+        v.setCarry(p.carry, p.cap);
       }
       for (const [id, v] of players) if (!seen.has(id)) (v.dispose(), players.delete(id));
 
@@ -95,7 +98,7 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
         seenC.add(c.id);
         let v = customers.get(c.id);
         if (!v) {
-          v = createCharacter([0x3d7dd8, 0xd8573d, 0x5aa34a, 0x9b59b6, 0xe0a020, 0x2aa3a3][c.id % 6], { hat: false });
+          v = createCharacter([0x3d7dd8, 0xd8573d, 0x5aa34a, 0x9b59b6, 0xe0a020, 0x2aa3a3][c.id % 6], { look: 'customer' });
           customers.set(c.id, v);
           scene.add(v.group);
         }
@@ -107,6 +110,31 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
         v.setCarry(c.holding);
       }
       for (const [id, v] of customers) if (!seenC.has(id)) (v.dispose(), customers.delete(id), lastPos.delete(`c${id}`));
+
+      // Nhân viên
+      const seenS = new Set<string>();
+      for (const st of s.staff) {
+        seenS.add(st.id);
+        let v = staffViews.get(st.id);
+        if (!v) {
+          const job = st.role === 'cashier' ? 'thu ngân' : ITEMS[st.item!].name;
+          v = createCharacter(0x7a8b99, { look: 'staff', name: `${st.name} · ${job}` });
+          staffViews.set(st.id, v);
+          scene.add(v.group);
+        }
+        const key = `s${st.id}`;
+        const prevPos = lastPos.get(key);
+        const moving = !!prevPos && Math.hypot(st.x - prevPos.x, st.z - prevPos.z) > 0.002;
+        lastPos.set(key, { x: st.x, z: st.z });
+        v.setPose(st.x, st.z, st.dir, moving, t);
+        v.setCarry(st.carry, BALANCE.STAFF_CARRY);
+      }
+      for (const [id, v] of staffViews) if (!seenS.has(id)) (v.dispose(), staffViews.delete(id), lastPos.delete(`s${id}`));
+
+      // Vòng tiến trình nhặt món của chính mình
+      const meSnap = latest?.players.find((p) => p.id === conn.playerId);
+      const mePose = myPose ?? meSnap;
+      pickRing.update(meSnap?.pickAt && mePose ? meSnap.pick : 0, mePose?.x ?? 0, mePose?.z ?? 0);
 
       const focus = myPose ?? s.players.find((p) => p.id === conn.playerId);
       if (focus) {

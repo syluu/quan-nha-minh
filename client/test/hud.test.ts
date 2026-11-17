@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { DaySummary, Snapshot } from '@qnm/shared';
-import { hudText } from '../src/ui/hud';
+import { carryBadge, hudText } from '../src/ui/hud';
 import { summaryRows } from '../src/ui/daySummary';
 
 describe('hudText', () => {
@@ -8,12 +8,20 @@ describe('hudText', () => {
     const s: Snapshot = {
       day: 1, secOfDay: 33.75, money: 2_987_500, stars: 3.7, stations: [], tiles: [], customers: [], log: [], staff: [], prices: {},
       players: [
-        { id: 'a', name: 'Bố', color: 0, x: 0, z: 0, dir: 0, carry: [], online: true, cap: 4, pick: 0, pickAt: null },
+        { id: 'a', name: 'Bố', color: 0, x: 0, z: 0, dir: 0, carry: ['banh_mi', 'banh_mi', 'tra_da'], online: true, cap: 4, pick: 0, pickAt: null },
         { id: 'b', name: 'Mẹ', color: 0, x: 0, z: 0, dir: 0, carry: [], online: true, cap: 4, pick: 0, pickAt: null },
         { id: 'c', name: 'Con', color: 0, x: 0, z: 0, dir: 0, carry: [], online: false, cap: 4, pick: 0, pickAt: null },
       ],
     };
-    expect(hudText(s)).toEqual({ money: '💰 2.987,5K', clock: 'Ngày 1 · 07:30', stars: '★ 3,7', online: 'Bố, Mẹ' });
+    expect(hudText(s, 'a')).toEqual({ money: '💰 2.987,5K', clock: 'Ngày 1 · 07:30', stars: '★ 3,7', online: 'Bố, Mẹ', basket: '🧺 3/4' });
+  });
+});
+
+describe('carryBadge', () => {
+  it('shows count/cap and flags a full stack', () => {
+    expect(carryBadge(3, 4)).toEqual({ text: '3/4', full: false });
+    expect(carryBadge(4, 4)).toEqual({ text: '4/4', full: true });
+    expect(carryBadge(0, 4)).toEqual({ text: '', full: false });
   });
 });
 

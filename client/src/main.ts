@@ -14,7 +14,7 @@ function enterGame(conn: GameConnection) {
   root.innerHTML = '<div class="game" id="game"></div><div class="ui" id="ui"></div>';
   const ui = document.getElementById('ui')!;
   const game = startGame(conn, document.getElementById('game')!);
-  const hud = createHud(ui);
+  const hud = createHud(ui, conn.playerId);
   hud.setCode(conn.code);
   const log = createEventLog(ui);
   const floats = createFloatText(ui, game.project);
@@ -28,6 +28,7 @@ function enterGame(conn: GameConnection) {
   conn.onEvent((e) => {
     if (e.type === 'sale') floats.spawn(`+${formatK(e.amount)}`, 'gain', e.x, e.z);
     else if (e.type === 'customerLost') floats.spawn('-1★', 'loss', e.x, e.z);
+    else if (e.type === 'trash') floats.spawn(`-${formatK(e.value)}`, 'waste', e.x, e.z);
     else if (e.type === 'dayEnd') showDaySummary(ui, e.summary);
   });
   conn.onStatus((st, code) => {

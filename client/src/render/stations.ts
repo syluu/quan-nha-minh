@@ -67,6 +67,13 @@ export function createStationView(placed: PlacedStation): StationView {
     const glass = box(w * 0.96, 0.05, d * 0.96, 0x8a5426);
     glass.position.y = 0.87;
     group.add(body, glass);
+  } else if (def.kind === 'trash') {
+    topY = 0.7;
+    const bin = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.23, 0.62, 12), mat(0x6b7a6e));
+    bin.position.y = 0.31;
+    const lid = new THREE.Mesh(new THREE.CylinderGeometry(0.31, 0.31, 0.06, 12), mat(0x4a564c));
+    lid.position.y = 0.65;
+    group.add(bin, lid);
   } else {
     const body = box(w, 0.9, d, 0x8a5426);
     body.position.y = 0.45;
