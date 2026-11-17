@@ -50,6 +50,15 @@ Mở `http://localhost:5173` ở 2 cửa sổ (hoặc 2 máy cùng wifi qua `htt
 - **Menu → Quảng cáo**: tờ rơi, mạng xã hội, mời người review — tăng lượng khách trong vài ngày.
 - **Menu → Ngân hàng**: vay 1/2/4 tháng (lãi 5/9/15%), góp cuối tháng, trả sớm không phạt.
 
+### Bán online (Kế hoạch 4)
+
+- Mở ô **"Điểm giao hàng"** (2.000K) ở cuối lối bếp bên phải để đăng ký bán qua app giao đồ ăn. App thu **hoa hồng 20%** mỗi đơn.
+- **Shipper xe máy** chạy tới đứng ngay ngoài mép phải quán, bong bóng trên đầu ghi món còn thiếu và số giây còn chờ. Bê đúng món tới điểm giao là món tự chuyển cho shipper; đủ đơn thì tiền vào ví.
+- Chờ quá lâu (60 giây) shipper bỏ đi: đơn huỷ, quán bị trừ sao.
+- **Menu → Nâng cấp → Điểm giao hàng** (5.000K): đổi sang **ô tô**, gom 2–5 đơn một lần, chờ 90 giây.
+- **Menu → Nhân sự → Giao đơn**: thuê người tự lấy món (ở máy hoặc trên kệ) mang ra cho shipper.
+- **Menu → Quảng cáo → Bán online**: xem đơn hôm nay, tạm ngưng / nhận đơn lại.
+
 ## Test
 
 ```bash
