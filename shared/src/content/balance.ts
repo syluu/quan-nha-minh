@@ -57,6 +57,7 @@ export const BALANCE = {
     lo_banh_mi: K(3000), ke_banh_mi: K(500), thu_ngan: K(500), thung_rac: 0,
     noi_com: K(2000), lo_suon: K(2000), ban_com_tam_suon: K(2000), ke_com_tam_suon: K(500),
     noi_nuoc_dung: K(2500), may_banh_pho: K(2000), thot_bo: K(2000), ban_pho: K(2500), ke_pho: K(500),
+    ruong_rau: K(1000), xe_cho_hang: K(2000),
   } as Record<string, number>,
 
   CAMPAIGNS: {
@@ -106,6 +107,9 @@ export const BALANCE = {
   EAT_SEC: 20,
   CLEAN_SEC: 0.5,
   TAKEAWAY_MAX_SCORE: 4,
+  /** Phí chở hàng từ kho tổng tới mỗi quán, mỗi sáng (khi có trang trại và kho còn hàng). */
+  DELIVERY_FEE_PER_SHOP: K(50),
+  FARMHANDS_MAX: 2,
 
   PAY_TILE_DELAY_SEC: 2,
   PAY_TILE_DRAIN_SEC: 1.5,

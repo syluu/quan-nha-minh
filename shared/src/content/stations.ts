@@ -1,3 +1,4 @@
+import { K } from '../money';
 import type { IngredientId, ItemId, ShopId } from './ids';
 
 export interface Footprint {
@@ -32,7 +33,11 @@ export type StationDef =
   | { kind: 'cashier'; id: string; name: string; footprint: Footprint }
   | { kind: 'trash'; id: string; name: string; footprint: Footprint }
   | { kind: 'pickup'; id: string; name: string; footprint: Footprint }
-  | { kind: 'table'; id: string; name: string; seats: number; footprint: Footprint };
+  | { kind: 'table'; id: string; name: string; seats: number; footprint: Footprint }
+  /** Lô trang trại: trả tiền giống/thức ăn mỗi mẻ (đồng), ra 1 thùng hàng sau cycleSec. */
+  | { kind: 'plot'; id: string; name: string; seedCost: number; output: ItemId; cycleSec: number; outputCap: number; animal: boolean; footprint: Footprint }
+  /** Xe chở hàng: bốc thùng hàng lên → nguyên liệu vào kho tổng. */
+  | { kind: 'truck'; id: string; name: string; footprint: Footprint };
 
 export interface PlacedStation {
   instanceId: string;
@@ -68,6 +73,7 @@ export interface ShopLayout {
 
 const MACHINE: Footprint = { w: 1.2, d: 1.0 };
 const SHELF: Footprint = { w: 1.0, d: 0.8 };
+const PLOT: Footprint = { w: 2.2, d: 1.6 };
 
 const list: StationDef[] = [
   { kind: 'producer', id: 'lo_banh_mi', name: 'Lò bánh mì', ingredients: [{ id: 'bot_mi', qty: 1 }], output: 'banh_mi', cycleSec: 3, outputCap: 8, footprint: MACHINE },
@@ -93,6 +99,15 @@ const list: StationDef[] = [
   { kind: 'trash', id: 'thung_rac', name: 'Thùng rác', footprint: { w: 0.6, d: 0.6 } },
   { kind: 'pickup', id: 'diem_giao', name: 'Điểm giao hàng', footprint: { w: 0.8, d: 0.6 } },
   { kind: 'table', id: 'ban_an', name: 'Bàn ăn', seats: 2, footprint: { w: 1.2, d: 0.8 } },
+
+  // Trang trại
+  { kind: 'plot', id: 'ruong_rau', name: 'Ruộng rau', seedCost: K(4), output: 'thung_rau', cycleSec: 40, outputCap: 3, animal: false, footprint: PLOT },
+  { kind: 'plot', id: 'ruong_lua_mi', name: 'Ruộng lúa mì', seedCost: K(8), output: 'bao_bot_mi', cycleSec: 60, outputCap: 3, animal: false, footprint: PLOT },
+  { kind: 'plot', id: 'ruong_lua', name: 'Ruộng lúa', seedCost: K(12), output: 'bao_gao', cycleSec: 60, outputCap: 3, animal: false, footprint: PLOT },
+  { kind: 'plot', id: 'chuong_ga', name: 'Chuồng gà', seedCost: K(12), output: 'khay_trung', cycleSec: 50, outputCap: 3, animal: true, footprint: PLOT },
+  { kind: 'plot', id: 'chuong_lon', name: 'Chuồng lợn', seedCost: K(25), output: 'thung_thit_lon', cycleSec: 90, outputCap: 3, animal: true, footprint: PLOT },
+  { kind: 'plot', id: 'chuong_bo', name: 'Chuồng bò', seedCost: K(60), output: 'thung_thit_bo', cycleSec: 120, outputCap: 3, animal: true, footprint: PLOT },
+  { kind: 'truck', id: 'xe_cho_hang', name: 'Xe chở hàng', footprint: { w: 1.0, d: 1.8 } },
 
   // Quán cơm tấm
   { kind: 'producer', id: 'noi_com', name: 'Nồi cơm', ingredients: [{ id: 'gao', qty: 1 }], output: 'com', cycleSec: 3, outputCap: 8, footprint: MACHINE },
