@@ -1,3 +1,4 @@
+import { APP_VERSION } from './version';
 import { normalizeCode } from '@qnm/shared';
 import { connect, createWorldOnServer } from './net';
 import type { GameConnection } from './net';
@@ -18,7 +19,7 @@ export function showLobby(root: HTMLElement, onJoined: (conn: GameConnection) =>
   root.innerHTML = `
     <div class="lobby">
       <h1>🥖 Quán Nhà Mình</h1>
-      <p class="sub">Cả nhà cùng bán bánh mì</p>
+      <p class="sub">Cả nhà cùng bán bánh mì <span class="ver">· Bản ${APP_VERSION}</span></p>
       <label>Tên của bạn<input id="name" maxlength="16" placeholder="Ví dụ: Bố" /></label>
       <button id="create" class="primary">Tạo quán mới</button>
       <div class="or">hoặc</div>

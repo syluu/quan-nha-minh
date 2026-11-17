@@ -110,3 +110,4 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .shipper-alert.urgent .secs { color: #c8452c; }
 .shipper-alert.pop { animation: shipper-pop 0.6s ease-out; }
 @keyframes shipper-pop { 0% { transform: translateX(-20px); opacity: 0; } 60% { transform: translateX(4px); opacity: 1; } 100% { transform: none; } }
+.ver { color: var(--muted); font-size: 12px; }
