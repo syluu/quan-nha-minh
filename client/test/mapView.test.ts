@@ -103,3 +103,22 @@ describe('costume tab (plan 7)', () => {
     expect(hats.find((h) => h.id === 'mu_luoi_trai_do')).toMatchObject({ state: 'buy', affordable: true, price: '300K' });
   });
 });
+
+describe('try-on before buying (owner request)', () => {
+  it('lists what changes, what must be bought and the total; owned items cost nothing', async () => {
+    const { tryOnSummary, costumeView } = await import('../src/ui/menu/views');
+    const s = snap({ money: 1_000_000 });
+    s.players[0].outfit = { hat: 'non_la', hair: 'toc_ngan_den', shirt: 'ao_mac_dinh', pants: 'quan_nau', apron: 'khong_tap_de' };
+    s.players[0].wardrobe = ['quan_jean'];
+    const trial = { ...s.players[0].outfit, shirt: 'ao_hong', pants: 'quan_jean', hat: 'mu_coi' };
+    const t = tryOnSummary(s, 'a', trial);
+    expect(t.changes.map((c) => c.id).sort()).toEqual(['ao_hong', 'mu_coi', 'quan_jean']);
+    expect(t.total).toBe(1_200_000 + 600_000);
+    expect(t.canBuy).toBe(false);
+    expect(t.reason).toBe('Không đủ tiền');
+    expect(costumeView(s, 'a', trial)[2].items.find((c) => c.id === 'ao_hong')!.trying).toBe(true);
+    const cheap = tryOnSummary(s, 'a', { ...s.players[0].outfit, pants: 'quan_jean' });
+    expect(cheap).toMatchObject({ total: 0, canBuy: true });
+    expect(tryOnSummary(s, 'a', s.players[0].outfit).changed).toBe(false);
+  });
+});

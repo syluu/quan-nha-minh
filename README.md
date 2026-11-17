@@ -31,6 +31,8 @@ Mở `http://localhost:5173` ở 2 cửa sổ (hoặc 2 máy cùng wifi qua `htt
 
 ### Cách chơi (Kế hoạch 2)
 
+- Hàng kệ đặt cách hàng máy một lối bếp rộng: đi dọc lối bếp ra điểm giao hàng không bị tự đặt nhầm món lên kệ.
+
 - **Điều khiển bằng chuột**: giữ **chuột trái** rồi kéo như cần điều khiển (kéo xa đi nhanh hơn); giữ **chuột phải** rồi kéo để xem quanh quán (nhân vật đi là khung nhìn tự quay về); lăn chuột để phóng to/nhỏ.
 - Shipper tới: bảng **bên trái màn hình** ghi giờ tới, số giây còn chờ và món cần (đỏ khi còn ≤ 15 giây).
 
@@ -89,6 +91,7 @@ Mở `http://localhost:5173` ở 2 cửa sổ (hoặc 2 máy cùng wifi qua `htt
   - **Áo & váy liền**: áo phông, áo ba lỗ, sơ mi, áo khoác có mũ, váy liền, áo dài (đỏ / xanh / trắng).
   - **Quần & chân váy**: quần dài, quần jean xắn gấu, quần short, chân váy.
   - **Tạp dề**: trơn hoặc kẻ caro.
+- **Mặc thử trước khi mua**: bấm vào món để thử trên khung xem trước 3D (kéo để xoay nhân vật); ưng thì **Mua & mặc cả bộ**, không ưng thì **Bỏ thử** — chưa mất tiền.
 - Nhân vật có tay chân, đi thì vung tay bước chân, bê đồ thì đưa hai tay ra trước; khách hàng cũng có nhiều kiểu tóc, áo, quần khác nhau.
 - Đồ thuộc về người mua, mặc ngay; đồ đã có đổi mặc lại miễn phí. Người khác trong nhà thấy ngay.
 - Quán phá sản vẫn **giữ trang phục** đã mua (cùng tên nhân vật và mã quán).

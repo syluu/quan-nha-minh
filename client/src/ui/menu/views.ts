@@ -1,7 +1,8 @@
 import {
-  BALANCE, COSTUME_LIST, COSTUME_SLOTS, DEFAULT_OUTFIT, INGREDIENTS, ITEMS, SHOP_META, SHOPS, effectiveCycle, isFarm, effectiveOutputCap, formatK, getStationDef, loanTerms, machineUpgradeCost,
+  BALANCE, COSTUMES, COSTUME_LIST, COSTUME_SLOTS, DEFAULT_OUTFIT, INGREDIENTS, ITEMS, SHOP_META, SHOPS, effectiveCycle, isFarm, effectiveOutputCap, formatK, getStationDef, loanTerms, machineUpgradeCost,
   marketingMultiplier, priceRange,
 } from '@qnm/shared';
+import type { Outfit } from '@qnm/shared';
 import type { CampaignId, ItemId, ShopState, Snapshot, StationState } from '@qnm/shared';
 
 /** Các món có kệ đang mở, theo thứ tự trong bố cục quán. */
@@ -298,7 +299,7 @@ const STYLE_ICON: Record<string, string> = {
 };
 
 /** Tab Trang phục: từng ô (mũ, áo, quần, tạp dề), món đang mặc / đã có / mua được. */
-export function costumeView(s: Snapshot, myId: string) {
+export function costumeView(s: Snapshot, myId: string, trial?: Outfit) {
   const me = s.players.find((p) => p.id === myId);
   const hex = (c: number, fallback: number) => `#${(c || fallback).toString(16).padStart(6, '0')}`;
   return COSTUME_SLOTS.map((slot) => ({
@@ -315,8 +316,30 @@ export function costumeView(s: Snapshot, myId: string) {
         swatch: c.style === 'khong' ? 'transparent' : hex(c.color, me?.color ?? 0x888888),
         price: c.price ? formatK(c.price) : 'Miễn phí',
         state: wearing ? ('wearing' as const) : owned ? ('owned' as const) : ('buy' as const),
+        /** Đang mặc thử trong khung xem trước. */
+        trying: !!trial && trial[slot] === c.id,
         affordable: owned || (s.money >= c.price && !s.settlement),
       };
     }),
   }));
+}
+
+/** Bộ đang mặc thử: món nào khác đồ đang mặc, món nào phải mua, tổng tiền, đủ tiền không. */
+export function tryOnSummary(s: Snapshot, myId: string, trial: Outfit) {
+  const me = s.players.find((p) => p.id === myId);
+  const current = me?.outfit ?? DEFAULT_OUTFIT;
+  const changes = COSTUME_SLOTS.filter((slot) => trial[slot] !== (current[slot] ?? DEFAULT_OUTFIT[slot])).map((slot) => {
+    const c = COSTUMES[trial[slot]];
+    const owned = c.price === 0 || !!me?.wardrobe?.includes(c.id);
+    return { slot, id: c.id, name: c.name, owned, price: owned ? 0 : c.price };
+  });
+  const total = changes.reduce((n, c) => n + c.price, 0);
+  return {
+    changed: changes.length > 0,
+    changes: changes.map((c) => ({ ...c, label: `${c.name}${c.owned ? ' (đã có)' : ` — ${formatK(c.price)}`}` })),
+    total,
+    totalText: formatK(total),
+    canBuy: changes.length > 0 && (total === 0 || (s.money >= total && !s.settlement)),
+    reason: total > 0 && s.settlement ? 'Đang kết toán cuối tháng' : total > s.money ? 'Không đủ tiền' : '',
+  };
 }
