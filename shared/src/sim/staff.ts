@@ -1,4 +1,4 @@
-import { BALANCE, ITEMS, SHOPS, getStationDef, isFarm, itemCost } from '../content';
+import { BALANCE, ITEMS, SHELF_ROW_Z, SHOPS, getStationDef, isFarm, itemCost } from '../content';
 import type { ItemId, ShopId } from '../content';
 import { formatK } from '../money';
 import type { ActionResult } from './actions';
@@ -339,11 +339,11 @@ function tickCourier(world: WorldState, shopId: ShopId, s: StaffState, dt: numbe
 
 /** Khe giữa các kệ (z=0): nhân viên dọn bàn đi qua đây để sang khu bàn ăn, không đi xuyên kệ. */
 const SHELF_GAPS = [-5, -2.5, 0, 2.5, 5];
-const KITCHEN_SIDE_Z = -0.85;
-const DINING_SIDE_Z = 1.7;
+const KITCHEN_SIDE_Z = SHELF_ROW_Z - 0.85;
+const DINING_SIDE_Z = SHELF_ROW_Z + 1.7;
 
 function routeTo(from: { x: number; z: number }, to: { x: number; z: number }): { x: number; z: number }[] {
-  const front = (p: { z: number }) => p.z > 0.6;
+  const front = (p: { z: number }) => p.z > SHELF_ROW_Z + 0.6;
   if (front(from) === front(to)) return [to];
   // Đang đứng trong khe giữa hai kệ: đi tiếp theo đúng khe đó.
   const inGap = from.z > KITCHEN_SIDE_Z - 0.01 && from.z < DINING_SIDE_Z + 0.01;

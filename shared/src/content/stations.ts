@@ -71,6 +71,12 @@ export interface ShopLayout {
   hourCurve: [number, number, number][];
 }
 
+/**
+ * Hàng kệ + thu ngân đặt cách hàng máy (z=-3.8) một lối bếp rộng: đi dọc lối bếp
+ * (z ≈ -1.85, ra điểm giao hàng) không lọt vào vùng đặt đồ của kệ.
+ */
+export const SHELF_ROW_Z = 1.0;
+
 const MACHINE: Footprint = { w: 1.2, d: 1.0 };
 const SHELF: Footprint = { w: 1.0, d: 0.8 };
 const PLOT: Footprint = { w: 2.2, d: 1.6 };

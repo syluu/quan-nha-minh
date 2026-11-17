@@ -1,5 +1,6 @@
 import { K } from '../../money';
 import type { ShopLayout } from '../stations';
+import { SHELF_ROW_Z } from '../stations';
 
 /**
  * Xe bánh mì (bố cục Kế hoạch 2, 16×11 m).
@@ -8,10 +9,10 @@ import type { ShopLayout } from '../stations';
  * Lối bếp (z -3.3 … -0.4) là nơi người chơi/nhân viên đi lại; vào bếp qua khe giữa các kệ.
  */
 const KITCHEN_Z = -3.8;
-const SHELF_Z = 0;
-const CUST_Z = 1.2;
+const SHELF_Z = SHELF_ROW_Z;
+const CUST_Z = SHELF_ROW_Z + 1.2;
 const KITCHEN_WORK_Z = -2.9;
-const SHELF_WORK_Z = -0.85;
+const SHELF_WORK_Z = SHELF_ROW_Z - 0.85;
 
 const kitchen = (x: number) => ({ x, z: KITCHEN_Z, workPoint: { x, z: KITCHEN_WORK_Z } });
 const shelf = (x: number) => ({ x, z: SHELF_Z, customerPoint: { x, z: CUST_Z }, workPoint: { x, z: SHELF_WORK_Z } });

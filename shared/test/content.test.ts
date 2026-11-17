@@ -293,3 +293,16 @@ describe('farm content (plan 6)', () => {
     }
   });
 });
+
+describe('shelves away from the machines (owner request)', () => {
+  it.each(['banh_mi', 'com_tam', 'pho_cafe'] as const)('%s: walking along the kitchen aisle to the pickup point never drops onto a shelf', (id) => {
+    const shop = SHOPS[id];
+    const aisleZ = -1.85;
+    for (const s of shop.stations) {
+      if (getStationDef(s.def).kind !== 'display') continue;
+      const b = footprintOf(s);
+      // Đi lệch khỏi giữa lối bếp tới 0,6 m vẫn ngoài vùng đặt đồ của kệ.
+      expect(b.minZ - (aisleZ + 0.6), s.instanceId).toBeGreaterThan(BALANCE.INTERACT_DIST);
+    }
+  });
+});
