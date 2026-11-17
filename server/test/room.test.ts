@@ -237,3 +237,39 @@ describe('plan 4 messages', () => {
     await a.room.leave();
   });
 });
+
+describe('plan 5: several shops', () => {
+  it('renting moves the renter to the new shop; each client gets the snapshot of the shop they stand in', async () => {
+    const code = await newWorld();
+    const raw = (await store.load(code)) as Record<string, any>;
+    for (const st of Object.values<any>(raw.shops.banh_mi.stations)) st.unlocked = true;
+    raw.money = 20_000_000;
+    await store.save(raw as never);
+    const a = await join(code, 'p5-a', 'Bố');
+    const b = await join(code, 'p5-b', 'Mẹ');
+    await sleep(300);
+    expect(a.snapshot()!.shopId).toBe('banh_mi');
+    expect(a.snapshot()!.canRent).toBe(true);
+    a.room.send(MSG.rentShop, { shopId: 'com_tam' });
+    await sleep(400);
+    expect(a.snapshot()!.shopId).toBe('com_tam');
+    // Cọc 8.000K (máy vẫn chạy nên trừ thêm chút tiền nguyên liệu).
+    expect(a.snapshot()!.money).toBeLessThanOrEqual(12_000_000);
+    expect(a.snapshot()!.money).toBeGreaterThan(11_800_000);
+    expect(b.snapshot()!.shopId).toBe('banh_mi');
+    expect(b.snapshot()!.shops.find((s) => s.id === 'com_tam')!.owned).toBe(true);
+    // Thao tác theo quán dùng quán người gửi đang đứng: B (xe bánh mì) bật/tắt lò bánh mì.
+    b.room.send(MSG.setMachineEnabled, { instanceId: 'lo_banh_mi', enabled: false });
+    a.room.send(MSG.setMachineEnabled, { instanceId: 'lo_banh_mi', enabled: false }); // không có ở quán cơm tấm
+    b.room.send(MSG.travel, { to: 'com_tam' });
+    a.room.send(MSG.travel, { to: 'pho_cafe' }); // chưa thuê
+    await sleep(400);
+    expect(b.snapshot()!.shopId).toBe('com_tam');
+    expect(a.errors).toEqual(['BAD_ITEM', 'NOT_FOUND']);
+    b.room.send(MSG.travel, { to: 'banh_mi' });
+    await sleep(300);
+    expect(b.snapshot()!.stations.find((s) => s.instanceId === 'lo_banh_mi')!.enabled).toBe(false);
+    await a.room.leave();
+    await b.room.leave();
+  });
+});

@@ -1,4 +1,5 @@
-import { BALANCE, SHOPS } from '../content';
+import { BALANCE, SHOP_IDS, SHOP_META, SHOPS } from '../content';
+import { canRent, isShopComplete } from './shops';
 import type { ShopId } from '../content';
 import type { Snapshot } from '../net/protocol';
 import { maxLoan } from './bank';
@@ -14,6 +15,12 @@ export function toSnapshot(world: WorldState, shopId: ShopId): Snapshot {
   const shop = world.shops[shopId];
   const layout = SHOPS[shopId];
   return {
+    shopId,
+    shops: SHOP_IDS.map((id) => ({
+      id, name: SHOP_META[id].name, owned: world.shops[id].owned, complete: world.shops[id].owned && isShopComplete(world, id),
+      deposit: SHOP_META[id].deposit, rentPerMonth: SHOP_META[id].rentPerMonth,
+    })),
+    canRent: canRent(world),
     day: world.day,
     secOfDay: world.secOfDay,
     money: world.money,
@@ -25,6 +32,7 @@ export function toSnapshot(world: WorldState, shopId: ShopId): Snapshot {
       pickAt: p.pickAt,
       carryLevel: p.carryLevel,
       speedLevel: p.speedLevel,
+      location: p.location,
     })),
     staff: shop.staff.map((s) => ({
       id: s.id, name: s.name, role: s.role, item: s.item, x: s.x, z: s.z, dir: s.dir, carry: [...s.carry],
@@ -38,15 +46,17 @@ export function toSnapshot(world: WorldState, shopId: ShopId): Snapshot {
     })),
     maxLoan: maxLoan(world),
     settlement: world.settlement ? { ...world.settlement } : null,
-    sellable: world.settlement ? sellableStations(world, shopId) : [],
+    sellable: world.settlement
+      ? SHOP_IDS.flatMap((id) => sellableStations(world, id).map((x) => ({ shopId: id, ...x })))
+      : [],
     online: onlineSnapshot(world, shopId),
     prices: { ...shop.prices },
-    customers: shop.customers.map((c) => ({ id: c.id, x: c.x, z: c.z, dir: c.dir, holding: [...c.holding] })),
+    customers: shop.customers.map((c) => ({ id: c.id, x: c.x, z: c.z, dir: c.dir, holding: [...c.holding], sitting: c.state === 'eating' })),
     stations: layout.stations.map((placed) => {
       const st = shop.stations[placed.instanceId];
       return {
         instanceId: st.instanceId, unlocked: st.unlocked, outputCount: st.outputCount, stock: st.stock,
-        inputs: { ...st.inputs }, blocked: st.blocked, level: st.level,
+        inputs: { ...st.inputs }, blocked: st.blocked, level: st.level, enabled: st.enabled, seats: [...st.seats],
       };
     }),
     tiles: layout.stations
