@@ -28,13 +28,15 @@ describe('carryBadge', () => {
 describe('summaryRows', () => {
   it('lists the day results in Vietnamese with K money', () => {
     const d: DaySummary = {
-      day: 1, revenue: 1_250_000, ingredientCost: 480_000, unlockSpend: 800_000, served: 86, lost: 4, wages: 0, wasted: 0, sold: {},
+      day: 1, revenue: 1_250_000, ingredientCost: 480_000, unlockSpend: 800_000, served: 86, lost: 4, wages: 300_000, wasted: 6_000, sold: {},
       operatingProfit: 770_000, stars: 4.2,
     };
     expect(summaryRows(d)).toEqual([
       ['Doanh thu', '1.250K'],
       ['Tiền nguyên liệu', '-480K'],
+      ['Lương nhân viên', '-300K'],
       ['Lãi hoạt động', '770K'],
+      ['Hàng bỏ thùng rác', '-6K'],
       ['Chi mở rộng', '-800K'],
       ['Khách đã phục vụ', '86'],
       ['Khách bỏ về', '4'],

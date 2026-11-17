@@ -6,7 +6,9 @@ export function summaryRows(d: DaySummary): [string, string][] {
   return [
     ['Doanh thu', formatK(d.revenue)],
     ['Tiền nguyên liệu', formatK(-d.ingredientCost)],
+    ['Lương nhân viên', formatK(-d.wages)],
     ['Lãi hoạt động', formatK(d.operatingProfit)],
+    ['Hàng bỏ thùng rác', formatK(-d.wasted)],
     ['Chi mở rộng', formatK(-d.unlockSpend)],
     ['Khách đã phục vụ', String(d.served)],
     ['Khách bỏ về', String(d.lost)],
