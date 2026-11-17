@@ -1,6 +1,7 @@
 import { BALANCE } from '../content';
 import type { ShopId } from '../content';
 import { stars } from './rating';
+import { payWages } from './staff';
 import { emptyDayStats } from './world';
 import type { DaySummary, WorldState } from './world';
 
@@ -25,13 +26,17 @@ export function advanceTime(world: WorldState, dt: number): DaySummary | null {
   world.secOfDay += dt;
   if (world.secOfDay < BALANCE.DAY_REAL_SEC) return null;
 
+  payWages(world);
   const s = world.dayStats;
   const summary: DaySummary = {
     ...s,
+    sold: { ...s.sold },
     day: world.day,
-    operatingProfit: s.revenue - s.ingredientCost,
+    operatingProfit: s.revenue - s.ingredientCost - s.wages,
     stars: stars(world.shops.banh_mi.ratings),
   };
+  world.history.push(summary);
+  while (world.history.length > BALANCE.HISTORY_DAYS) world.history.shift();
   world.day += 1;
   world.secOfDay = 0;
   world.dayStats = emptyDayStats();

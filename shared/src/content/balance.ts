@@ -30,6 +30,11 @@ export const BALANCE = {
   CASHIER_SERVICE_SEC: 1.0,
   QUEUE_SPACING: 0.8,
 
+  /** Lương mỗi nhân viên mỗi ngày. */
+  WAGE: K(300),
+  /** Số ngày giữ trong báo cáo. */
+  HISTORY_DAYS: 30,
+
   RATING_WINDOW: 50,
   DEFAULT_STARS: 3,
   STAR_MULT: [
