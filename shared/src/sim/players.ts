@@ -1,4 +1,4 @@
-import { BALANCE, SHOPS } from '../content';
+import { BALANCE, DEFAULT_OUTFIT, SHOPS } from '../content';
 import type { ShopId } from '../content';
 import type { PlayerState, WorldState } from './world';
 
@@ -39,6 +39,8 @@ export function joinPlayer(world: WorldState, playerId: string, name: string): P
     carryLevel: 0,
     speedLevel: 0,
     location: 'banh_mi',
+    outfit: { ...DEFAULT_OUTFIT },
+    wardrobe: [],
   };
   world.players[playerId] = p;
   return p;
