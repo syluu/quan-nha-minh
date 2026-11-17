@@ -38,12 +38,16 @@ export function mapTab(conn: GameConnection, latest: () => Snapshot | null, clos
                     ? `<span class="confirm">Thuê ${f.name}: cọc ${f.deposit}, tiền thuê ${f.rent}?
                        <button class="primary" data-rent-yes="${f.id}">Đồng ý</button><button data-rent-no>Thôi</button></span>`
                     : `<button class="primary" data-rent="${f.id}" ${f.canRent ? '' : 'disabled'}>Thuê (cọc ${f.deposit})</button>`;
-                return `<tr><td><b>${f.name}</b><div class="muted">Bán: ${f.menu}</div><div class="muted">Thuê ${f.rent} · có bàn ghế</div></td>
+                return `<tr><td><b>${f.name}</b><div class="muted">${f.farm ? 'Lô' : 'Bán'}: ${f.menu}</div>
+                  <div class="muted">Thuê ${f.rent}${f.farm ? ' · nguyên liệu rẻ cho mọi quán, thuê được ngay' : ' · có bàn ghế'}</div></td>
                   <td class="act">${act}</td></tr>`;
               })
               .join('')}
           </tbody></table>
           ${v.hint ? `<p class="note">${v.hint}</p>` : ''}
+          <h3>Kho tổng</h3>
+          <p>${v.warehouse || '<span class="muted">Trống — thu hoạch ở trang trại rồi bê thùng lên xe chở hàng.</span>'}</p>
+          <p class="note">Máy ở các quán lấy nguyên liệu trong kho trước, thiếu mới mua chợ. Phí xe chở hàng 50K cho mỗi quán đã dùng hàng trong kho hôm đó.</p>
           <p class="note">Mọi quán vẫn chạy khi không có ai đứng ở đó (nhân viên làm thay). Tiền thuê trả cuối tháng cùng lương. Đồ đang cầm mang theo khi đi.</p>`;
         body.querySelectorAll<HTMLButtonElement>('[data-go]').forEach((b) => {
           b.onclick = () => {

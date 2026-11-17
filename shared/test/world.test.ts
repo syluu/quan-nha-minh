@@ -10,7 +10,7 @@ describe('createWorld', () => {
     expect(w.day).toBe(1);
     expect(w.secOfDay).toBe(0);
     expect(w.code).toBe('ABC-DEF');
-    expect(w.schemaVersion).toBe(5);
+    expect(w.schemaVersion).toBe(6);
     expect(w.history).toEqual([]);
     expect(Object.keys(w.players)).toEqual([]);
   });
@@ -55,7 +55,9 @@ describe('rating', () => {
 describe('createWorld (plan 5)', () => {
   it('has all three shops, only the bánh mì cart is owned; tables start with free seats', () => {
     const w = createWorld('ABC-DEF', 1);
-    expect(Object.keys(w.shops).sort()).toEqual(['banh_mi', 'com_tam', 'pho_cafe']);
+    expect(Object.keys(w.shops).sort()).toEqual(['banh_mi', 'com_tam', 'farm', 'pho_cafe']);
+    expect(w.shops.farm.owned).toBe(false);
+    expect(w.warehouse).toEqual({});
     expect(w.shops.banh_mi.owned).toBe(true);
     expect(w.shops.com_tam.owned).toBe(false);
     expect(w.shops.pho_cafe.owned).toBe(false);

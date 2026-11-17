@@ -1,4 +1,4 @@
-import { BALANCE } from '../content';
+import { BALANCE, SHOP_META } from '../content';
 import type { ShopState, WorldState } from './world';
 
 export function stars(ratings: number[]): number {
@@ -9,7 +9,7 @@ export function stars(ratings: number[]): number {
 
 /** Sao trung bình các quán đang có (tổng kết ngày, báo cáo). */
 export function averageStars(world: WorldState): number {
-  const owned = Object.values(world.shops).filter((s) => s.owned);
+  const owned = Object.values(world.shops).filter((s) => s.owned && SHOP_META[s.id].kind === 'shop');
   if (!owned.length) return BALANCE.DEFAULT_STARS;
   return Math.round((owned.reduce((n, s) => n + stars(s.ratings), 0) / owned.length) * 10) / 10;
 }

@@ -91,6 +91,7 @@ describe.each(shops.map((s) => [s.id, s] as const))('shop %s', (_id, shop) => {
   });
 
   it('starter set (unlockCost 0) has ≥1 producer, ≥1 display, exactly 1 cashier', () => {
+    if (shop.id === 'farm') return; // trang trại: kiểm riêng bên dưới
     const starter = shop.stations.filter((s) => s.unlockCost === 0).map((s) => getStationDef(s.def).kind);
     expect(starter.filter((k) => k === 'producer').length).toBeGreaterThanOrEqual(1);
     expect(starter.filter((k) => k === 'display').length).toBeGreaterThanOrEqual(1);
@@ -165,6 +166,7 @@ describe.each(shops.map((s) => [s.id, s] as const))('shop %s', (_id, shop) => {
   });
 
   it('customer paths are clear', () => {
+    if (shop.id === 'farm') return; // trang trại không có khách
     const boxes = shop.stations.map((s) => footprintOf(s, 0.2));
     const cashier = shop.stations.find((s) => getStationDef(s.def).kind === 'cashier')!;
     const pts = customerPoints(shop);
@@ -232,7 +234,7 @@ describe('pickup point (plan 4)', () => {
 describe('plan 5 content', () => {
   it('has the three shop types with meta (deposit, rent, tables)', async () => {
     const { SHOP_META } = await import('../src/content');
-    expect(Object.keys(SHOPS).sort()).toEqual(['banh_mi', 'com_tam', 'pho_cafe']);
+    expect(Object.keys(SHOPS).sort()).toEqual(['banh_mi', 'com_tam', 'farm', 'pho_cafe']);
     expect(SHOP_META.banh_mi).toMatchObject({ deposit: 0, rentPerMonth: 0, hasTables: false });
     expect(SHOP_META.com_tam).toMatchObject({ deposit: 8_000_000, rentPerMonth: 4_000_000, hasTables: true });
     expect(SHOP_META.pho_cafe).toMatchObject({ deposit: 12_000_000, rentPerMonth: 6_000_000, hasTables: true });
@@ -259,6 +261,35 @@ describe('plan 5 content', () => {
           expect(segmentHitsBox(cashier.customerPoint!, seat, box), `${t.instanceId} from cashier`).toBe(false);
           expect(segmentHitsBox(seat, shop.exit, box), `${t.instanceId} to exit`).toBe(false);
         }
+    }
+  });
+});
+
+describe('farm content (plan 6)', () => {
+  it('farm meta: deposit 5.000K, rent 1.500K/month + 300K per plot', async () => {
+    const { SHOP_META } = await import('../src/content');
+    expect(SHOP_META.farm).toMatchObject({ kind: 'farm', deposit: 5_000_000, rentPerMonth: 700_000, plotRent: 150_000 });
+    for (const id of ['banh_mi', 'com_tam', 'pho_cafe'] as const) expect(SHOP_META[id].kind).toBe('shop');
+  });
+
+  it('starts with the vegetable plot, the truck and a trash bin; six plots in all', () => {
+    const farm = SHOPS.farm;
+    const kinds = farm.stations.map((p) => getStationDef(p.def).kind);
+    expect(kinds.filter((k) => k === 'plot')).toHaveLength(6);
+    expect(farm.stations.filter((p) => p.unlockCost === 0).map((p) => p.instanceId).sort()).toEqual(['ruong_rau', 'thung_rac', 'xe_cho_hang']);
+  });
+
+  it('home-grown ingredients: seed cost is 15–35% of the market price (rent, wages and delivery come on top)', () => {
+    for (const p of SHOPS.farm.stations) {
+      const def = getStationDef(p.def);
+      if (def.kind !== 'plot') continue;
+      const bundle = ITEMS[def.output].bundle!;
+      expect(bundle, def.id).toBeDefined();
+      expect(ITEMS[def.output].sellable).toBe(false);
+      const market = bundle.reduce((n, b) => n + INGREDIENTS[b.id].marketPrice * b.qty, 0);
+      const ratio = def.seedCost / market;
+      expect(ratio, def.id).toBeGreaterThanOrEqual(0.15);
+      expect(ratio, def.id).toBeLessThanOrEqual(0.35);
     }
   });
 });

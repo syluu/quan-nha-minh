@@ -18,5 +18,14 @@ export const ITEMS: Record<ItemId, ItemDef> = {
   bo_tai: { id: 'bo_tai', name: 'Bò tái', sellable: false, basePrice: 0, demandWeight: 0, color: 0xb84a4a },
   pho_bo: { id: 'pho_bo', name: 'Phở bò', sellable: true, basePrice: K(50), demandWeight: 2, color: 0xe2b66a },
   ca_phe_phin: { id: 'ca_phe_phin', name: 'Cà phê đen', sellable: true, basePrice: K(15), demandWeight: 1, color: 0x3b2416 },
+  thung_rau: { id: 'thung_rau', name: 'Thùng rau', sellable: false, basePrice: 0, demandWeight: 0, color: 0x5aa34a, bundle: [{ id: 'rau', qty: 20 }] },
+  bao_bot_mi: { id: 'bao_bot_mi', name: 'Bao bột mì', sellable: false, basePrice: 0, demandWeight: 0, color: 0xefe3c0, bundle: [{ id: 'bot_mi', qty: 20 }] },
+  bao_gao: { id: 'bao_gao', name: 'Bao gạo', sellable: false, basePrice: 0, demandWeight: 0, color: 0xf7f3e8, bundle: [{ id: 'gao', qty: 20 }] },
+  khay_trung: { id: 'khay_trung', name: 'Khay trứng', sellable: false, basePrice: 0, demandWeight: 0, color: 0xf2dfb0, bundle: [{ id: 'trung', qty: 15 }] },
+  thung_thit_lon: { id: 'thung_thit_lon', name: 'Thùng thịt lợn', sellable: false, basePrice: 0, demandWeight: 0, color: 0xe58f8f, bundle: [{ id: 'thit_lon', qty: 10 }] },
+  thung_thit_bo: {
+    id: 'thung_thit_bo', name: 'Thùng thịt bò', sellable: false, basePrice: 0, demandWeight: 0, color: 0xa83a3a,
+    bundle: [{ id: 'thit_bo', qty: 8 }, { id: 'xuong_bo', qty: 8 }],
+  },
   ca_phe_sua_da: { id: 'ca_phe_sua_da', name: 'Cà phê sữa đá', sellable: true, basePrice: K(25), demandWeight: 1.5, color: 0x8a5a3a },
 };

@@ -1,3 +1,4 @@
+import { isFarm } from '@qnm/shared';
 import type { Snapshot } from '@qnm/shared';
 import type { GameConnection } from '../../net';
 import type { MenuTab } from './menu';
@@ -13,6 +14,11 @@ export function marketingTab(conn: GameConnection, latest: () => Snapshot | null
       const render = () => {
         const s = latest();
         if (!s) return;
+        if (isFarm(s.shopId)) {
+          if (key !== 'farm') body.innerHTML = '<p class="note">Không áp dụng ở trang trại — đi tới một quán (Bản đồ) để chỉnh.</p>';
+          key = 'farm';
+          return;
+        }
         const v = marketingView(s);
         const o = onlineView(s);
         const k = JSON.stringify([v, o]);

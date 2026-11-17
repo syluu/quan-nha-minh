@@ -1,4 +1,4 @@
-import { formatK } from '@qnm/shared';
+import { formatK, isFarm } from '@qnm/shared';
 import type { Snapshot } from '@qnm/shared';
 import type { GameConnection } from '../../net';
 import type { MenuTab } from './menu';
@@ -18,6 +18,11 @@ export function pricesTab(conn: GameConnection, latest: () => Snapshot | null): 
       const render = () => {
         const s = latest();
         if (!s || dragging) return;
+        if (isFarm(s.shopId)) {
+          if (key !== 'farm') body.innerHTML = '<p class="note">Không áp dụng ở trang trại — đi tới một quán (Bản đồ) để chỉnh.</p>';
+          key = 'farm';
+          return;
+        }
         const v = priceView(s);
         for (const p of v) {
           const pend = pending.get(p.item);

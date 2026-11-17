@@ -10,11 +10,12 @@ function snap(over: Partial<Snapshot> = {}): Snapshot {
   return {
     shopId: 'com_tam',
     shops: [
-      { id: 'banh_mi', name: 'Xe bánh mì', owned: true, complete: true, deposit: 0, rentPerMonth: 0 },
-      { id: 'com_tam', name: 'Quán cơm tấm', owned: true, complete: false, deposit: 8_000_000, rentPerMonth: 4_000_000 },
-      { id: 'pho_cafe', name: 'Quán phở & cà phê', owned: false, complete: false, deposit: 12_000_000, rentPerMonth: 6_000_000 },
+      { id: 'banh_mi', name: 'Xe bánh mì', kind: 'shop', owned: true, complete: true, deposit: 0, rentPerMonth: 0 },
+      { id: 'com_tam', name: 'Quán cơm tấm', kind: 'shop', owned: true, complete: false, deposit: 8_000_000, rentPerMonth: 4_000_000 },
+      { id: 'pho_cafe', name: 'Quán phở & cà phê', kind: 'shop', owned: false, complete: false, deposit: 12_000_000, rentPerMonth: 6_000_000 },
     ],
     canRent: false,
+    warehouse: {},
     day: 9, secOfDay: 0, money: 20_000_000, stars: 4, tiles: [], customers: [], log: [], prices: {},
     players: [
       { id: 'a', name: 'Bố', color: 0, x: 0, z: 0, dir: 0, carry: [], online: true, cap: 4, pick: 0, pickAt: null, carryLevel: 0, speedLevel: 0, location: 'com_tam' },
@@ -62,5 +63,27 @@ describe('shop-aware menus (plan 5)', () => {
   it('names sell-list entries across shops, including returning a place', () => {
     expect(sellableName({ shopId: 'com_tam', instanceId: 'mat_bang' })).toBe('Trả mặt bằng Quán cơm tấm');
     expect(sellableName({ shopId: 'banh_mi', instanceId: 'chao_op_la' })).toBe('Chảo ốp la (Xe bánh mì)');
+  });
+});
+
+describe('farm in the client (plan 6)', () => {
+  const farmShops: Snapshot['shops'] = [
+    { id: 'banh_mi', name: 'Xe bánh mì', kind: 'shop', owned: true, complete: false, deposit: 0, rentPerMonth: 0 },
+    { id: 'farm', name: 'Trang trại', kind: 'farm', owned: false, complete: false, deposit: 5_000_000, rentPerMonth: 1_500_000 },
+  ];
+  it('the farm can be rented before the shops are complete; the warehouse is listed', () => {
+    const v = mapView(snap({ shopId: 'banh_mi', shops: farmShops, canRent: false, warehouse: { rau: 12, gao: 0, trung: 10 } }));
+    const farm = v.free.find((f) => f.id === 'farm')!;
+    expect(farm).toMatchObject({ farm: true, canRent: true, deposit: '5.000K' });
+    expect(farm.menu).toContain('Chuồng bò');
+    expect(v.warehouse).toBe('12 rau, 10 trứng');
+  });
+
+  it('staff tab at the farm offers farmhands only; HUD hides stars there', () => {
+    const s = snap({ shopId: 'farm', shops: farmShops, stations: [], staff: [] });
+    const v = staffView(s);
+    expect(v.farm).toEqual({ hands: [], canHire: true });
+    expect(hudText(s, 'a').stars).toBe('★ —');
+    expect(staffLabel({ name: 'Nam', role: 'farmhand', item: null })).toBe('Nam · trang trại');
   });
 });

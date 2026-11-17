@@ -1,4 +1,4 @@
-import { BALANCE } from '../content';
+import { BALANCE, isFarm } from '../content';
 import type { ShopId } from '../content';
 import { averageStars } from './rating';
 import { buildSettlement } from './settlement';
@@ -23,12 +23,28 @@ export function formatClock(secOfDay: number): string {
   return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
 }
 
+/**
+ * Cuối ngày: phí xe chở hàng từ kho tổng cho mỗi quán hôm nay đã dùng hàng trong kho.
+ * Không đủ tiền thì bỏ qua (không rút cạn ví).
+ */
+export function chargeDelivery(world: WorldState): number {
+  const shops = world.deliveredTo.filter((id) => world.shops[id]?.owned && !isFarm(id)).length;
+  world.deliveredTo = [];
+  const fee = shops * BALANCE.DELIVERY_FEE_PER_SHOP;
+  if (fee <= 0 || world.money < fee) return 0;
+  world.money -= fee;
+  world.dayStats.ingredientCost += fee;
+  return fee;
+}
+
 /** Tiến thời gian; hết ngày thì trả bảng tổng kết và sang ngày mới. */
 export function advanceTime(world: WorldState, dt: number): DaySummary | null {
   world.secOfDay += dt;
   if (world.secOfDay < BALANCE.DAY_REAL_SEC) return null;
 
   accrueWages(world);
+  // Trước khi lập bảng tổng kết/kết toán: phí chở hàng của hôm nay.
+  chargeDelivery(world);
   tickCampaignsDaily(world);
   const s = world.dayStats;
   const summary: DaySummary = {

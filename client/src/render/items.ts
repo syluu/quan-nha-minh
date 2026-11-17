@@ -20,9 +20,11 @@ const potGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.14, 10);
 const sliceGeo = new THREE.BoxGeometry(0.22, 0.03, 0.12);
 const glassGeo = new THREE.CylinderGeometry(0.07, 0.06, 0.18, 10);
 const lumpGeo = new THREE.BoxGeometry(0.2, 0.1, 0.14);
+const crateGeo = new THREE.BoxGeometry(0.32, 0.12, 0.22);
+const crateTopGeo = new THREE.BoxGeometry(0.28, 0.03, 0.18);
 /** Hình dùng chung giữa các món — không được giải phóng khi dọn cảnh. */
 export const SHARED_ITEM_GEOS = new Set<THREE.BufferGeometry>([
-  loafGeo, discGeo, yolkGeo, skewerGeo, cupGeo, fillingGeo, plateGeo, moundGeo, bowlGeo, brothGeo, potGeo, sliceGeo, glassGeo, lumpGeo,
+  loafGeo, discGeo, yolkGeo, skewerGeo, cupGeo, fillingGeo, plateGeo, moundGeo, bowlGeo, brothGeo, potGeo, sliceGeo, glassGeo, lumpGeo, crateGeo, crateTopGeo,
 ]);
 markSharedGeometry(...SHARED_ITEM_GEOS);
 
@@ -119,6 +121,19 @@ export function createItemMesh(item: ItemId): THREE.Object3D {
       const glass = new THREE.Mesh(glassGeo, mat(ITEMS[item].color));
       glass.position.y = 0.09;
       g.add(glass);
+      break;
+    }
+    case 'thung_rau':
+    case 'bao_bot_mi':
+    case 'bao_gao':
+    case 'khay_trung':
+    case 'thung_thit_lon':
+    case 'thung_thit_bo': {
+      const crate = new THREE.Mesh(crateGeo, mat(0xb08850));
+      crate.position.y = 0.06;
+      const top = new THREE.Mesh(crateTopGeo, mat(ITEMS[item].color));
+      top.position.y = 0.13;
+      g.add(crate, top);
       break;
     }
     default:

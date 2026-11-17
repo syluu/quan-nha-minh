@@ -20,7 +20,7 @@ export function hudText(
     shop: `🏠 ${SHOP_META[s.shopId].name}`,
     money: `💰 ${formatK(s.money)}`,
     clock: `Ngày ${s.day} · ${formatClock(s.secOfDay)}`,
-    stars: formatStars(s.stars),
+    stars: SHOP_META[s.shopId].kind === 'farm' ? '★ —' : formatStars(s.stars),
     // Người ở quán khác ghi kèm tên quán.
     online: s.players
       .filter((p) => p.online)

@@ -1,4 +1,5 @@
-import { BALANCE, SHOP_IDS, SHOP_META, SHOPS, getStationDef } from '../content';
+import { BALANCE, ITEMS, SHOP_IDS, SHOP_META, SHOPS, getStationDef, isFarm, itemCost } from '../content';
+import { loadCrate } from './carry';
 import type { ShopId } from '../content';
 import { formatK } from '../money';
 import type { ActionResult } from './actions';
@@ -19,21 +20,22 @@ export function isShopComplete(world: WorldState, shopId: ShopId): boolean {
   const shop = world.shops[shopId];
   return SHOPS[shopId].stations.every((p) => {
     const kind = getStationDef(p.def).kind;
-    if (kind !== 'producer' && kind !== 'assembler' && kind !== 'display') return true;
+    if (kind !== 'producer' && kind !== 'assembler' && kind !== 'display' && kind !== 'plot') return true;
     return shop.stations[p.instanceId].unlocked;
   });
 }
 
-/** Được thuê mặt bằng mới khi mọi quán đang có đã mở hết. */
+/** Được thuê mặt bằng quán mới khi mọi quán đang có đã mở hết (trang trại không tính). */
 export function canRent(world: WorldState): boolean {
-  return SHOP_IDS.filter((id) => world.shops[id].owned).every((id) => isShopComplete(world, id));
+  return SHOP_IDS.filter((id) => world.shops[id].owned && !isFarm(id)).every((id) => isShopComplete(world, id));
 }
 
 export function rentShop(world: WorldState, shopId: unknown, byPlayerId: string): ActionResult {
   if (world.settlement) return { ok: false, error: 'PAUSED' };
   if (!isShopId(shopId) || SHOP_META[shopId].deposit <= 0) return { ok: false, error: 'BAD_ITEM' };
   if (world.shops[shopId].owned) return { ok: false, error: 'NO_SLOT' };
-  if (!canRent(world)) return { ok: false, error: 'NOT_READY' };
+  // Trang trại thuê được bất cứ lúc nào (đủ tiền); quán mới cần mở hết các quán đang có.
+  if (!isFarm(shopId) && !canRent(world)) return { ok: false, error: 'NOT_READY' };
   const deposit = SHOP_META[shopId].deposit;
   if (world.money < deposit) return { ok: false, error: 'NO_MONEY' };
   world.money -= deposit;
@@ -79,6 +81,12 @@ export function returnShop(world: WorldState, shopId: unknown, byPlayerId: strin
   const refund = returnRefund(world, shopId);
   const old = world.shops[shopId];
   world.extraWagesOwed += old.staff.reduce((n, s) => n + s.wageOwed, 0);
+  // Thùng hàng người làm trang trại đang cầm: bốc vào kho; món khác coi như bỏ đi.
+  for (const s of old.staff)
+    for (const it of s.carry) {
+      if (ITEMS[it].bundle) loadCrate(world, it);
+      else world.dayStats.wasted += itemCost(it);
+    }
   world.shops[shopId] = createShop(shopId, false);
   for (const p of Object.values(world.players)) {
     if (p.location !== shopId) continue;

@@ -78,6 +78,7 @@ function enterGame(conn: GameConnection) {
     else if (e.type === 'customerLost') floats.spawn('-1★', 'loss', e.x, e.z);
     else if (e.type === 'trash') floats.spawn(`-${formatK(e.value)}`, 'waste', e.x, e.z);
     else if (e.type === 'orderDone') floats.spawn(`+${formatK(e.net)} online`, 'gain', e.x, e.z);
+    else if (e.type === 'stored') floats.spawn('📦 Vào kho', 'gain', e.x, e.z);
     else if (e.type === 'orderCancelled') floats.spawn('Huỷ đơn -1★', 'loss', e.x, e.z);
     else if (e.type === 'dayEnd') showDaySummary(ui, e.summary);
   });

@@ -3,7 +3,7 @@ import { canRent, isShopComplete } from './shops';
 import type { ShopId } from '../content';
 import type { Snapshot } from '../net/protocol';
 import { maxLoan } from './bank';
-import { migrateV1toV2, migrateV2toV3, migrateV3toV4, migrateV4toV5 } from './migrate';
+import { migrateV1toV2, migrateV2toV3, migrateV3toV4, migrateV4toV5, migrateV5toV6 } from './migrate';
 import { onlineSnapshot } from './online';
 import { sellableStations } from './settlement';
 import { isTileVisible } from './payTiles';
@@ -17,10 +17,11 @@ export function toSnapshot(world: WorldState, shopId: ShopId): Snapshot {
   return {
     shopId,
     shops: SHOP_IDS.map((id) => ({
-      id, name: SHOP_META[id].name, owned: world.shops[id].owned, complete: world.shops[id].owned && isShopComplete(world, id),
+      id, name: SHOP_META[id].name, kind: SHOP_META[id].kind, owned: world.shops[id].owned, complete: world.shops[id].owned && isShopComplete(world, id),
       deposit: SHOP_META[id].deposit, rentPerMonth: SHOP_META[id].rentPerMonth,
     })),
     canRent: canRent(world),
+    warehouse: { ...world.warehouse },
     day: world.day,
     secOfDay: world.secOfDay,
     money: world.money,
@@ -73,15 +74,17 @@ export function toSnapshot(world: WorldState, shopId: ShopId): Snapshot {
 /** Chuẩn hoá thế giới vừa tải từ DB: nâng version, dọn trạng thái tạm, bổ sung trạm mới thêm vào nội dung. */
 export function normalizeLoaded(raw: unknown): WorldState {
   const version = raw && typeof raw === 'object' ? (raw as { schemaVersion?: unknown }).schemaVersion : undefined;
-  if (version !== 1 && version !== 2 && version !== 3 && version !== 4 && version !== 5) throw new Error('UNSUPPORTED_SCHEMA');
+  if (version !== 1 && version !== 2 && version !== 3 && version !== 4 && version !== 5 && version !== 6) throw new Error('UNSUPPORTED_SCHEMA');
   let w: unknown = raw;
   if (version === 1) w = migrateV1toV2(w);
   if (version === 1 || version === 2) w = migrateV2toV3(w);
-  if (version !== 4 && version !== 5) w = migrateV3toV4(w);
+  if (version !== 4 && version !== 5 && version !== 6) w = migrateV3toV4(w);
   const code = (w as { code: string }).code;
   const fresh = createWorld(code, 0);
-  if (version !== 5) w = migrateV4toV5(w, fresh.shops);
+  if (version !== 5 && version !== 6) w = migrateV4toV5(w, fresh.shops);
+  if (version !== 6) w = migrateV5toV6(w, fresh.shops);
   const world = w as WorldState;
+  world.deliveredTo ??= [];
   for (const id of Object.keys(fresh.shops) as ShopId[]) {
     const shop = (world.shops[id] ??= fresh.shops[id]);
     for (const [instanceId, st] of Object.entries(fresh.shops[id].stations)) shop.stations[instanceId] ??= st;

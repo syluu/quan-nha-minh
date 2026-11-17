@@ -1,4 +1,4 @@
-import { BALANCE, SHOPS, getStationDef, itemCost } from '../content';
+import { BALANCE, ITEMS, SHOPS, getStationDef, itemCost } from '../content';
 import type { ItemId, PlacedStation, ShopId } from '../content';
 import type { SimEvent } from './events';
 import { deliverToPickup, pickupNeeds } from './online';
@@ -25,6 +25,11 @@ export function nearestStation(shop: ShopState, shopId: ShopId, x: number, z: nu
     }
   }
   return best;
+}
+
+/** Đổ một thùng hàng vào kho tổng. */
+export function loadCrate(world: WorldState, crate: ItemId): void {
+  for (const b of ITEMS[crate].bundle ?? []) world.warehouse[b.id] = (world.warehouse[b.id] ?? 0) + b.qty;
 }
 
 function takeFromCarry(p: PlayerState, accepts: (item: ItemId) => boolean): ItemId | null {
@@ -91,6 +96,19 @@ export function tickCarry(world: WorldState, shopId: ShopId, dt: number): SimEve
       continue;
     }
 
+    // 1d) Xe chở hàng: bốc thùng hàng → nguyên liệu vào kho tổng
+    if (def.kind === 'truck') {
+      p.pickTimer = 0;
+      p.pickAt = null;
+      if (p.dropCd > 0) continue;
+      const crate = takeFromCarry(p, (it) => !!ITEMS[it].bundle);
+      if (!crate) continue;
+      loadCrate(world, crate);
+      events.push({ type: 'stored', shopId, item: crate, x: placed.x, z: placed.z });
+      p.dropCd = BALANCE.DROP_INTERVAL;
+      continue;
+    }
+
     // 1c) Bàn ăn: đứng yên cạnh bàn bẩn → dọn 1 chỗ mỗi CLEAN_SEC
     if (def.kind === 'table') {
       const still = Math.hypot(p.input.mx, p.input.mz) <= BALANCE.STILL_INPUT;
@@ -126,7 +144,7 @@ export function tickCarry(world: WorldState, shopId: ShopId, dt: number): SimEve
     }
 
     // 3) Nhặt dần
-    if ((def.kind === 'producer' || def.kind === 'assembler') && st.outputCount > 0 && p.carry.length < p.carryCap) {
+    if ((def.kind === 'producer' || def.kind === 'assembler' || def.kind === 'plot') && st.outputCount > 0 && p.carry.length < p.carryCap) {
       if (p.pickAt !== placed.instanceId) p.pickTimer = 0;
       p.pickAt = placed.instanceId;
       p.pickTimer += dt;

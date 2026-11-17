@@ -50,13 +50,18 @@ export function machineUpgradeCost(shopId: ShopId, instanceId: string, toLevel: 
   return round500(0.5 * stationValue(shopId, instanceId) * Math.pow(1.6, toLevel - 1));
 }
 
+/** Máy làm món hoặc lô trang trại (có chu kỳ, đầu ra, nâng cấp, công tắc). */
+export function isMachine(def: StationDef): def is Extract<StationDef, { kind: 'producer' | 'assembler' | 'plot' }> {
+  return def.kind === 'producer' || def.kind === 'assembler' || def.kind === 'plot';
+}
+
 export function effectiveCycle(def: StationDef, st: Pick<StationState, 'level'>): number {
-  if (def.kind !== 'producer' && def.kind !== 'assembler') return 0;
+  if (!isMachine(def)) return 0;
   return def.cycleSec * Math.pow(BALANCE.MACHINE_CYCLE_FACTOR, st.level ?? 0);
 }
 
 export function effectiveOutputCap(def: StationDef, st: Pick<StationState, 'level'>): number {
-  if (def.kind !== 'producer' && def.kind !== 'assembler') return 0;
+  if (!isMachine(def)) return 0;
   return Math.floor(def.outputCap * (1 + BALANCE.MACHINE_CAP_BONUS * (st.level ?? 0)));
 }
 
@@ -67,7 +72,7 @@ export function upgradeMachine(world: WorldState, shopId: ShopId, instanceId: un
   if (!placed) return { ok: false, error: 'BAD_ITEM' };
   const def = getStationDef(placed.def);
   const st = world.shops[shopId].stations[placed.instanceId];
-  if ((def.kind !== 'producer' && def.kind !== 'assembler') || !st.unlocked) return { ok: false, error: 'BAD_ITEM' };
+  if (!isMachine(def) || !st.unlocked) return { ok: false, error: 'BAD_ITEM' };
   if (st.level >= BALANCE.MACHINE_MAX_LEVEL) return { ok: false, error: 'MAXED' };
   const cost = machineUpgradeCost(shopId, placed.instanceId, st.level + 1);
   if (world.money < cost) return { ok: false, error: 'NO_MONEY' };
@@ -84,7 +89,7 @@ export function setMachineEnabled(world: WorldState, shopId: ShopId, instanceId:
   if (!placed || typeof enabled !== 'boolean') return { ok: false, error: 'BAD_ITEM' };
   const def = getStationDef(placed.def);
   const st = world.shops[shopId].stations[placed.instanceId];
-  if ((def.kind !== 'producer' && def.kind !== 'assembler') || !st.unlocked) return { ok: false, error: 'BAD_ITEM' };
+  if (!isMachine(def) || !st.unlocked) return { ok: false, error: 'BAD_ITEM' };
   if (st.enabled === enabled) return { ok: true };
   st.enabled = enabled;
   if (enabled && st.blocked === 'off') st.blocked = null;
