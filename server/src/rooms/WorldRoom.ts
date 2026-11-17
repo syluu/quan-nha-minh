@@ -17,7 +17,6 @@ import type { WorldStore } from '../persistence';
 
 interface ClientData {
   playerId: string;
-  kicked?: boolean;
 }
 
 export const KICK_DUPLICATE = 4001;
@@ -31,23 +30,49 @@ function cleanName(name: unknown): string {
   return s || 'Người chơi';
 }
 
+/** Mỗi mã quán chỉ có đúng một phòng đang chạy (hoặc đang lưu lúc đóng) trong tiến trình này. */
+type ActiveEntry = { room: WorldRoom } | { disposing: Promise<void> };
+
 /** Một phòng = một thế giới (quán của một gia đình), xác định bằng mã. */
 export class WorldRoom extends Room {
   static store: WorldStore;
-  maxClients = BALANCE.MAX_PLAYERS;
+  /** Số giây giữ chỗ khi rớt mạng (test đặt nhỏ để chạy nhanh). */
+  static reconnectSec: number = BALANCE.RECONNECT_SEC;
+  static active = new Map<string, ActiveEntry>();
+
+  /** Dư ghế cho các chỗ đang giữ khi F5/rớt mạng; giới hạn người thật kiểm ở onAuth. */
+  maxClients = BALANCE.MAX_PLAYERS * 2;
   private world!: WorldState;
+  private code = '';
+  /** playerId → sessionId của tab đang sở hữu nhân vật. */
+  private owners = new Map<string, string>();
   private saving: Promise<void> = Promise.resolve();
 
   async onCreate(options: { code?: string }) {
     const code = String(options?.code ?? '');
     if (normalizeCode(code) !== code) throw new Error('INVALID_CODE');
-    const raw = await WorldRoom.store.load(code);
-    if (!raw) throw new Error('WORLD_NOT_FOUND');
+
+    // Không bao giờ có 2 phòng cho cùng một quán: phòng cũ đang lưu thì chờ, đang chạy thì từ chối.
+    for (let entry = WorldRoom.active.get(code); entry; entry = WorldRoom.active.get(code)) {
+      if ('room' in entry) throw new Error('WORLD_BUSY');
+      await entry.disposing;
+    }
+    WorldRoom.active.set(code, { room: this });
+    this.code = code;
+
+    const raw = await WorldRoom.store.load(code).catch((err) => {
+      WorldRoom.active.delete(code);
+      throw err;
+    });
+    if (!raw) {
+      WorldRoom.active.delete(code);
+      throw new Error('WORLD_NOT_FOUND');
+    }
     this.world = normalizeLoaded(raw);
 
     this.onMessage(MSG.input, (client: Client, msg: InputMsg) => {
-      const data = client.userData as ClientData | undefined;
-      if (data) setInput(this.world, data.playerId, msg ?? { mx: 0, mz: 0 });
+      const pid = this.ownedPlayer(client);
+      if (pid) setInput(this.world, pid, msg ?? { mx: 0, mz: 0 });
     });
 
     this.setSimulationInterval((deltaMs) => {
@@ -61,32 +86,61 @@ export class WorldRoom extends Room {
     this.clock.setInterval(() => void this.save(), BALANCE.AUTOSAVE_SEC * 1000);
   }
 
+  onAuth(_client: Client, options: JoinOptions) {
+    const pid = playerIdFromToken(options?.token ?? '');
+    if (!this.owners.has(pid) && this.owners.size >= BALANCE.MAX_PLAYERS) throw new Error('WORLD_FULL');
+    return true;
+  }
+
   onJoin(client: Client, options: JoinOptions) {
     const playerId = playerIdFromToken(options?.token ?? client.sessionId);
-    for (const other of this.clients) {
-      const data = other.userData as ClientData | undefined;
-      if (other !== client && data?.playerId === playerId) {
-        data.kicked = true;
-        other.leave(KICK_DUPLICATE);
-      }
+    const previous = this.owners.get(playerId);
+    if (previous) {
+      // Cùng trình duyệt mở tab mới / F5: tab cũ (nếu còn sống) bị đá; nếu đang giữ chỗ thì bị đá khi kết nối lại.
+      this.clients.find((c) => c.sessionId === previous)?.leave(KICK_DUPLICATE);
     }
+    this.owners.set(playerId, client.sessionId);
     client.userData = { playerId } satisfies ClientData;
     joinPlayer(this.world, playerId, cleanName(options?.name));
     client.send(MSG.welcome, { playerId, code: this.world.code });
   }
 
   onDrop(client: Client) {
-    this.allowReconnection(client, BALANCE.RECONNECT_SEC);
+    // Rớt mạng: nhân vật offline ngay (nhả ô trả tiền, dừng input), giữ chỗ để kết nối lại.
+    const pid = this.ownedPlayer(client);
+    if (pid) leavePlayer(this.world, pid);
+    void Promise.resolve(this.allowReconnection(client, WorldRoom.reconnectSec)).catch(() => {});
+  }
+
+  onReconnect(client: Client) {
+    const pid = this.ownedPlayer(client);
+    if (!pid) {
+      client.leave(KICK_DUPLICATE);
+      return;
+    }
+    joinPlayer(this.world, pid, this.world.players[pid]?.name ?? 'Người chơi');
   }
 
   onLeave(client: Client) {
-    const data = client.userData as ClientData | undefined;
-    if (!data || data.kicked) return;
-    leavePlayer(this.world, data.playerId);
+    const pid = this.ownedPlayer(client);
+    if (!pid) return;
+    this.owners.delete(pid);
+    leavePlayer(this.world, pid);
   }
 
   async onDispose() {
-    await this.save();
+    const done = this.save();
+    const entry: ActiveEntry = { disposing: done };
+    WorldRoom.active.set(this.code, entry);
+    await done;
+    if (WorldRoom.active.get(this.code) === entry) WorldRoom.active.delete(this.code);
+  }
+
+  /** playerId nếu client này đang là chủ nhân vật, ngược lại null. */
+  private ownedPlayer(client: Client): string | null {
+    const data = client.userData as ClientData | undefined;
+    if (!data) return null;
+    return this.owners.get(data.playerId) === client.sessionId ? data.playerId : null;
   }
 
   private save(): Promise<void> {

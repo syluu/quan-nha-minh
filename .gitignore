@@ -1,5 +1,8 @@
 node_modules
 dist
-.env
+.env*
+!.env.example
 .superpowers/
 *.log
+# ghi chú cá nhân, không đưa lên repo công khai
+note.txt

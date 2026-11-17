@@ -113,6 +113,17 @@ describe.each(shops.map((s) => [s.id, s] as const))('shop %s', (_id, shop) => {
       }
   });
 
+  it('every pay tile centre is outside the pick-up zone of every other station', () => {
+    for (const tile of shop.stations.filter((s) => s.unlockCost > 0))
+      for (const other of shop.stations) {
+        if (other === tile) continue;
+        const b = footprintOf(other);
+        const dx = Math.max(b.minX - tile.x, 0, tile.x - b.maxX);
+        const dz = Math.max(b.minZ - tile.z, 0, tile.z - b.maxZ);
+        expect(Math.hypot(dx, dz), `${tile.instanceId} vs ${other.instanceId}`).toBeGreaterThan(BALANCE.INTERACT_DIST);
+      }
+  });
+
   it('customer paths are clear', () => {
     const boxes = shop.stations.map((s) => footprintOf(s, 0.2));
     const cashier = shop.stations.find((s) => getStationDef(s.def).kind === 'cashier')!;

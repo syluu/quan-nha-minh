@@ -7,7 +7,8 @@ function errorText(err: unknown): string {
   const msg = String((err as Error)?.message ?? err);
   if (msg.includes('WORLD_NOT_FOUND')) return 'Không tìm thấy quán với mã này.';
   if (msg.includes('INVALID_CODE')) return 'Mã quán gồm 6 ký tự, ví dụ ABC-DEF.';
-  if (msg.includes('full') || msg.includes('locked')) return 'Quán đã đủ người chơi.';
+  if (msg.includes('WORLD_FULL') || msg.includes('locked')) return 'Quán đã đủ 4 người chơi.';
+  if (msg.includes('WORLD_BUSY')) return 'Quán đang lưu dữ liệu, thử lại sau vài giây.';
   if (msg.includes('CREATE_FAILED')) return 'Không tạo được quán mới, thử lại sau.';
   return 'Không kết nối được máy chủ. Nếu vừa mở, chờ khoảng 1 phút để máy chủ khởi động rồi thử lại.';
 }

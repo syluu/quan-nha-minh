@@ -17,6 +17,9 @@ export class PgWorldStore implements WorldStore {
 
   constructor(connectionString: string) {
     this.pool = new pg.Pool({ connectionString, max: 3 });
+    // Neon tự ngủ khi rảnh và cắt kết nối đang nhàn rỗi → pool phát 'error'.
+    // Không bắt thì Node coi là lỗi chưa xử lý và tắt cả máy chủ game.
+    this.pool.on('error', (err) => console.warn('[db] kết nối nhàn rỗi bị đóng:', err.message));
   }
 
   async init(): Promise<void> {

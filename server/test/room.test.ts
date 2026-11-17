@@ -4,12 +4,14 @@ import { MSG, normalizeCode } from '@qnm/shared';
 import type { Snapshot } from '@qnm/shared';
 import { createGameServer } from '../src/app';
 import { MemoryWorldStore } from '../src/persistence';
+import { WorldRoom } from '../src/rooms/WorldRoom';
 
 const store = new MemoryWorldStore();
 let game: Awaited<ReturnType<typeof createGameServer>>;
 let base: string;
 
 beforeAll(async () => {
+  WorldRoom.reconnectSec = 1;
   game = await createGameServer(store);
   const port = await game.listen(0);
   base = `http://localhost:${port}`;
@@ -80,6 +82,48 @@ describe('WorldRoom', () => {
     expect(s.players.filter((p) => p.online)).toHaveLength(1);
     expect(s.players).toHaveLength(1);
     await second.room.leave();
+  });
+
+  it('a reload (drop + rejoin with the same token) keeps the new tab online after the reconnect window (C1)', async () => {
+    const code = await newWorld();
+    const watcher = await join(code, 'watcher', 'Mẹ');
+    const first = await join(code, 'reload-token', 'Bố');
+    await first.room.leave(false); // F5: rớt mạng không chủ động
+    await sleep(200);
+    const second = await join(code, 'reload-token', 'Bố');
+    await sleep(WorldRoom.reconnectSec * 1000 + 800);
+    const bo = watcher.snapshot()!.players.filter((p) => p.name === 'Bố');
+    expect(bo).toHaveLength(1);
+    expect(bo[0].online).toBe(true);
+    expect(second.leaveCode()).toBeNull();
+    await second.room.leave();
+    await watcher.room.leave();
+  });
+
+  it('a dropped player goes offline right away so tiles and input are released (I1)', async () => {
+    const code = await newWorld();
+    const watcher = await join(code, 'w2', 'Mẹ');
+    const a = await join(code, 'drop-me', 'Bố');
+    await sleep(300);
+    await a.room.leave(false);
+    await sleep(400);
+    expect(watcher.snapshot()!.players.find((p) => p.name === 'Bố')?.online).toBe(false);
+    await watcher.room.leave();
+  });
+
+  it('never forks a world: a 5th distinct player is refused, reloads stay in the same room (C2)', async () => {
+    const code = await newWorld();
+    const members = [];
+    for (let i = 0; i < 4; i++) members.push(await join(code, `fam-${i}`, `P${i}`));
+    await expect(join(code, 'stranger', 'X')).rejects.toThrow(/WORLD_FULL/);
+    // 2 người F5 trong lúc ghế còn giữ chỗ → vẫn cùng một phòng.
+    await members[0].room.leave(false);
+    await members[1].room.leave(false);
+    const back0 = await join(code, 'fam-0', 'P0');
+    const back1 = await join(code, 'fam-1', 'P1');
+    expect(back0.room.roomId).toBe(members[2].room.roomId);
+    expect(back1.room.roomId).toBe(members[2].room.roomId);
+    for (const m of [back0, back1, members[2], members[3]]) await m.room.leave();
   });
 
   it('saves the world with everyone offline when the last person leaves (Review Focus 4)', async () => {

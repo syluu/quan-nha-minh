@@ -1,5 +1,6 @@
 import { BALANCE, SHOPS } from '../content';
 import type { PlacedStation, ShopId } from '../content';
+import { nearestStation } from './carry';
 import type { SimEvent } from './events';
 import type { PlayerState, ShopState, WorldState } from './world';
 
@@ -9,8 +10,18 @@ export function isTileVisible(shop: ShopState, placed: PlacedStation): boolean {
   return placed.requires.every((r) => shop.stations[r].unlocked);
 }
 
-function onTile(p: PlayerState, placed: PlacedStation): boolean {
-  return p.online && Math.hypot(p.x - placed.x, p.z - placed.z) <= BALANCE.PAY_TILE_RADIUS;
+/** Ngưỡng coi là "đứng yên" (độ dài input). */
+const STILL_INPUT = 0.05;
+
+/**
+ * Tính là đang đứng mua trên ô khi: online, trong bán kính ô, đứng yên (không bấm phím đi),
+ * và không đứng trong vùng nhặt/đặt đồ của trạm khác (ô nằm sát máy bên cạnh — tránh trừ tiền oan).
+ */
+function onTile(world: WorldState, shopId: ShopId, p: PlayerState, placed: PlacedStation): boolean {
+  if (!p.online) return false;
+  if (Math.hypot(p.x - placed.x, p.z - placed.z) > BALANCE.PAY_TILE_RADIUS) return false;
+  if (Math.hypot(p.input.mx, p.input.mz) > STILL_INPUT) return false;
+  return nearestStation(world.shops[shopId], shopId, p.x, p.z, BALANCE.INTERACT_DIST) === null;
 }
 
 /**
@@ -30,10 +41,10 @@ export function tickPayTiles(world: WorldState, shopId: ShopId, dt: number): Sim
     const occ = st.tileOccupant;
     if (occ) {
       const p = world.players[occ.playerId];
-      if (!p || !onTile(p, placed)) st.tileOccupant = null;
+      if (!p || !onTile(world, shopId, p, placed)) st.tileOccupant = null;
     }
     if (!st.tileOccupant) {
-      const p = Object.values(world.players).find((pl) => onTile(pl, placed));
+      const p = Object.values(world.players).find((pl) => onTile(world, shopId, pl, placed));
       if (!p) continue;
       st.tileOccupant = { playerId: p.id, sec: 0 };
     }

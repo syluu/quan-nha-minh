@@ -92,4 +92,22 @@ describe('tickPayTiles', () => {
     expect(chao.paid).toBeGreaterThan(paid);
     expect(chao.tileOccupant?.playerId).toBe('b');
   });
+
+  it('does not charge while the player is moving across the tile (spec §12: đứng yên)', () => {
+    const { w, tick, chao } = setup();
+    const p = putPlayer(w, 'a', CHAO.x, CHAO.z);
+    p.input = { mx: 0.2, mz: 0 }; // đang bấm phím đi (vị trí giữ nguyên trong test đơn vị)
+    repeat(4, tick);
+    expect(chao.paid).toBe(0);
+    expect(w.money).toBe(5_000_000);
+  });
+
+  it('does not charge a player standing in a machine pick-up zone that overlaps the tile (I2)', () => {
+    const { w, tick, chao } = setup();
+    // Cạnh đông của lò bánh mì (mép x = -3.9): trong vùng nhặt đồ của lò VÀ trong bán kính ô chảo (tâm -3.0).
+    putPlayer(w, 'a', -3.45, -2.5);
+    repeat(5, tick);
+    expect(chao.paid).toBe(0);
+    expect(w.money).toBe(5_000_000);
+  });
 });

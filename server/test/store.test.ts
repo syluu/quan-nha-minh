@@ -37,6 +37,15 @@ function contract(name: string, make: () => Promise<WorldStore>) {
 
 contract('MemoryWorldStore', async () => new MemoryWorldStore());
 
+describe('PgWorldStore resilience', () => {
+  it('an idle-connection error from the pool (Neon autosuspend) does not crash the process (M3)', async () => {
+    const s = new PgWorldStore('postgres://nobody@127.0.0.1:1/none');
+    const pool = (s as unknown as { pool: import('node:events').EventEmitter }).pool;
+    expect(() => pool.emit('error', new Error('terminating connection due to administrator command'))).not.toThrow();
+    await s.close();
+  });
+});
+
 const PG = process.env.TEST_DATABASE_URL;
 describe.skipIf(!PG)('PgWorldStore', () => {
   contract('PgWorldStore (TEST_DATABASE_URL)', async () => {

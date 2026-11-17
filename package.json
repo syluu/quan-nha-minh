@@ -11,9 +11,9 @@
     "node": "22.x"
   },
   "scripts": {
-    "dev": "concurrently -k -n server,client -c blue,green \"tsx watch server/src/index.ts\" \"npm run dev -w @qnm/client\"",
+    "dev": "concurrently -k -n server,client -c blue,green \"tsx watch --env-file-if-exists=.env server/src/index.ts\" \"npm run dev -w @qnm/client\"",
     "build": "npm run typecheck && npm run build -w @qnm/client",
-    "start": "tsx server/src/index.ts",
+    "start": "tsx --env-file-if-exists=.env server/src/index.ts",
     "test": "vitest run",
     "typecheck": "tsc -p shared --noEmit && tsc -p server --noEmit && tsc -p client --noEmit"
   },

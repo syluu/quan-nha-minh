@@ -30,6 +30,18 @@ describe('players', () => {
   });
 });
 
+describe('leavePlayer', () => {
+  it('releases any pay tile the player was on and clears input', () => {
+    const w = createWorld('X', 1);
+    const p = joinPlayer(w, 'a', 'Bố');
+    p.input = { mx: 1, mz: 0 };
+    w.shops.banh_mi.stations.chao_op_la.tileOccupant = { playerId: 'a', sec: 1.5 };
+    leavePlayer(w, 'a');
+    expect(w.shops.banh_mi.stations.chao_op_la.tileOccupant).toBeNull();
+    expect(w.players.a.input).toEqual({ mx: 0, mz: 0 });
+  });
+});
+
 describe('tick', () => {
   it('does nothing while nobody is online', () => {
     const w = createWorld('X', 1);
