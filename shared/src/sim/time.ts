@@ -1,4 +1,4 @@
-import { BALANCE } from '../content';
+import { BALANCE, isFarm } from '../content';
 import type { ShopId } from '../content';
 import { averageStars } from './rating';
 import { buildSettlement } from './settlement';
@@ -23,6 +23,20 @@ export function formatClock(secOfDay: number): string {
   return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
 }
 
+/**
+ * Sáng sớm: xe chở hàng từ kho tổng tới mỗi quán (khi có trang trại và kho còn hàng).
+ * Không đủ tiền thì trả hết số đang có (không âm ví).
+ */
+export function chargeDelivery(world: WorldState): number {
+  if (!world.shops.farm?.owned) return 0;
+  if (!Object.values(world.warehouse).some((n) => (n ?? 0) > 0)) return 0;
+  const shops = (Object.keys(world.shops) as ShopId[]).filter((id) => world.shops[id].owned && !isFarm(id)).length;
+  const fee = Math.min(world.money, shops * BALANCE.DELIVERY_FEE_PER_SHOP);
+  world.money -= fee;
+  world.dayStats.ingredientCost += fee;
+  return fee;
+}
+
 /** Tiến thời gian; hết ngày thì trả bảng tổng kết và sang ngày mới. */
 export function advanceTime(world: WorldState, dt: number): DaySummary | null {
   world.secOfDay += dt;
@@ -45,6 +59,7 @@ export function advanceTime(world: WorldState, dt: number): DaySummary | null {
   world.day += 1;
   world.secOfDay = 0;
   world.dayStats = emptyDayStats();
+  chargeDelivery(world);
   for (const id of Object.keys(world.shops) as ShopId[]) {
     const shop = world.shops[id];
     // Đóng cửa: khách đang ăn để lại chỗ bẩn; chỗ giữ cho khách chưa kịp ngồi thì trả lại.

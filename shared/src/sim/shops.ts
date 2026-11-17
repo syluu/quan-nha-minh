@@ -1,4 +1,4 @@
-import { BALANCE, SHOP_IDS, SHOP_META, SHOPS, getStationDef } from '../content';
+import { BALANCE, SHOP_IDS, SHOP_META, SHOPS, getStationDef, isFarm } from '../content';
 import type { ShopId } from '../content';
 import { formatK } from '../money';
 import type { ActionResult } from './actions';
@@ -24,16 +24,17 @@ export function isShopComplete(world: WorldState, shopId: ShopId): boolean {
   });
 }
 
-/** Được thuê mặt bằng mới khi mọi quán đang có đã mở hết. */
+/** Được thuê mặt bằng quán mới khi mọi quán đang có đã mở hết (trang trại không tính). */
 export function canRent(world: WorldState): boolean {
-  return SHOP_IDS.filter((id) => world.shops[id].owned).every((id) => isShopComplete(world, id));
+  return SHOP_IDS.filter((id) => world.shops[id].owned && !isFarm(id)).every((id) => isShopComplete(world, id));
 }
 
 export function rentShop(world: WorldState, shopId: unknown, byPlayerId: string): ActionResult {
   if (world.settlement) return { ok: false, error: 'PAUSED' };
   if (!isShopId(shopId) || SHOP_META[shopId].deposit <= 0) return { ok: false, error: 'BAD_ITEM' };
   if (world.shops[shopId].owned) return { ok: false, error: 'NO_SLOT' };
-  if (!canRent(world)) return { ok: false, error: 'NOT_READY' };
+  // Trang trại thuê được bất cứ lúc nào (đủ tiền); quán mới cần mở hết các quán đang có.
+  if (!isFarm(shopId) && !canRent(world)) return { ok: false, error: 'NOT_READY' };
   const deposit = SHOP_META[shopId].deposit;
   if (world.money < deposit) return { ok: false, error: 'NO_MONEY' };
   world.money -= deposit;

@@ -1,9 +1,10 @@
-import { BALANCE, ITEMS, SHOPS, getStationDef, itemCost } from '../content';
+import { BALANCE, ITEMS, SHOPS, getStationDef, isFarm, itemCost } from '../content';
 import type { ItemId, ShopId } from '../content';
 import { formatK } from '../money';
 import type { ActionResult } from './actions';
 import { trySettleAfterAction } from './settlement';
 import { deliverToPickup, pickupNeeds, pickupOf } from './online';
+import { loadCrate } from './carry';
 import type { SimEvent } from './events';
 import { addLog, playerName } from './log';
 import { isOnSale } from './prices';
@@ -19,7 +20,7 @@ export function staffWage(s: Pick<StaffState, 'level'>): number {
 }
 
 const ROLE_LABEL = (s: Pick<StaffState, 'role' | 'item'>) =>
-  s.role === 'cashier' ? 'thu ngân' : s.role === 'courier' ? 'giao đơn' : s.role === 'cleaner' ? 'dọn bàn' : `phụ bếp ${ITEMS[s.item!].name}`;
+  s.role === 'cashier' ? 'thu ngân' : s.role === 'courier' ? 'giao đơn' : s.role === 'cleaner' ? 'dọn bàn' : s.role === 'farmhand' ? 'làm trang trại' : `phụ bếp ${ITEMS[s.item!].name}`;
 
 /** Quán có bàn ăn đã mở → có chỗ cho 1 nhân viên dọn bàn. */
 function tablesOpen(world: WorldState, shopId: ShopId): boolean {
@@ -42,6 +43,8 @@ export function staffSlots(world: WorldState, shopId: ShopId): {
   courier: { max: 1; used: number } | null;
   /** Chỉ có khi quán đã mở bàn ăn. */
   cleaner: { max: 1; used: number } | null;
+  /** Chỉ ở trang trại. */
+  farmhand: { max: number; used: number } | null;
   cookLines: { item: ItemId; taken: string | null }[];
 } {
   const staff = world.shops[shopId].staff;
@@ -49,6 +52,7 @@ export function staffSlots(world: WorldState, shopId: ShopId): {
     cashier: { max: 1, used: staff.filter((s) => s.role === 'cashier').length },
     courier: pickupOpen(world, shopId) ? { max: 1, used: staff.filter((s) => s.role === 'courier').length } : null,
     cleaner: tablesOpen(world, shopId) ? { max: 1, used: staff.filter((s) => s.role === 'cleaner').length } : null,
+    farmhand: isFarm(shopId) ? { max: BALANCE.FARMHANDS_MAX, used: staff.filter((s) => s.role === 'farmhand').length } : null,
     cookLines: openLines(world, shopId).map((item) => ({
       item,
       taken: staff.find((s) => s.role === 'cook' && s.item === item)?.id ?? null,
@@ -58,7 +62,12 @@ export function staffSlots(world: WorldState, shopId: ShopId): {
 
 export function hireStaff(world: WorldState, shopId: ShopId, role: StaffRole, item: ItemId | null, byPlayerId: string): ActionResult {
   const shop = world.shops[shopId];
-  if (role === 'cashier') {
+  // Trang trại chỉ thuê người làm trang trại; quán không thuê người làm trang trại.
+  if (isFarm(shopId) !== (role === 'farmhand')) return { ok: false, error: 'BAD_ROLE' };
+  if (role === 'farmhand') {
+    if (shop.staff.filter((s) => s.role === 'farmhand').length >= BALANCE.FARMHANDS_MAX) return { ok: false, error: 'NO_SLOT' };
+    item = null;
+  } else if (role === 'cashier') {
     if (shop.staff.some((s) => s.role === 'cashier')) return { ok: false, error: 'NO_SLOT' };
     item = null;
   } else if (role === 'courier') {
@@ -108,6 +117,11 @@ export function fireStaff(world: WorldState, shopId: ShopId, staffId: string, by
   shop.staff = shop.staff.filter((x) => x !== s);
   // Món đang cầm: trả về chỗ còn nhận được, còn thừa thì tính là hàng bỏ đi.
   for (const item of s.carry) {
+    // Thùng hàng trang trại: bốc luôn lên xe vào kho.
+    if (ITEMS[item].bundle) {
+      loadCrate(world, item);
+      continue;
+    }
     const to = targetForCarry(world, shopId, item);
     if (to) {
       const st = shop.stations[to];
@@ -378,6 +392,76 @@ function tickCleaner(world: WorldState, shopId: ShopId, s: StaffState, dt: numbe
   return [{ type: 'clean', shopId, instanceId: s.target, x: placed.x, z: placed.z }];
 }
 
+/** Người làm trang trại: lô có thùng hàng → nhặt (đầy tay hoặc hết hàng) → bê ra xe chở hàng. */
+function tickFarmhand(world: WorldState, shopId: ShopId, s: StaffState, dt: number): SimEvent[] {
+  const shop = world.shops[shopId];
+  const truck = SHOPS[shopId].stations.find((p) => getStationDef(p.def).kind === 'truck');
+  if (!truck) return [];
+  const cap = staffStats(s).carry;
+  if (!s.task) {
+    s.timer = 0;
+    if (s.carry.length > 0) s.task = { from: truck.instanceId, to: truck.instanceId, item: s.carry[0], phase: 'toTarget' };
+    else {
+      let best: (typeof SHOPS)[ShopId]['stations'][number] | null = null;
+      for (const p of SHOPS[shopId].stations) {
+        const st = shop.stations[p.instanceId];
+        if (getStationDef(p.def).kind !== 'plot' || !st.unlocked || st.outputCount <= 0) continue;
+        // Người làm khác đang tới lô này thì chọn lô khác (nếu có).
+        const taken = shop.staff.some((o) => o !== s && o.task?.from === p.instanceId);
+        if (!best || (!taken && st.outputCount > shop.stations[best.instanceId].outputCount)) best = p;
+      }
+      if (!best) {
+        walk(s, truck.workPoint.x, truck.workPoint.z, dt);
+        return [];
+      }
+      const def = getStationDef(best.def);
+      s.task = { from: best.instanceId, to: truck.instanceId, item: def.kind === 'plot' ? def.output : s.item!, phase: 'toSource' };
+    }
+  }
+  const t = s.task!;
+  const from = placedOf(shopId, t.from);
+  switch (t.phase) {
+    case 'toSource':
+      if (walk(s, from.workPoint.x, from.workPoint.z, dt)) t.phase = 'picking';
+      return [];
+    case 'picking': {
+      const src = shop.stations[t.from];
+      if (src.outputCount <= 0 || s.carry.length >= cap) {
+        if (s.carry.length > 0) t.phase = 'toTarget';
+        else s.task = null;
+        return [];
+      }
+      s.timer += dt;
+      if (s.timer >= BALANCE.PICK_INTERVAL - 1e-6) {
+        s.timer = 0;
+        src.outputCount -= 1;
+        s.carry.push(t.item);
+      }
+      return [];
+    }
+    case 'toTarget':
+      if (walk(s, truck.workPoint.x, truck.workPoint.z, dt)) {
+        t.phase = 'dropping';
+        s.timer = 0;
+      }
+      return [];
+    case 'dropping': {
+      s.timer += dt;
+      if (s.timer < BALANCE.DROP_INTERVAL - 1e-6) return [];
+      s.timer = 0;
+      const crate = s.carry.pop();
+      if (!crate) {
+        s.task = null;
+        return [];
+      }
+      loadCrate(world, crate);
+      if (s.carry.length === 0) s.task = null;
+      return [{ type: 'stored', shopId, item: crate, x: truck.x, z: truck.z }];
+    }
+  }
+  return [];
+}
+
 export function tickStaff(world: WorldState, shopId: ShopId, dt: number): SimEvent[] {
   const events: SimEvent[] = [];
   const shop = world.shops[shopId];
@@ -388,6 +472,10 @@ export function tickStaff(world: WorldState, shopId: ShopId, dt: number): SimEve
     }
     if (s.role === 'cleaner') {
       events.push(...tickCleaner(world, shopId, s, dt));
+      continue;
+    }
+    if (s.role === 'farmhand') {
+      events.push(...tickFarmhand(world, shopId, s, dt));
       continue;
     }
     if (s.role === 'cashier') {

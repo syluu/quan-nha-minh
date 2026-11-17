@@ -44,7 +44,7 @@ export interface Customer {
   eatTimer: number;
 }
 
-export type StaffRole = 'cashier' | 'cook' | 'courier' | 'cleaner';
+export type StaffRole = 'cashier' | 'cook' | 'courier' | 'cleaner' | 'farmhand';
 
 export interface StaffTask {
   from: string;

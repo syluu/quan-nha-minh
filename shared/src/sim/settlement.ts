@@ -37,6 +37,9 @@ export function rentDue(world: WorldState): number {
     if (!shop.owned || perMonth <= 0) continue;
     const days = Math.min(BALANCE.MONTH_DAYS, Math.max(1, world.day - Math.max(shop.rentedDay, monthStart) + 1));
     n += Math.round((perMonth * days) / BALANCE.MONTH_DAYS / 1000) * 1000;
+    // Trang trại: mỗi lô đã mở thêm (ngoài lô có sẵn) cộng tiền thuê lô.
+    const plots = SHOPS[id].stations.filter((p) => p.unlockCost > 0 && getStationDef(p.def).kind === 'plot' && shop.stations[p.instanceId].unlocked);
+    n += plots.length * SHOP_META[id].plotRent;
   }
   return n;
 }

@@ -77,3 +77,101 @@ describe('save v5 → v6 (Review Focus 4)', () => {
     expect(loaded.warehouse).toEqual({});
   });
 });
+
+describe('renting the farm (plan 6, Review Focus 2)', () => {
+  it('can be rented any time with enough money, and does not block renting shops', async () => {
+    const { canRent, rentShop } = await import('../src/sim/shops');
+    const w = createWorld('X', 1);
+    putPlayer(w, 'a', 0, 2);
+    w.money = 4_999_000;
+    expect(rentShop(w, 'farm', 'a')).toEqual({ ok: false, error: 'NO_MONEY' });
+    w.day = 7;
+    w.settlement = { month: 1, revenue: 0, ingredientCost: 0, marketing: 0, commission: 0, wages: 0, rent: 0, loanDue: 0, totalDue: 1 };
+    w.money = 6_000_000;
+    expect(rentShop(w, 'farm', 'a')).toEqual({ ok: false, error: 'PAUSED' });
+    expect(w.money).toBe(6_000_000);
+    w.settlement = null;
+    expect(rentShop(w, 'farm', 'a')).toEqual({ ok: true });
+    expect(w.money).toBe(1_000_000);
+    expect(w.players.a.location).toBe('farm');
+    // Trang trại chưa mở hết lô vẫn không chặn thuê quán mới.
+    for (const st of Object.values(w.shops.banh_mi.stations)) st.unlocked = true;
+    expect(canRent(w)).toBe(true);
+  });
+
+  it('farm rent + 300K for each extra plot goes into the settlement', async () => {
+    const { buildSettlement } = await import('../src/sim/settlement');
+    const w = farmWorld();
+    w.shops.farm.rentedDay = 1;
+    w.shops.farm.stations.ruong_lua_mi.unlocked = true;
+    w.shops.farm.stations.chuong_ga.unlocked = true;
+    w.day = 7;
+    expect(buildSettlement(w).rent).toBe(1_500_000 + 2 * 300_000);
+  });
+});
+
+describe('farm runs without shop systems (Review Focus 3)', () => {
+  it('no customers, no orders, campaigns and cashiers refused, stars only from shops', async () => {
+    const { tick } = await import('../src/sim/tick');
+    const { runCampaign } = await import('../src/sim/marketing');
+    const { hireStaff } = await import('../src/sim/staff');
+    const { averageStars } = await import('../src/sim/rating');
+    const w = farmWorld();
+    putPlayer(w, 'a', 0, -1.25, [], 'farm');
+    repeat(30, (dt) => tick(w, dt), 0.25);
+    expect(w.shops.farm.customers).toEqual([]);
+    expect(w.shops.farm.orders).toEqual([]);
+    expect(runCampaign(w, 'farm', 'to_roi', 'a')).toEqual({ ok: false, error: 'BAD_ITEM' });
+    expect(hireStaff(w, 'farm', 'cashier', null, 'a')).toEqual({ ok: false, error: 'BAD_ROLE' });
+    expect(hireStaff(w, 'banh_mi', 'farmhand', null, 'a')).toEqual({ ok: false, error: 'BAD_ROLE' });
+    w.shops.farm.ratings = [1, 1, 1];
+    w.shops.banh_mi.ratings = [5];
+    expect(averageStars(w)).toBe(5);
+  });
+
+  it('farmhands (max 2) carry crates from plots to the truck', async () => {
+    const { hireStaff, tickStaff } = await import('../src/sim/staff');
+    const w = farmWorld();
+    putPlayer(w, 'a', 0, -1.25, [], 'farm');
+    expect(hireStaff(w, 'farm', 'farmhand', null, 'a')).toEqual({ ok: true });
+    expect(hireStaff(w, 'farm', 'farmhand', null, 'a')).toEqual({ ok: true });
+    expect(hireStaff(w, 'farm', 'farmhand', null, 'a')).toEqual({ ok: false, error: 'NO_SLOT' });
+    w.shops.farm.stations.ruong_rau.outputCount = 3;
+    w.shops.farm.stations.chuong_ga.unlocked = true;
+    w.shops.farm.stations.chuong_ga.outputCount = 2;
+    repeat(30, (dt) => tickStaff(w, 'farm', dt));
+    expect(w.warehouse.rau).toBe(30);
+    expect(w.warehouse.trung).toBe(20);
+  });
+});
+
+describe('delivery fee and returning the farm', () => {
+  it('each morning: 50K per shop when the farm is rented and the warehouse has stock', async () => {
+    const { advanceTime } = await import('../src/sim/time');
+    const w = farmWorld();
+    w.shops.com_tam.owned = true;
+    w.secOfDay = 359.99;
+    advanceTime(w, 0.1); // kho rỗng → không tốn
+    expect(w.money).toBe(5_000_000);
+    w.warehouse.rau = 5;
+    w.secOfDay = 359.99;
+    advanceTime(w, 0.1);
+    expect(w.money).toBe(5_000_000 - 100_000);
+    expect(w.dayStats.ingredientCost).toBe(100_000);
+  });
+
+  it('returning the farm sends people home and keeps the warehouse (Review Focus 5)', async () => {
+    const { sellStation } = await import('../src/sim/settlement');
+    const w = farmWorld();
+    const p = putPlayer(w, 'a', 0, -1.25, ['thung_rau'], 'farm');
+    w.warehouse.gao = 7;
+    w.money = 0;
+    w.day = 7;
+    w.settlement = { month: 1, revenue: 0, ingredientCost: 0, marketing: 0, commission: 0, wages: 0, rent: 1e12, loanDue: 0, totalDue: 1e12 };
+    expect(sellStation(w, 'farm', 'mat_bang', 'a', 1)).toEqual({ ok: true });
+    expect(w.shops.farm.owned).toBe(false);
+    expect(p.location).toBe('banh_mi');
+    expect(w.warehouse.gao).toBe(7);
+    expect(w.money).toBe(2_500_000);
+  });
+});

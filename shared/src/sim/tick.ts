@@ -1,4 +1,4 @@
-import { BALANCE, SHOPS, getPlaced, getStationDef } from '../content';
+import { BALANCE, SHOPS, getPlaced, getStationDef, isFarm } from '../content';
 import type { ShopId } from '../content';
 import { tickCarry } from './carry';
 import { tickCustomers } from './customers';
@@ -38,8 +38,11 @@ export function tick(world: WorldState, dt: number): SimEvent[] {
     for (const shopId of shopIds) {
       events.push(...tickCarry(world, shopId, sdt));
       events.push(...tickStaff(world, shopId, sdt));
-      tickOrders(world, shopId, sdt);
-      events.push(...tickShipper(world, shopId, sdt));
+      const isShop = !isFarm(shopId);
+      if (isShop) {
+        tickOrders(world, shopId, sdt);
+        events.push(...tickShipper(world, shopId, sdt));
+      }
       for (const e of tickPayTiles(world, shopId, sdt)) {
         if (e.type === 'unlock') {
           const name = world.players[e.byPlayerId]?.name ?? 'Ai đó';
@@ -48,7 +51,7 @@ export function tick(world: WorldState, dt: number): SimEvent[] {
         events.push(e);
       }
       tickStations(world, shopId, sdt);
-      events.push(...tickCustomers(world, shopId, sdt));
+      if (isShop) events.push(...tickCustomers(world, shopId, sdt));
     }
     const summary = advanceTime(world, sdt);
     if (summary) events.push({ type: 'dayEnd', summary });
