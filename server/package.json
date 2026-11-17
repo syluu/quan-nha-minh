@@ -4,10 +4,16 @@
   "private": true,
   "type": "module",
   "devDependencies": {
+    "@colyseus/sdk": "^0.18.10",
+    "@types/express": "^5.0.6",
     "@types/pg": "^8.23.1"
   },
   "dependencies": {
+    "@colyseus/core": "^0.18.28",
+    "@colyseus/ws-transport": "^0.18.5",
+    "@qnm/shared": "0.0.0",
+    "express": "^5.3.0",
     "pg": "^8.23.1",
-    "@qnm/shared": "0.0.0"
+    "tsx": "^4.23.15"
   }
 }
