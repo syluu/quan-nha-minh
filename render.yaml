@@ -1,0 +1,16 @@
+# Render Blueprint — 1 web service chạy cả game (client đã build + server chơi chung).
+services:
+  - type: web
+    name: quan-nha-minh
+    runtime: node
+    region: singapore
+    plan: free
+    # NODE_ENV=production làm `npm ci` bỏ devDependencies → cần --include=dev để build được.
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
