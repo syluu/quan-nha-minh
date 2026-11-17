@@ -1,4 +1,4 @@
-import type { IngredientId, ItemId, ShopId } from '../content';
+import type { IngredientId, ItemId, Outfit, ShopId } from '../content';
 import type { CampaignId, DaySummary, LogEntry, SeatState, Settlement, StaffRole, StationState } from '../sim/world';
 
 export const MSG = {
@@ -25,7 +25,13 @@ export const MSG = {
   rentShop: 'rentShop',
   travel: 'travel',
   setMachineEnabled: 'setMachineEnabled',
+  buyCostume: 'buyCostume',
+  wearCostume: 'wearCostume',
 } as const;
+
+export interface CostumeMsg {
+  id: string;
+}
 
 export interface RentShopMsg {
   shopId: ShopId;
@@ -135,6 +141,8 @@ export interface Snapshot {
     carryLevel: number;
     speedLevel: number;
     location: ShopId;
+    outfit: Outfit;
+    wardrobe: string[];
   }[];
   staff: {
     id: string; name: string; role: StaffRole; item: ItemId | null; x: number; z: number; dir: number; carry: ItemId[];

@@ -35,6 +35,8 @@ export function toSnapshot(world: WorldState, shopId: ShopId): Snapshot {
       carryLevel: p.carryLevel,
       speedLevel: p.speedLevel,
       location: p.location,
+      outfit: { ...p.outfit },
+      wardrobe: [...p.wardrobe],
     })),
     staff: shop.staff.map((s) => ({
       id: s.id, name: s.name, role: s.role, item: s.item, x: s.x, z: s.z, dir: s.dir, carry: [...s.carry],
