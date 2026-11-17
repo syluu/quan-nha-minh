@@ -1,6 +1,7 @@
 import { BALANCE, SHOPS, getStationDef, itemCost } from '../content';
 import type { ItemId, PlacedStation, ShopId } from '../content';
 import type { SimEvent } from './events';
+import { deliverToPickup, pickupNeeds } from './online';
 import type { PlayerState, ShopState, WorldState } from './world';
 
 /** Khoảng cách từ điểm (x,z) tới cạnh footprint của trạm (0 nếu ở trong). */
@@ -73,6 +74,19 @@ export function tickCarry(world: WorldState, shopId: ShopId, dt: number): SimEve
         )!;
         st.inputs[item] = (st.inputs[item] ?? 0) + 1;
       }
+      p.dropCd = BALANCE.DROP_INTERVAL;
+      continue;
+    }
+
+    // 1b) Điểm giao hàng: đưa món shipper đang cần
+    if (def.kind === 'pickup') {
+      p.pickTimer = 0;
+      p.pickAt = null;
+      const needs = pickupNeeds(shop);
+      const has = p.carry.some((it) => needs.includes(it));
+      if (!has || p.dropCd > 0) continue;
+      const item = takeFromCarry(p, (it) => needs.includes(it))!;
+      events.push(...deliverToPickup(world, shopId, item));
       p.dropCd = BALANCE.DROP_INTERVAL;
       continue;
     }

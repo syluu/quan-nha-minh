@@ -19,7 +19,7 @@ export function buildReport(world: WorldState): Report {
       sold: { ...s.sold },
       wages,
       day: world.day,
-      operatingProfit: s.revenue - s.ingredientCost - wages,
+      operatingProfit: s.revenue - s.ingredientCost - wages - s.commission,
       stars: stars(world.shops.banh_mi.ratings),
     },
   };

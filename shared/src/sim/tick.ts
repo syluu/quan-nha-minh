@@ -7,6 +7,7 @@ import { movePlayer } from './movement';
 import { tickPayTiles } from './payTiles';
 import { tickStations } from './production';
 import { addLog } from './log';
+import { tickOrders, tickShipper } from './online';
 import { trySettle } from './settlement';
 import { tickStaff } from './staff';
 import { advanceTime } from './time';
@@ -37,6 +38,8 @@ export function tick(world: WorldState, dt: number): SimEvent[] {
       }
       events.push(...tickCarry(world, shopId, sdt));
       tickStaff(world, shopId, sdt);
+      tickOrders(world, shopId, sdt);
+      events.push(...tickShipper(world, shopId, sdt));
       for (const e of tickPayTiles(world, shopId, sdt)) {
         if (e.type === 'unlock') {
           const name = world.players[e.byPlayerId]?.name ?? 'Ai đó';

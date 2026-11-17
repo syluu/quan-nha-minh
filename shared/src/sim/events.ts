@@ -9,4 +9,6 @@ export type SimEvent =
   | { type: 'dayEnd'; summary: DaySummary }
   | { type: 'monthEnd'; settlement: Settlement }
   | { type: 'monthClosed'; month: number }
-  | { type: 'bankrupt' };
+  | { type: 'bankrupt' }
+  | { type: 'orderDone'; shopId: ShopId; net: number; x: number; z: number }
+  | { type: 'orderCancelled'; shopId: ShopId; x: number; z: number };

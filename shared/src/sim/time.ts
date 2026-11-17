@@ -35,7 +35,7 @@ export function advanceTime(world: WorldState, dt: number): DaySummary | null {
     ...s,
     sold: { ...s.sold },
     day: world.day,
-    operatingProfit: s.revenue - s.ingredientCost - s.wages,
+    operatingProfit: s.revenue - s.ingredientCost - s.wages - s.commission,
     stars: stars(world.shops.banh_mi.ratings),
   };
   world.history.push(summary);

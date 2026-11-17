@@ -78,3 +78,89 @@ describe('online orders', () => {
     expect(o.delivered).toEqual([]);
   });
 });
+
+describe('shipper and delivery', async () => {
+  const { tick } = await import('../src/sim/tick');
+  const { getPlaced, BALANCE } = await import('../src/content');
+  const { putPlayer } = await import('./helpers');
+  const { pickupNeeds } = await import('../src/sim/online');
+  type Ev = import('../src/sim/events').SimEvent;
+
+  function setup() {
+    const w = onlineWorld();
+    w.shops.banh_mi.nextCustomerIn = 1e9; // không có khách tại quán
+    w.shops.banh_mi.nextOrderIn = 1e9; // đơn do test tạo
+    w.shops.banh_mi.stations.lo_banh_mi.unlocked = false; // không tốn nguyên liệu
+    w.players.a.x = 0; w.players.a.z = 3; // đứng xa
+    return w;
+  }
+  const order = (w: WorldState, items: string[], total: number) =>
+    w.shops.banh_mi.orders.push({ id: w.shops.banh_mi.nextOrderId++, items: items as never, delivered: [], total, createdSec: w.secOfDay });
+  const run = (w: WorldState, sec: number) => {
+    const ev: Ev[] = [];
+    repeat(sec, (dt) => ev.push(...tick(w, dt)));
+    return ev;
+  };
+  const atPickup = (w: WorldState, carry: string[]) => {
+    const wp = getPlaced('banh_mi', 'diem_giao').workPoint;
+    return putPlayer(w, 'b', wp.x, wp.z, carry as never);
+  };
+
+  it('a motorbike comes for one order; handing the item pays 80% and rates the shop', () => {
+    const w = setup();
+    order(w, ['banh_mi'], 5000);
+    run(w, 3);
+    expect(w.shops.banh_mi.shipper).toMatchObject({ vehicle: 'bike', state: 'waiting', orderIds: [1] });
+    expect(pickupNeeds(w.shops.banh_mi)).toEqual(['banh_mi']);
+    const money = w.money;
+    const p = atPickup(w, ['banh_mi']);
+    const ev = run(w, 0.5);
+    expect(p.carry).toEqual([]);
+    expect(w.money).toBe(money + 4000);
+    expect(w.dayStats).toMatchObject({ commission: 1000, onlineOrders: 1, revenue: 5000, sold: { banh_mi: 1 } });
+    expect(w.shops.banh_mi.ratings.at(-1)).toBe(5);
+    expect(ev.some((e) => e.type === 'orderDone')).toBe(true);
+    expect(w.shops.banh_mi.shipper?.state).toBe('leaving');
+  });
+
+  it('a shipper who waits too long leaves: order cancelled, 1 star, handed items wasted', () => {
+    const w = setup();
+    order(w, ['banh_mi', 'banh_mi'], 10_000);
+    run(w, 3);
+    atPickup(w, ['banh_mi']);
+    run(w, 0.5); // đưa được 1/2
+    w.players.b.online = false;
+    const ev = run(w, BALANCE.ONLINE.bike.patience);
+    expect(ev.some((e) => e.type === 'orderCancelled')).toBe(true);
+    expect(w.shops.banh_mi.orders).toEqual([]);
+    expect(w.dayStats.onlineCancelled).toBe(1);
+    expect(w.dayStats.wasted).toBe(2000);
+    expect(w.shops.banh_mi.ratings.at(-1)).toBe(1);
+  });
+
+  it('a car (pickup level 1) waits for 2+ orders, then takes up to 5', () => {
+    const w = setup();
+    w.shops.banh_mi.stations.diem_giao.level = 1;
+    order(w, ['banh_mi'], 5000);
+    run(w, 5);
+    expect(w.shops.banh_mi.shipper).toBeNull(); // 1 đơn mới, chưa đủ 30 s
+    for (let i = 0; i < 6; i++) order(w, ['banh_mi'], 5000);
+    run(w, 1);
+    expect(w.shops.banh_mi.shipper).toMatchObject({ vehicle: 'car' });
+    expect(w.shops.banh_mi.shipper!.orderIds).toHaveLength(5);
+  });
+
+  it('the last item handed on the very tick patience runs out completes the order (Review Focus 1)', () => {
+    const w = setup();
+    order(w, ['banh_mi'], 5000);
+    run(w, 3);
+    const s = w.shops.banh_mi.shipper!;
+    s.waited = BALANCE.ONLINE.bike.patience - 0.01;
+    const money = w.money;
+    atPickup(w, ['banh_mi']);
+    const ev = run(w, 0.05);
+    expect(ev.filter((e) => e.type === 'orderDone')).toHaveLength(1);
+    expect(ev.filter((e) => e.type === 'orderCancelled')).toHaveLength(0);
+    expect(w.money).toBe(money + 4000);
+  });
+});
