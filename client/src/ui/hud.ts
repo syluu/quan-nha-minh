@@ -47,7 +47,7 @@ export function createHud(root: HTMLElement, myId: string) {
   status.hidden = true;
   const hint = document.createElement('div');
   hint.className = 'hint';
-  hint.textContent = 'WASD / phím mũi tên để đi · lăn chuột để phóng to/nhỏ · đứng gần máy/kệ để tự nhặt/đặt';
+  hint.textContent = 'WASD / mũi tên hoặc giữ chuột trái kéo để đi · giữ chuột phải kéo để xem quanh · lăn chuột để phóng to/nhỏ';
   root.append(bar, status, hint);
   const el = (k: string) => bar.querySelector<HTMLElement>(`[data-k="${k}"]`)!;
   let last = '';

@@ -31,6 +31,9 @@ Mở `http://localhost:5173` ở 2 cửa sổ (hoặc 2 máy cùng wifi qua `htt
 
 ### Cách chơi (Kế hoạch 2)
 
+- **Điều khiển bằng chuột**: giữ **chuột trái** rồi kéo như cần điều khiển (kéo xa đi nhanh hơn); giữ **chuột phải** rồi kéo để xem quanh quán (nhân vật đi là khung nhìn tự quay về); lăn chuột để phóng to/nhỏ.
+- Shipper tới: bảng **bên trái màn hình** ghi giờ tới, số giây còn chờ và món cần (đỏ khi còn ≤ 15 giây).
+
 - **Nhặt món**: đứng cạnh máy, cứ 0,45 giây được 1 món (vòng xanh quanh chân chạy dần); đủ thì bước đi. Nhãn **"3/4"** trên đầu = đang cầm 3, tối đa 4.
 - **Đặt món**: đứng cạnh kệ hoặc bàn ghép, món tự đặt xuống (nhanh).
 - **Thùng rác** (góc trái lối bếp): đứng yên cạnh thùng để bỏ món trên tay — mất tiền nguyên liệu của món đó.
