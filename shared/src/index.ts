@@ -14,3 +14,6 @@ export * from './sim/tick';
 export * from './sim/snapshot';
 export * from './net/protocol';
 export * from './codes';
+export * from './sim/actions';
+export * from './sim/log';
+export * from './sim/prices';

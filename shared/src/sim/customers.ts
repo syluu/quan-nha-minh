@@ -191,6 +191,7 @@ export function tickCustomers(world: WorldState, shopId: ShopId, dt: number): Si
             world.money += c.bill;
             world.dayStats.revenue += c.bill;
             world.dayStats.served += 1;
+            for (const it of c.holding) world.dayStats.sold[it] = (world.dayStats.sold[it] ?? 0) + 1;
             pushRating(shop, scoreFor(c.waited));
             c.scored = true;
             c.state = 'leaving';

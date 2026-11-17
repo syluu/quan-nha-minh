@@ -44,6 +44,14 @@ export function leavePlayer(world: WorldState, playerId: string): void {
       if (st.tileOccupant?.playerId === playerId) st.tileOccupant = null;
 }
 
+/** Đổi tên nhân vật: bỏ khoảng trắng thừa, tối đa 16 ký tự; tên rỗng thì giữ tên cũ. */
+export function renamePlayer(world: WorldState, playerId: string, name: unknown): void {
+  const p = world.players[playerId];
+  if (!p) return;
+  const clean = String(name ?? '').trim().slice(0, 16).trim();
+  if (clean) p.name = clean;
+}
+
 export function setInput(world: WorldState, playerId: string, input: { mx: number; mz: number }): void {
   const p = world.players[playerId];
   if (!p) return;

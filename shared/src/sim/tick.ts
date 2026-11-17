@@ -6,15 +6,9 @@ import type { SimEvent } from './events';
 import { movePlayer } from './movement';
 import { tickPayTiles } from './payTiles';
 import { tickStations } from './production';
-import { advanceTime, formatClock } from './time';
+import { addLog } from './log';
+import { advanceTime } from './time';
 import type { WorldState } from './world';
-
-const LOG_MAX = 30;
-
-function addLog(world: WorldState, text: string): void {
-  world.log.push({ day: world.day, clock: formatClock(world.secOfDay), text });
-  while (world.log.length > LOG_MAX) world.log.shift();
-}
 
 /** Một bước mô phỏng. Không ai online → không làm gì (thời gian dừng). */
 export function tick(world: WorldState, dt: number): SimEvent[] {
