@@ -4,9 +4,9 @@ import { V3 } from './fixtures';
 import { onlineView, staffView, upgradeView } from '../src/ui/menu/views';
 
 function snap(registered: boolean): Snapshot {
-  const st = (instanceId: string, unlocked: boolean, level = 0) => ({ instanceId, unlocked, outputCount: 0, stock: 0, inputs: {}, blocked: null, level });
+  const st = (instanceId: string, unlocked: boolean, level = 0) => ({ instanceId, unlocked, outputCount: 0, stock: 0, inputs: {}, enabled: true, seats: [], blocked: null, level });
   return {
-    day: 1, secOfDay: 0, money: 0, stars: 3, tiles: [], customers: [], log: [], prices: {}, players: [], ...V3,
+    shopId: 'banh_mi', shops: [], canRent: false, day: 1, secOfDay: 0, money: 0, stars: 3, tiles: [], customers: [], log: [], prices: {}, players: [], ...V3,
     stations: [st('lo_banh_mi', true), st('ke_banh_mi', true), st('thu_ngan', true), st('diem_giao', registered)],
     staff: registered ? [{ id: 's9', name: 'Mai', role: 'courier', item: null, x: 0, z: 0, dir: 0, carry: [], level: 1, wageOwed: 0 }] : [],
     online: { registered, paused: false, vehicle: 'bike', pending: 2, shipper: null, ordersToday: 7, cancelledToday: 1 },

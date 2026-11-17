@@ -1,4 +1,4 @@
-import { formatClock, formatK } from '@qnm/shared';
+import { SHOP_META, formatClock, formatK } from '@qnm/shared';
 import type { Snapshot } from '@qnm/shared';
 
 export function formatStars(s: number): string {
@@ -14,13 +14,18 @@ export function carryBadge(count: number, cap: number): { text: string; full: bo
 export function hudText(
   s: Snapshot,
   myId = '',
-): { money: string; clock: string; stars: string; online: string; basket: string } {
+): { shop: string; money: string; clock: string; stars: string; online: string; basket: string } {
   const me = s.players.find((p) => p.id === myId);
   return {
+    shop: `🏠 ${SHOP_META[s.shopId].name}`,
     money: `💰 ${formatK(s.money)}`,
     clock: `Ngày ${s.day} · ${formatClock(s.secOfDay)}`,
     stars: formatStars(s.stars),
-    online: s.players.filter((p) => p.online).map((p) => p.name).join(', '),
+    // Người ở quán khác ghi kèm tên quán.
+    online: s.players
+      .filter((p) => p.online)
+      .map((p) => (p.location === s.shopId ? p.name : `${p.name} (${SHOP_META[p.location].name})`))
+      .join(', '),
     basket: `🧺 ${me ? me.carry.length : 0}/${me ? me.cap : 0}`,
   };
 }
@@ -30,6 +35,7 @@ export function createHud(root: HTMLElement, myId: string) {
   const bar = document.createElement('div');
   bar.className = 'hud';
   bar.innerHTML = `
+    <span class="pill" data-k="shop"></span>
     <span class="pill" data-k="money"></span>
     <span class="pill" data-k="clock"></span>
     <span class="pill stars" data-k="stars"></span>
@@ -54,6 +60,7 @@ export function createHud(root: HTMLElement, myId: string) {
       const key = Object.values(t).join('|');
       if (key === last) return;
       last = key;
+      el('shop').textContent = t.shop;
       el('money').textContent = t.money;
       el('clock').textContent = t.clock;
       el('stars').textContent = t.stars;

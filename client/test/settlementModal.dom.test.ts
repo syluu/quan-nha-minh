@@ -24,7 +24,7 @@ function fakeConn() {
 
 const settlement = { month: 1, revenue: 900_000, ingredientCost: 400_000, marketing: 0, commission: 0, wages: 1_680_000, rent: 0, loanDue: 0, totalDue: 1_680_000 };
 const base = (over: Partial<Snapshot>): Snapshot => ({
-  day: 8, secOfDay: 0, money: 1_000_000, stars: 3, tiles: [], customers: [], log: [], prices: {}, players: [], stations: [], staff: [], ...V3, ...over,
+  shopId: 'banh_mi', shops: [], canRent: false, day: 8, secOfDay: 0, money: 1_000_000, stars: 3, tiles: [], customers: [], log: [], prices: {}, players: [], stations: [], staff: [], ...V3, ...over,
 });
 
 describe('settlement modal', () => {
@@ -33,7 +33,7 @@ describe('settlement modal', () => {
     const f = fakeConn();
     const blocked: boolean[] = [];
     createSettlementModal(document.getElementById('ui')!, f.conn, (b) => blocked.push(b));
-    f.snap(base({ settlement, sellable: [{ instanceId: 'chao_op_la', refund: 400_000 }], maxLoan: 2_000_000 }));
+    f.snap(base({ settlement, sellable: [{ shopId: 'banh_mi', instanceId: 'chao_op_la', refund: 400_000 }], maxLoan: 2_000_000 }));
     const box = document.querySelector('.settle') as HTMLElement;
     expect(box.hidden).toBe(false);
     expect(box.textContent).toContain('Kết toán tháng 1');

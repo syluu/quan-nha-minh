@@ -44,7 +44,7 @@ export function tickCarry(world: WorldState, shopId: ShopId, dt: number): SimEve
   const events: SimEvent[] = [];
   const shop = world.shops[shopId];
   for (const p of Object.values(world.players)) {
-    if (!p.online) continue;
+    if (!p.online || p.location !== shopId) continue;
     p.dropCd = Math.max(p.dropCd - dt, 0);
 
     const placed = nearestStation(shop, shopId, p.x, p.z, BALANCE.INTERACT_DIST);
@@ -88,6 +88,26 @@ export function tickCarry(world: WorldState, shopId: ShopId, dt: number): SimEve
       const item = takeFromCarry(p, (it) => needs.includes(it))!;
       events.push(...deliverToPickup(world, shopId, item));
       p.dropCd = BALANCE.DROP_INTERVAL;
+      continue;
+    }
+
+    // 1c) Bàn ăn: đứng yên cạnh bàn bẩn → dọn 1 chỗ mỗi CLEAN_SEC
+    if (def.kind === 'table') {
+      const still = Math.hypot(p.input.mx, p.input.mz) <= BALANCE.STILL_INPUT;
+      const dirty = st.seats.indexOf('dirty');
+      if (!still || p.inMenu || dirty < 0) {
+        p.pickTimer = 0;
+        p.pickAt = null;
+        continue;
+      }
+      if (p.pickAt !== placed.instanceId) p.pickTimer = 0;
+      p.pickAt = placed.instanceId;
+      p.pickTimer += dt;
+      if (p.pickTimer >= BALANCE.CLEAN_SEC - 1e-6) {
+        p.pickTimer = 0;
+        st.seats[dirty] = 'free';
+        events.push({ type: 'clean', shopId, instanceId: placed.instanceId, x: placed.x, z: placed.z });
+      }
       continue;
     }
 

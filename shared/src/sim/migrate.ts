@@ -70,3 +70,26 @@ export function migrateV3toV4(raw: any): any {
   }
   return w;
 }
+
+/** Kế hoạch 4 → 5: nhiều quán, bàn ăn, công tắc máy. Mọi người về quán bánh mì; 2 quán mới chưa thuê. */
+export function migrateV4toV5(raw: any, freshShops: Record<string, any>): any {
+  const w = structuredClone(raw);
+  w.schemaVersion = 5;
+  w.extraWagesOwed ??= 0;
+  for (const [id, shop] of Object.entries<any>(w.shops ?? {})) {
+    shop.owned ??= id === 'banh_mi';
+    shop.rentedDay ??= 0;
+    for (const st of Object.values<any>(shop.stations ?? {})) {
+      st.enabled ??= true;
+      st.seats ??= [];
+    }
+    for (const c of shop.customers ?? []) {
+      c.table ??= null;
+      c.seat ??= 0;
+      c.eatTimer ??= 0;
+    }
+  }
+  for (const [id, fresh] of Object.entries<any>(freshShops)) w.shops[id] ??= structuredClone(fresh);
+  for (const p of Object.values<any>(w.players ?? {})) p.location ??= 'banh_mi';
+  return w;
+}

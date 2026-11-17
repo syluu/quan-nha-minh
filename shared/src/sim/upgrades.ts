@@ -77,3 +77,17 @@ export function upgradeMachine(world: WorldState, shopId: ShopId, instanceId: un
   addLog(world, `${playerName(world, byPlayerId)} nâng ${def.name} lên cấp ${st.level} (${formatK(cost)})`);
   return { ok: true };
 }
+
+/** Bật/tắt tự sản xuất của một máy/bàn ghép. Tắt giữa mẻ → mẻ đó vẫn làm xong. */
+export function setMachineEnabled(world: WorldState, shopId: ShopId, instanceId: unknown, enabled: unknown, byPlayerId: string): ActionResult {
+  const placed = SHOPS[shopId].stations.find((p) => p.instanceId === instanceId);
+  if (!placed || typeof enabled !== 'boolean') return { ok: false, error: 'BAD_ITEM' };
+  const def = getStationDef(placed.def);
+  const st = world.shops[shopId].stations[placed.instanceId];
+  if ((def.kind !== 'producer' && def.kind !== 'assembler') || !st.unlocked) return { ok: false, error: 'BAD_ITEM' };
+  if (st.enabled === enabled) return { ok: true };
+  st.enabled = enabled;
+  if (enabled && st.blocked === 'off') st.blocked = null;
+  addLog(world, `${playerName(world, byPlayerId)} ${enabled ? 'bật' : 'tắt'} ${def.name}`);
+  return { ok: true };
+}

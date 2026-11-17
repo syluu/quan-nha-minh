@@ -31,13 +31,19 @@ export function upgradesTab(conn: GameConnection, latest: () => Snapshot | null,
           <h3>Máy</h3>
           <table class="staff"><tbody>
             ${v.machines
-              .map((m) => row(m.name, bar(m.level, m.max), `${m.cycle} · ${m.cap}`, null, m.cost, `data-machine="${m.instanceId}"`))
+              .map((m) =>
+                row(m.name + (m.enabled ? '' : ' <span class="off">TẮT</span>'), bar(m.level, m.max), `${m.cycle} · ${m.cap}`, null, m.cost, `data-machine="${m.instanceId}"`)
+                  .replace('<td class="act">', `<td class="act"><button data-toggle="${m.instanceId}" data-on="${m.enabled ? 0 : 1}">${m.enabled ? 'Tắt máy' : 'Bật máy'}</button> `),
+              )
               .join('')}
             ${v.pickup ? row('Điểm giao hàng', v.pickup.vehicle, v.pickup.cost ? 'Xe máy: 1 đơn/lần' : 'Ô tô: gom nhiều đơn', v.pickup.cost ? 'Ô tô gom 2–5 đơn' : null, v.pickup.cost, 'data-pickup') : ''}
           </tbody></table>
-          <p class="note">Mỗi cấp máy làm nhanh hơn 15% và chứa thêm 50% món. Nhân viên nâng cấp trong tab Nhân sự. Tiền lấy từ ví chung của quán.</p>`;
+          <p class="note">Tắt máy: máy làm xong mẻ đang làm rồi dừng, nhân viên không bê thêm nguyên liệu vào. Mỗi cấp máy làm nhanh hơn 15% và chứa thêm 50% món. Nhân viên nâng cấp trong tab Nhân sự. Tiền lấy từ ví chung của quán.</p>`;
         body.querySelectorAll<HTMLButtonElement>('[data-me]').forEach((b) => (b.onclick = () => conn.upgradePlayer(b.dataset.me as 'carry' | 'speed')));
         body.querySelectorAll<HTMLButtonElement>('[data-machine]').forEach((b) => (b.onclick = () => conn.upgradeMachine(b.dataset.machine!)));
+        body.querySelectorAll<HTMLButtonElement>('[data-toggle]').forEach(
+          (b) => (b.onclick = () => conn.setMachineEnabled(b.dataset.toggle!, b.dataset.on === '1')),
+        );
         body.querySelectorAll<HTMLButtonElement>('[data-pickup]').forEach((b) => (b.onclick = () => conn.upgradePickup()));
       };
       render();

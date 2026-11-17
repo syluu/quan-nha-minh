@@ -1,4 +1,4 @@
-import { BALANCE, SHOPS, getStationDef } from '../content';
+import { BALANCE, SHOP_META, SHOPS, getStationDef } from '../content';
 import type { ShopId } from '../content';
 import type { ActionResult } from './actions';
 import { maxLoan, stationValue } from './bank';
@@ -6,13 +6,14 @@ import { formatK } from '../money';
 import type { SimEvent } from './events';
 import { addLog, playerName } from './log';
 import { clearOnline, dropUnsellableOrders } from './online';
+import { RETURN_SHOP_ID, canReturn, returnRefund, returnShop } from './shops';
 import { createWorld } from './world';
 import type { Loan, Settlement, WorldState } from './world';
 
 const MONTHS_KEPT = 12;
 
 function owedWages(world: WorldState): number {
-  let n = 0;
+  let n = world.extraWagesOwed ?? 0;
   for (const id of Object.keys(world.shops) as ShopId[]) for (const s of world.shops[id].staff) n += s.wageOwed;
   return n;
 }
@@ -26,12 +27,26 @@ function isDue(world: WorldState, l: Loan): boolean {
   return (l.firstDueMonth ?? 0) <= world.month;
 }
 
+/** Tiền thuê mặt bằng tháng này: quán thuê giữa tháng chỉ trả theo số ngày đã thuê (làm tròn nghìn). */
+export function rentDue(world: WorldState): number {
+  const monthStart = world.day - BALANCE.MONTH_DAYS + 1;
+  let n = 0;
+  for (const id of Object.keys(world.shops) as ShopId[]) {
+    const shop = world.shops[id];
+    const perMonth = SHOP_META[id].rentPerMonth;
+    if (!shop.owned || perMonth <= 0) continue;
+    const days = Math.min(BALANCE.MONTH_DAYS, Math.max(1, world.day - Math.max(shop.rentedDay, monthStart) + 1));
+    n += Math.round((perMonth * days) / BALANCE.MONTH_DAYS / 1000) * 1000;
+  }
+  return n;
+}
+
 /** Lập bảng kết toán: số liệu 7 ngày gần nhất + lương còn nợ + góp nợ đến hạn. */
 export function buildSettlement(world: WorldState): Settlement {
   const days = world.history.slice(-BALANCE.MONTH_DAYS);
   const sum = (k: 'revenue' | 'ingredientCost' | 'marketing' | 'commission') => days.reduce((n, d) => n + (d[k] ?? 0), 0);
   const wages = owedWages(world);
-  const rent = 0;
+  const rent = rentDue(world);
   const loanDue = loanInstallmentsDue(world);
   return {
     month: world.month,
@@ -82,6 +97,7 @@ export function trySettle(world: WorldState): SimEvent[] {
 
   world.money -= st.totalDue;
   for (const id of Object.keys(world.shops) as ShopId[]) for (const s of world.shops[id].staff) s.wageOwed = 0;
+  world.extraWagesOwed = 0;
   payInstallments(world);
   world.months.push({ ...st });
   while (world.months.length > MONTHS_KEPT) world.months.shift();
@@ -105,17 +121,25 @@ function payInstallments(world: WorldState): void {
 export function sellableStations(world: WorldState, shopId: ShopId): { instanceId: string; refund: number }[] {
   const shop = world.shops[shopId];
   const layout = SHOPS[shopId];
+  if (!shop.owned) return [];
+  // Mặt bằng thuê: trả lại được (mục riêng, cuối danh sách).
+  const lease = canReturn(world, shopId) ? [{ instanceId: RETURN_SHOP_ID, refund: returnRefund(world, shopId) }] : [];
   // Kệ và máy làm món của một dây chuyền đang có phụ bếp: không bán (phụ bếp sẽ mất việc mà vẫn ăn lương).
   const staffedLines = new Set(shop.staff.filter((s) => s.role === 'cook' && s.item).map((s) => s.item));
   const hasCourier = shop.staff.some((s) => s.role === 'courier');
+  // Còn nhân viên dọn bàn thì giữ lại bàn cuối cùng (cho nghỉ trước rồi mới bán hết bàn).
+  const hasCleaner = shop.staff.some((s) => s.role === 'cleaner');
+  const openTables = layout.stations.filter((p) => p.seatPoints && shop.stations[p.instanceId].unlocked).length;
   const busy = (def: ReturnType<typeof getStationDef>) =>
     (def.kind === 'display' && staffedLines.has(def.item)) ||
     ((def.kind === 'producer' || def.kind === 'assembler') && staffedLines.has(def.output)) ||
-    (def.kind === 'pickup' && hasCourier);
+    (def.kind === 'pickup' && hasCourier) ||
+    (def.kind === 'table' && hasCleaner && openTables <= 1);
   return layout.stations
     .filter((p) => p.unlockCost > 0 && shop.stations[p.instanceId].unlocked && !busy(getStationDef(p.def)))
     .filter((p) => !layout.stations.some((o) => shop.stations[o.instanceId].unlocked && o.requires.includes(p.instanceId)))
-    .map((p) => ({ instanceId: p.instanceId, refund: sellRefund(world, shopId, p.instanceId) }));
+    .map((p) => ({ instanceId: p.instanceId, refund: sellRefund(world, shopId, p.instanceId) }))
+    .concat(lease);
 }
 
 function sellRefund(world: WorldState, shopId: ShopId, instanceId: string): number {
@@ -130,14 +154,22 @@ export function settlementMismatch(world: WorldState, forMonth: unknown): boolea
 
 export function sellStation(world: WorldState, shopId: ShopId, instanceId: unknown, byPlayerId: string, forMonth?: unknown): ActionResult {
   if (settlementMismatch(world, forMonth)) return { ok: false, error: 'NO_SETTLEMENT' };
+  if (instanceId === RETURN_SHOP_ID) return returnShop(world, shopId, byPlayerId, forMonth);
   if (typeof instanceId !== 'string' || !sellableStations(world, shopId).some((x) => x.instanceId === instanceId))
     return { ok: false, error: 'NOT_SELLABLE' };
   const refund = sellRefund(world, shopId, instanceId);
   const st = world.shops[shopId].stations[instanceId];
   Object.assign(st, {
     unlocked: false, paid: 0, level: 0, upgradeSpent: 0, outputCount: 0, inputs: {}, stock: 0,
-    progress: 0, running: false, blocked: null, tileOccupant: null,
+    progress: 0, running: false, blocked: null, tileOccupant: null, enabled: true,
+    seats: st.seats.map(() => 'free' as const),
   });
+  // Bán bàn ăn: khách đang ngồi / đang tới bàn đó đứng dậy ra về.
+  for (const c of world.shops[shopId].customers)
+    if (c.table === instanceId) {
+      c.table = null;
+      c.state = 'leaving';
+    }
   world.money += refund;
   const placed = SHOPS[shopId].stations.find((p) => p.instanceId === instanceId)!;
   if (getStationDef(placed.def).kind === 'pickup') clearOnline(world, shopId);
@@ -154,7 +186,7 @@ export function bankrupt(world: WorldState): void {
   const entrance = SHOPS.banh_mi.entrance;
   for (const p of Object.values(players)) {
     Object.assign(p, {
-      x: entrance.x, z: entrance.z, carry: [], carryLevel: 0, speedLevel: 0,
+      x: entrance.x, z: entrance.z, location: 'banh_mi', carry: [], carryLevel: 0, speedLevel: 0,
       carryCap: BALANCE.PLAYER_CARRY_CAPS[0], speed: BALANCE.PLAYER_SPEED,
       dropCd: 0, pickTimer: 0, pickAt: null, inMenu: false, input: { mx: 0, mz: 0 },
     });

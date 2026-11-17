@@ -11,4 +11,5 @@ export type SimEvent =
   | { type: 'monthClosed'; month: number }
   | { type: 'bankrupt' }
   | { type: 'orderDone'; shopId: ShopId; net: number; x: number; z: number }
-  | { type: 'orderCancelled'; shopId: ShopId; x: number; z: number };
+  | { type: 'orderCancelled'; shopId: ShopId; x: number; z: number }
+  | { type: 'clean'; shopId: ShopId; instanceId: string; x: number; z: number };

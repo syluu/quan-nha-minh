@@ -24,6 +24,8 @@ export interface CharacterView {
   setCarry(items: ItemId[], cap?: number): void;
   /** Đổi chữ trên đầu (khi người chơi đổi tên). */
   setName(name: string): void;
+  /** Ngồi trên ghế (khách ăn tại chỗ): nhấc người lên ghế, quay mặt vào bàn. */
+  setSitting(on: boolean): void;
   dispose(): void;
 }
 
@@ -52,6 +54,7 @@ export function createCharacter(color: number, opts: { look: CharacterLook; name
   const eyeR = new THREE.Mesh(eyeGeo, mat(0x2b2118));
   eyeR.position.set(0.07, 1.0, 0.19);
   inner.add(legs, body, head, eyeL, eyeR);
+  let sitting = false;
 
   if (opts.look === 'player') {
     const hat = new THREE.Mesh(hatGeo, mat(0xe8d08a));
@@ -113,8 +116,12 @@ export function createCharacter(color: number, opts: { look: CharacterLook; name
     group,
     setPose(x, z, dir, moving, t) {
       group.position.set(x, 0, z);
-      inner.rotation.y = dir;
-      inner.position.y = moving ? Math.abs(Math.sin(t * 10)) * 0.07 : 0;
+      inner.rotation.y = sitting ? 0 : dir;
+      inner.position.y = sitting ? 0.18 : moving ? Math.abs(Math.sin(t * 10)) * 0.07 : 0;
+    },
+    setSitting(on) {
+      sitting = on;
+      legs.scale.y = on ? 0.4 : 1;
     },
     setName,
     setCarry(items, cap = 4) {

@@ -59,6 +59,17 @@ Mở `http://localhost:5173` ở 2 cửa sổ (hoặc 2 máy cùng wifi qua `htt
 - **Menu → Nhân sự → Giao đơn**: thuê người tự lấy món (ở máy hoặc trên kệ) mang ra cho shipper.
 - **Menu → Quảng cáo → Bán online**: xem đơn hôm nay, tạm ngưng / nhận đơn lại.
 
+### Nhiều quán, bàn ghế (Kế hoạch 5)
+
+- Mở hết máy và kệ của các quán đang có → **Menu → 🗺️ Bản đồ** cho thuê mặt bằng mới và chọn loại hình:
+  - **Quán cơm tấm** (cọc 8.000K, thuê 4.000K/tháng): cơm tấm sườn 35K, cơm tấm sườn chả 45K, trà đá.
+  - **Quán phở & cà phê** (cọc 12.000K, thuê 6.000K/tháng): phở bò 50K, cà phê đen 15K, cà phê sữa đá 25K.
+- Mỗi người đứng ở một quán; **Bản đồ → Đi tới** để sang quán khác (đồ đang cầm mang theo). Quán không có ai vẫn chạy nhờ nhân viên.
+- Quán mới có **4 bàn ăn** (ô trả tiền 500K/bàn, 2 chỗ). Khách trả tiền xong có 60% muốn ngồi ăn 20 giây; ăn xong chỗ đó bẩn. Hết chỗ sạch thì khách mang về và chấm tối đa 4 sao.
+- **Dọn bàn**: đứng yên cạnh bàn bẩn (0,5 giây/chỗ) hoặc thuê **nhân viên dọn bàn** trong Nhân sự.
+- Tiền thuê mặt bằng vào **kết toán cuối tháng** (tháng đầu tính theo số ngày đã thuê). Thiếu tiền thì có thể **trả mặt bằng** (thu 50% cọc + 50% máy).
+- **Menu → Nâng cấp → Máy**: nút **Tắt máy / Bật máy** — máy làm xong mẻ đang làm rồi dừng, nhân viên không bê thêm nguyên liệu vào.
+
 ## Test
 
 ```bash

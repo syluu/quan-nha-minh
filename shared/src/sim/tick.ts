@@ -24,18 +24,18 @@ export function tick(world: WorldState, dt: number): SimEvent[] {
   const steps = Math.max(1, Math.ceil(total / BALANCE.SUBSTEP_DT - 1e-9));
   const sdt = total / steps;
   const events: SimEvent[] = [];
-  const shopIds = Object.keys(world.shops) as ShopId[];
+  // Chỉ quán đã thuê mới chạy; quán vẫn chạy khi không ai đứng ở đó (nhân viên làm thay).
+  const shopIds = (Object.keys(world.shops) as ShopId[]).filter((id) => world.shops[id].owned);
 
   for (let i = 0; i < steps; i++) {
+    for (const p of online) {
+      const shop = world.shops[p.location];
+      const next = movePlayer(p, p.input, p.speed, sdt, SHOPS[p.location], (id) => shop.stations[id].unlocked);
+      p.x = next.x;
+      p.z = next.z;
+      p.dir = next.dir;
+    }
     for (const shopId of shopIds) {
-      const shop = world.shops[shopId];
-      const layout = SHOPS[shopId];
-      for (const p of online) {
-        const next = movePlayer(p, p.input, p.speed, sdt, layout, (id) => shop.stations[id].unlocked);
-        p.x = next.x;
-        p.z = next.z;
-        p.dir = next.dir;
-      }
       events.push(...tickCarry(world, shopId, sdt));
       events.push(...tickStaff(world, shopId, sdt));
       tickOrders(world, shopId, sdt);

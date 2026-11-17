@@ -31,7 +31,8 @@ export type StationDef =
   | { kind: 'display'; id: string; name: string; item: ItemId; cap: number; footprint: Footprint }
   | { kind: 'cashier'; id: string; name: string; footprint: Footprint }
   | { kind: 'trash'; id: string; name: string; footprint: Footprint }
-  | { kind: 'pickup'; id: string; name: string; footprint: Footprint };
+  | { kind: 'pickup'; id: string; name: string; footprint: Footprint }
+  | { kind: 'table'; id: string; name: string; seats: number; footprint: Footprint };
 
 export interface PlacedStation {
   instanceId: string;
@@ -46,6 +47,8 @@ export interface PlacedStation {
   workPoint: { x: number; z: number };
   /** Chỗ shipper đứng chờ (chỉ điểm giao hàng). */
   shipperPoint?: { x: number; z: number };
+  /** Chỗ khách ngồi ăn (chỉ bàn ăn). */
+  seatPoints?: { x: number; z: number }[];
 }
 
 export interface ShopLayout {
@@ -89,6 +92,43 @@ const list: StationDef[] = [
   { kind: 'cashier', id: 'thu_ngan', name: 'Quầy thu ngân', footprint: SHELF },
   { kind: 'trash', id: 'thung_rac', name: 'Thùng rác', footprint: { w: 0.6, d: 0.6 } },
   { kind: 'pickup', id: 'diem_giao', name: 'Điểm giao hàng', footprint: { w: 0.8, d: 0.6 } },
+  { kind: 'table', id: 'ban_an', name: 'Bàn ăn', seats: 2, footprint: { w: 1.2, d: 0.8 } },
+
+  // Quán cơm tấm
+  { kind: 'producer', id: 'noi_com', name: 'Nồi cơm', ingredients: [{ id: 'gao', qty: 1 }], output: 'com', cycleSec: 3, outputCap: 8, footprint: MACHINE },
+  { kind: 'producer', id: 'lo_suon', name: 'Lò nướng sườn', ingredients: [{ id: 'thit_lon', qty: 1 }], output: 'suon_nuong', cycleSec: 5, outputCap: 6, footprint: MACHINE },
+  { kind: 'producer', id: 'chao_cha', name: 'Chảo chả trứng', ingredients: [{ id: 'trung', qty: 1 }, { id: 'thit_lon', qty: 1 }], output: 'cha_trung', cycleSec: 5, outputCap: 6, footprint: MACHINE },
+  {
+    kind: 'assembler', id: 'ban_com_tam_suon', name: 'Bàn cơm tấm sườn',
+    inputs: [{ item: 'com', qty: 1 }, { item: 'suon_nuong', qty: 1 }], inputCap: 6,
+    ingredients: [{ id: 'rau', qty: 1 }], output: 'com_tam_suon', cycleSec: 2, outputCap: 6, footprint: MACHINE,
+  },
+  {
+    kind: 'assembler', id: 'ban_com_tam_suon_cha', name: 'Bàn cơm tấm sườn chả',
+    inputs: [{ item: 'com', qty: 1 }, { item: 'suon_nuong', qty: 1 }, { item: 'cha_trung', qty: 1 }], inputCap: 6,
+    ingredients: [{ id: 'rau', qty: 1 }], output: 'com_tam_suon_cha', cycleSec: 2.5, outputCap: 6, footprint: MACHINE,
+  },
+  { kind: 'display', id: 'ke_com_tam_suon', name: 'Kệ cơm tấm sườn', item: 'com_tam_suon', cap: 8, footprint: SHELF },
+  { kind: 'display', id: 'ke_com_tam_suon_cha', name: 'Kệ cơm tấm sườn chả', item: 'com_tam_suon_cha', cap: 8, footprint: SHELF },
+
+  // Quán phở & cà phê
+  { kind: 'producer', id: 'noi_nuoc_dung', name: 'Nồi nước dùng', ingredients: [{ id: 'xuong_bo', qty: 1 }], output: 'nuoc_dung', cycleSec: 4, outputCap: 8, footprint: MACHINE },
+  { kind: 'producer', id: 'may_banh_pho', name: 'Máy bánh phở', ingredients: [{ id: 'gao', qty: 1 }], output: 'banh_pho', cycleSec: 3, outputCap: 8, footprint: MACHINE },
+  { kind: 'producer', id: 'thot_bo', name: 'Thớt thái bò', ingredients: [{ id: 'thit_bo', qty: 1 }], output: 'bo_tai', cycleSec: 4, outputCap: 6, footprint: MACHINE },
+  {
+    kind: 'assembler', id: 'ban_pho', name: 'Bàn phở',
+    inputs: [{ item: 'nuoc_dung', qty: 1 }, { item: 'banh_pho', qty: 1 }, { item: 'bo_tai', qty: 1 }], inputCap: 6,
+    ingredients: [{ id: 'rau', qty: 1 }], output: 'pho_bo', cycleSec: 2.5, outputCap: 6, footprint: MACHINE,
+  },
+  { kind: 'producer', id: 'may_pha_phin', name: 'Máy pha phin', ingredients: [{ id: 'ca_phe', qty: 1 }], output: 'ca_phe_phin', cycleSec: 3, outputCap: 8, footprint: MACHINE },
+  {
+    kind: 'assembler', id: 'quay_ca_phe', name: 'Quầy cà phê sữa',
+    inputs: [{ item: 'ca_phe_phin', qty: 1 }], inputCap: 6,
+    ingredients: [{ id: 'sua_dac', qty: 1 }], output: 'ca_phe_sua_da', cycleSec: 2, outputCap: 6, footprint: MACHINE,
+  },
+  { kind: 'display', id: 'ke_pho', name: 'Kệ phở bò', item: 'pho_bo', cap: 8, footprint: SHELF },
+  { kind: 'display', id: 'ke_ca_phe_den', name: 'Kệ cà phê đen', item: 'ca_phe_phin', cap: 10, footprint: SHELF },
+  { kind: 'display', id: 'ke_ca_phe_sua', name: 'Kệ cà phê sữa đá', item: 'ca_phe_sua_da', cap: 10, footprint: SHELF },
 ];
 
 export const STATIONS: Record<string, StationDef> = Object.fromEntries(list.map((d) => [d.id, d]));

@@ -1,6 +1,6 @@
 import { BALANCE } from '../content';
 import type { Report } from '../net/protocol';
-import { stars } from './rating';
+import { averageStars } from './rating';
 import { staffWage } from './staff';
 import type { WorldState } from './world';
 
@@ -20,7 +20,7 @@ export function buildReport(world: WorldState): Report {
       wages,
       day: world.day,
       operatingProfit: s.revenue - s.ingredientCost - wages - s.commission,
-      stars: stars(world.shops.banh_mi.ratings),
+      stars: averageStars(world),
     },
   };
 }

@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import { SHOPS } from '@qnm/shared';
+import { SHOP_META, SHOPS } from '@qnm/shared';
+import type { ShopId } from '@qnm/shared';
 import { box } from './materials';
 
 /** Renderer + cảnh nền (sàn caro, tường, biển hiệu). Không bóng đổ để chạy mượt trên laptop văn phòng. */
@@ -17,7 +18,28 @@ export function createScene(container: HTMLElement) {
   sun.position.set(5, 10, 6);
   scene.add(sun);
 
-  const b = SHOPS.banh_mi.bounds;
+  const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 200);
+
+  function resize() {
+    const cw = container.clientWidth || window.innerWidth;
+    const ch = container.clientHeight || window.innerHeight;
+    renderer.setSize(cw, ch, false);
+    renderer.domElement.style.width = '100%';
+    renderer.domElement.style.height = '100%';
+    camera.aspect = cw / ch;
+    camera.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  return { renderer, scene, camera, resize };
+}
+
+/** Nền của một quán: sàn caro, vỉa hè, đường bên phải, tường sau và biển hiệu theo loại quán. */
+export function createShopBackdrop(shopId: ShopId): THREE.Group {
+  const root = new THREE.Group();
+  const scene = root;
+  const b = SHOPS[shopId].bounds;
   const w = b.maxX - b.minX;
   const d = b.maxZ - b.minZ;
   const fc = document.createElement('canvas');
@@ -59,32 +81,18 @@ export function createScene(container: HTMLElement) {
   sc.width = 512;
   sc.height = 104;
   const sg = sc.getContext('2d')!;
-  sg.fillStyle = '#c8452c';
+  sg.fillStyle = SHOP_META[shopId].signColor;
   sg.fillRect(0, 0, 512, 104);
   sg.fillStyle = '#fff3d6';
   sg.font = '800 50px system-ui, sans-serif';
   sg.textAlign = 'center';
   sg.textBaseline = 'middle';
-  sg.fillText('BÁNH MÌ NÓNG GIÒN', 256, 54);
+  sg.fillText(SHOP_META[shopId].sign, 256, 54, 490);
   const signTex = new THREE.CanvasTexture(sc);
   signTex.colorSpace = THREE.SRGBColorSpace;
   const sign = new THREE.Mesh(new THREE.PlaneGeometry(4, 0.8), new THREE.MeshBasicMaterial({ map: signTex }));
   sign.position.set(0, 1.5, b.minZ + 0.02);
   scene.add(sign);
 
-  const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 200);
-
-  function resize() {
-    const cw = container.clientWidth || window.innerWidth;
-    const ch = container.clientHeight || window.innerHeight;
-    renderer.setSize(cw, ch, false);
-    renderer.domElement.style.width = '100%';
-    renderer.domElement.style.height = '100%';
-    camera.aspect = cw / ch;
-    camera.updateProjectionMatrix();
-  }
-  window.addEventListener('resize', resize);
-  resize();
-
-  return { renderer, scene, camera, resize };
+  return root;
 }

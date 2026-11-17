@@ -1,6 +1,6 @@
 import { BALANCE } from '../content';
 import type { ShopId } from '../content';
-import { stars } from './rating';
+import { averageStars } from './rating';
 import { buildSettlement } from './settlement';
 import { tickCampaignsDaily } from './marketing';
 import { accrueWages } from './staff';
@@ -36,7 +36,7 @@ export function advanceTime(world: WorldState, dt: number): DaySummary | null {
     sold: { ...s.sold },
     day: world.day,
     operatingProfit: s.revenue - s.ingredientCost - s.wages - s.commission,
-    stars: stars(world.shops.banh_mi.ratings),
+    stars: averageStars(world),
   };
   world.history.push(summary);
   while (world.history.length > BALANCE.HISTORY_DAYS) world.history.shift();
@@ -45,6 +45,12 @@ export function advanceTime(world: WorldState, dt: number): DaySummary | null {
   world.day += 1;
   world.secOfDay = 0;
   world.dayStats = emptyDayStats();
-  for (const id of Object.keys(world.shops) as ShopId[]) world.shops[id].customers = [];
+  for (const id of Object.keys(world.shops) as ShopId[]) {
+    const shop = world.shops[id];
+    // Đóng cửa: khách đang ăn để lại chỗ bẩn; chỗ giữ cho khách chưa kịp ngồi thì trả lại.
+    for (const st of Object.values(shop.stations)) st.seats = st.seats.map((x) => (x === 'taken' ? 'free' : x));
+    for (const c of shop.customers) if (c.state === 'eating' && c.table) shop.stations[c.table].seats[c.seat] = 'dirty';
+    shop.customers = [];
+  }
   return summary;
 }

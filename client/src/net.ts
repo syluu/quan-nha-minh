@@ -1,6 +1,6 @@
 import { Client } from '@colyseus/sdk';
 import { MSG } from '@qnm/shared';
-import type { CampaignId, ItemId, JoinOptions, Report, SimEvent, Snapshot, StaffRole, WelcomeMsg } from '@qnm/shared';
+import type { CampaignId, ItemId, JoinOptions, Report, ShopId, SimEvent, Snapshot, StaffRole, WelcomeMsg } from '@qnm/shared';
 
 export type ConnStatus = 'connected' | 'reconnecting' | 'left';
 
@@ -27,9 +27,12 @@ export interface GameConnection {
   runCampaign(campaign: CampaignId): void;
   takeLoan(amount: number, months: number, forMonth?: number): void;
   repayLoan(loanId: string): void;
-  sellStation(instanceId: string, forMonth?: number): void;
+  sellStation(instanceId: string, forMonth?: number, shopId?: ShopId): void;
   setOnlinePaused(paused: boolean): void;
   upgradePickup(): void;
+  rentShop(shopId: ShopId): void;
+  travel(to: ShopId): void;
+  setMachineEnabled(instanceId: string, enabled: boolean): void;
 }
 
 export function serverEndpoint(): string {
@@ -53,7 +56,12 @@ export async function connect(opts: JoinOptions): Promise<GameConnection> {
     room.onMessage(MSG.welcome, (m: WelcomeMsg) => resolve(m));
     setTimeout(() => reject(new Error('NO_WELCOME')), 5000);
   });
-  room.onMessage(MSG.snapshot, (s: Snapshot) => snapshotCbs.forEach((cb) => cb(s)));
+  // Quán đang xem: gửi kèm các thao tác theo quán để máy chủ từ chối nếu vừa bị chuyển quán.
+  let here: ShopId | undefined;
+  room.onMessage(MSG.snapshot, (s: Snapshot) => {
+    here = s.shopId;
+    snapshotCbs.forEach((cb) => cb(s));
+  });
   room.onMessage(MSG.event, (e: SimEvent) => eventCbs.forEach((cb) => cb(e)));
   const reportCbs: ((r: Report) => void)[] = [];
   const errorCbs: ((e: string) => void)[] = [];
@@ -81,18 +89,21 @@ export async function connect(opts: JoinOptions): Promise<GameConnection> {
       };
     },
     onActionError: (cb) => errorCbs.push(cb),
-    hire: (role, item) => room.send(MSG.hire, { role, item }),
-    fire: (staffId) => room.send(MSG.fire, { staffId }),
-    setPrice: (item, price) => room.send(MSG.setPrice, { item, price }),
+    hire: (role, item) => room.send(MSG.hire, { role, item, shopId: here }),
+    fire: (staffId) => room.send(MSG.fire, { staffId, shopId: here }),
+    setPrice: (item, price) => room.send(MSG.setPrice, { item, price, shopId: here }),
     rename: (name) => room.send(MSG.rename, { name }),
     upgradePlayer: (kind) => room.send(MSG.upgradePlayer, { kind }),
-    upgradeStaff: (staffId) => room.send(MSG.upgradeStaff, { staffId }),
-    upgradeMachine: (instanceId) => room.send(MSG.upgradeMachine, { instanceId }),
-    runCampaign: (campaign) => room.send(MSG.runCampaign, { campaign }),
+    upgradeStaff: (staffId) => room.send(MSG.upgradeStaff, { staffId, shopId: here }),
+    upgradeMachine: (instanceId) => room.send(MSG.upgradeMachine, { instanceId, shopId: here }),
+    runCampaign: (campaign) => room.send(MSG.runCampaign, { campaign, shopId: here }),
     takeLoan: (amount, months, forMonth) => room.send(MSG.takeLoan, { amount, months, forMonth }),
     repayLoan: (loanId) => room.send(MSG.repayLoan, { loanId }),
-    sellStation: (instanceId, forMonth) => room.send(MSG.sellStation, { instanceId, forMonth }),
-    setOnlinePaused: (paused) => room.send(MSG.setOnlinePaused, { paused }),
-    upgradePickup: () => room.send(MSG.upgradePickup, {}),
+    sellStation: (instanceId, forMonth, shopId) => room.send(MSG.sellStation, { instanceId, forMonth, shopId }),
+    setOnlinePaused: (paused) => room.send(MSG.setOnlinePaused, { paused, shopId: here }),
+    upgradePickup: () => room.send(MSG.upgradePickup, { shopId: here }),
+    rentShop: (shopId) => room.send(MSG.rentShop, { shopId }),
+    travel: (to) => room.send(MSG.travel, { to }),
+    setMachineEnabled: (instanceId, enabled) => room.send(MSG.setMachineEnabled, { instanceId, enabled, shopId: here }),
   };
 }

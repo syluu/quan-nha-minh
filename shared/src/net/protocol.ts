@@ -1,5 +1,5 @@
-import type { ItemId } from '../content';
-import type { CampaignId, DaySummary, LogEntry, Settlement, StaffRole, StationState } from '../sim/world';
+import type { ItemId, ShopId } from '../content';
+import type { CampaignId, DaySummary, LogEntry, SeatState, Settlement, StaffRole, StationState } from '../sim/world';
 
 export const MSG = {
   input: 'input',
@@ -22,7 +22,21 @@ export const MSG = {
   sellStation: 'sellStation',
   setOnlinePaused: 'setOnlinePaused',
   upgradePickup: 'upgradePickup',
+  rentShop: 'rentShop',
+  travel: 'travel',
+  setMachineEnabled: 'setMachineEnabled',
 } as const;
+
+export interface RentShopMsg {
+  shopId: ShopId;
+}
+export interface TravelMsg {
+  to: ShopId;
+}
+export interface SetMachineEnabledMsg {
+  instanceId: string;
+  enabled: boolean;
+}
 
 export interface SetOnlinePausedMsg {
   paused: boolean;
@@ -50,6 +64,8 @@ export interface RepayLoanMsg {
   loanId: string;
 }
 export interface SellStationMsg {
+  /** Quán có máy cần bán (mặc định: quán đang đứng). */
+  shopId?: ShopId;
   instanceId: string;
   forMonth?: number;
 }
@@ -98,6 +114,12 @@ export interface InputMsg {
 }
 
 export interface Snapshot {
+  /** Quán người nhận đang đứng (mọi số liệu theo quán bên dưới là của quán này). */
+  shopId: ShopId;
+  /** Bản đồ: mọi quán/mặt bằng. */
+  shops: { id: ShopId; name: string; owned: boolean; complete: boolean; deposit: number; rentPerMonth: number }[];
+  /** Mọi quán đang có đã mở hết → được thuê mặt bằng mới. */
+  canRent: boolean;
   day: number;
   secOfDay: number;
   money: number;
@@ -110,6 +132,7 @@ export interface Snapshot {
     pickAt: string | null;
     carryLevel: number;
     speedLevel: number;
+    location: ShopId;
   }[];
   staff: {
     id: string; name: string; role: StaffRole; item: ItemId | null; x: number; z: number; dir: number; carry: ItemId[];
@@ -122,8 +145,8 @@ export interface Snapshot {
   loans: { id: string; principal: number; remaining: number; installment: number; monthsLeft: number }[];
   maxLoan: number;
   settlement: Settlement | null;
-  /** Máy bán được (chỉ có khi đang kết toán). */
-  sellable: { instanceId: string; refund: number }[];
+  /** Máy bán được ở mọi quán đang có (chỉ có khi đang kết toán). instanceId 'mat_bang' = trả mặt bằng. */
+  sellable: { shopId: ShopId; instanceId: string; refund: number }[];
   online: {
     registered: boolean;
     paused: boolean;
@@ -138,7 +161,7 @@ export interface Snapshot {
     cancelledToday: number;
   };
   prices: Partial<Record<ItemId, number>>;
-  customers: { id: number; x: number; z: number; dir: number; holding: ItemId[] }[];
+  customers: { id: number; x: number; z: number; dir: number; holding: ItemId[]; sitting: boolean }[];
   stations: {
     instanceId: string;
     unlocked: boolean;
@@ -147,6 +170,8 @@ export interface Snapshot {
     inputs: Partial<Record<ItemId, number>>;
     blocked: StationState['blocked'];
     level: number;
+    enabled: boolean;
+    seats: SeatState[];
   }[];
   tiles: { instanceId: string; cost: number; paid: number; occupantSec: number }[];
   log: LogEntry[];

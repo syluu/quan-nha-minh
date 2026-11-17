@@ -53,7 +53,11 @@ export const BALANCE = {
   MACHINE_CYCLE_FACTOR: 0.85,
   MACHINE_CAP_BONUS: 0.5,
   /** Giá trị máy có sẵn từ đầu (để tính tài sản, giá nâng cấp). */
-  STARTER_VALUES: { lo_banh_mi: K(3000), ke_banh_mi: K(500), thu_ngan: K(500), thung_rac: 0 } as Record<string, number>,
+  STARTER_VALUES: {
+    lo_banh_mi: K(3000), ke_banh_mi: K(500), thu_ngan: K(500), thung_rac: 0,
+    noi_com: K(2000), lo_suon: K(2000), ban_com_tam_suon: K(2000), ke_com_tam_suon: K(500),
+    noi_nuoc_dung: K(2500), may_banh_pho: K(2000), thot_bo: K(2000), ban_pho: K(2500), ke_pho: K(500),
+  } as Record<string, number>,
 
   CAMPAIGNS: {
     to_roi: { name: 'Phát tờ rơi', cost: K(200), boost: 0.2, days: 1, starBonus: 0 },
@@ -96,6 +100,12 @@ export const BALANCE = {
   SCORE_OK_SEC: 20,
   SCORE_PRICEY: 3,
   SCORE_ABANDON: 1,
+
+  /** Bàn ăn (quán có bàn): tỉ lệ khách muốn ngồi, thời gian ăn, dọn 1 chỗ; mang về vì hết chỗ → tối đa 4 sao. */
+  DINE_IN_CHANCE: 0.6,
+  EAT_SEC: 20,
+  CLEAN_SEC: 0.5,
+  TAKEAWAY_MAX_SCORE: 4,
 
   PAY_TILE_DELAY_SEC: 2,
   PAY_TILE_DRAIN_SEC: 1.5,

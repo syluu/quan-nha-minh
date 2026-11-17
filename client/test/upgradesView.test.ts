@@ -4,10 +4,10 @@ import { V3 } from './fixtures';
 import { staffView, upgradeView } from '../src/ui/menu/views';
 
 function snap(): Snapshot {
-  const st = (instanceId: string, unlocked: boolean, level = 0) => ({ instanceId, unlocked, outputCount: 0, stock: 0, inputs: {}, blocked: null, level });
+  const st = (instanceId: string, unlocked: boolean, level = 0) => ({ instanceId, unlocked, outputCount: 0, stock: 0, inputs: {}, enabled: true, seats: [], blocked: null, level });
   return {
-    day: 3, secOfDay: 0, money: 0, stars: 3, tiles: [], customers: [], log: [], prices: {}, ...V3,
-    players: [{ id: 'me', name: 'Bố', color: 0, x: 0, z: 0, dir: 0, carry: [], online: true, cap: 6, pick: 0, pickAt: null, carryLevel: 1, speedLevel: 5 }],
+    shopId: 'banh_mi', shops: [], canRent: false, day: 3, secOfDay: 0, money: 0, stars: 3, tiles: [], customers: [], log: [], prices: {}, ...V3,
+    players: [{ id: 'me', name: 'Bố', color: 0, x: 0, z: 0, dir: 0, carry: [], online: true, cap: 6, pick: 0, pickAt: null, carryLevel: 1, speedLevel: 5, location: 'banh_mi' }],
     stations: [st('lo_banh_mi', true, 1), st('ke_banh_mi', true), st('thu_ngan', true), st('chao_op_la', false)],
     staff: [{ id: 's1', name: 'Lan', role: 'cashier', item: null, x: 0, z: 0, dir: 0, carry: [], level: 2, wageOwed: 450_000 }],
   };
@@ -19,7 +19,7 @@ describe('upgradeView', () => {
     expect(v.me.carry).toEqual({ level: 1, max: 4, now: '6 món', next: '8 món', cost: '500K' });
     expect(v.me.speed).toEqual({ level: 5, max: 5, now: '150%', next: null, cost: null });
     expect(v.machines).toEqual([
-      { instanceId: 'lo_banh_mi', name: 'Lò bánh mì', level: 1, max: 3, cycle: '2,6 giây/món', cap: 'chứa 12', cost: '2.400K' },
+      { instanceId: 'lo_banh_mi', name: 'Lò bánh mì', level: 1, enabled: true, max: 3, cycle: '2,6 giây/món', cap: 'chứa 12', cost: '2.400K' },
     ]);
   });
 });

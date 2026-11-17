@@ -1,7 +1,8 @@
-import { BALANCE, SHOPS, formatK, getStationDef } from '@qnm/shared';
+import { BALANCE, formatK } from '@qnm/shared';
 import type { Settlement, SimEvent, Snapshot } from '@qnm/shared';
 import type { GameConnection } from '../net';
 import { loanForm } from './menu/bankTab';
+import { sellableName } from './menu/views';
 
 export function settlementRows(st: Settlement): [string, string][] {
   return [
@@ -24,11 +25,6 @@ export function shortfall(money: number, st: Settlement): number {
 export function suggestedLoan(short: number): number {
   return Math.max(BALANCE.LOAN_MIN, Math.ceil(short / BALANCE.LOAN_STEP) * BALANCE.LOAN_STEP);
 }
-
-const stationName = (id: string) => {
-  const p = SHOPS.banh_mi.stations.find((s) => s.instanceId === id);
-  return p ? getStationDef(p.def).name : id;
-};
 
 function table(st: Settlement): string {
   return `<table>${settlementRows(st)
@@ -86,16 +82,17 @@ export function createSettlementModal(root: HTMLElement, conn: GameConnection, s
       <p class="have">Tiền đang có: <b>${formatK(s.money)}</b> · Còn thiếu: <b class="neg">${formatK(short)}</b></p>
       <p class="note">Cả quán tạm dừng cho tới khi trả đủ. Ai trong nhà cũng có thể vay hoặc bán máy.</p>
       <h3>Vay ngân hàng</h3><div class="loan-slot"></div>
-      <h3>Bán máy (thu về 50%)</h3>
+      <h3>Bán máy / trả mặt bằng (thu về 50%)</h3>
       <div class="sell">${
         s.sellable.length
           ? s.sellable
-              .map((x) =>
-                confirmSell === x.instanceId
-                  ? `<span class="confirm">Bán ${stationName(x.instanceId)}, thu ${formatK(x.refund)}?
-                     <button class="primary" data-sell-yes="${x.instanceId}">Đồng ý</button><button data-sell-no>Thôi</button></span>`
-                  : `<button data-sell="${x.instanceId}">${stationName(x.instanceId)} (+${formatK(x.refund)})</button>`,
-              )
+              .map((x) => {
+                const id = `${x.shopId}:${x.instanceId}`;
+                return confirmSell === id
+                  ? `<span class="confirm">${x.instanceId === 'mat_bang' ? '' : 'Bán '}${sellableName(x)}, thu ${formatK(x.refund)}?
+                     <button class="primary" data-sell-yes="${id}">Đồng ý</button><button data-sell-no>Thôi</button></span>`
+                  : `<button data-sell="${id}">${sellableName(x)} (+${formatK(x.refund)})</button>`;
+              })
               .join('')
           : '<span class="muted">Không còn máy nào bán được (máy của dây chuyền có phụ bếp phải cho phụ bếp nghỉ trước).</span>'
       }</div>`;
@@ -116,7 +113,8 @@ export function createSettlementModal(root: HTMLElement, conn: GameConnection, s
       b.onclick = () => {
         if (b.disabled) return;
         b.disabled = true;
-        conn.sellStation(b.dataset.sellYes!, st.month);
+        const [shopId, instanceId] = b.dataset.sellYes!.split(':');
+        conn.sellStation(instanceId, st.month, shopId as Snapshot['shopId']);
         confirmSell = null;
       };
     });

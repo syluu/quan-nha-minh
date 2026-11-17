@@ -4,6 +4,7 @@ import type { Client } from '@colyseus/core';
 import {
   BALANCE,
   MSG,
+  SHOP_IDS,
   buildReport,
   drainSettleEvents,
   fireStaff,
@@ -18,6 +19,9 @@ import {
   upgradeStaff,
   hireStaff,
   joinPlayer,
+  rentShop,
+  setMachineEnabled,
+  travel,
   leavePlayer,
   normalizeCode,
   normalizeLoaded,
@@ -30,6 +34,7 @@ import {
 import type {
   ActionResult, FireMsg, HireMsg, InputMsg, JoinOptions, RenameMsg, RepayLoanMsg, RunCampaignMsg, SellStationMsg, SetPriceMsg,
   SetOnlinePausedMsg, TakeLoanMsg, UpgradeMachineMsg, UpgradePlayerMsg, UpgradeStaffMsg, WorldState,
+  RentShopMsg, SetMachineEnabledMsg, ShopId, Snapshot, TravelMsg,
 } from '@qnm/shared';
 import type { WorldStore } from '../persistence';
 
@@ -98,6 +103,12 @@ export class WorldRoom extends Room {
       this.onMessage(type, (client: Client, msg: T) => {
         const pid = this.ownedPlayer(client);
         if (!pid) return;
+        // Thao tác theo quán gửi kèm quán đang xem; vừa bị chuyển quán (vd. người nhà trả mặt bằng) thì từ chối.
+        const sent = (msg as { shopId?: unknown } | null)?.shopId;
+        if (type !== MSG.sellStation && type !== MSG.rentShop && sent !== undefined && sent !== this.world.players[pid]?.location) {
+          client.send(MSG.actionError, { error: 'WRONG_SHOP' });
+          return;
+        }
         const r = run(pid, (msg ?? {}) as T);
         if (r && !r.ok) client.send(MSG.actionError, { error: r.error });
         // Vay / bán máy có thể vừa đóng kết toán tháng (hoặc phá sản): báo cho cả nhà và lưu ngay.
@@ -105,19 +116,27 @@ export class WorldRoom extends Room {
         for (const e of settled) this.broadcast(MSG.event, e);
         if (settled.length) void this.save();
       });
-    act<HireMsg>(MSG.hire, (pid, m) => hireStaff(this.world, 'banh_mi', m.role, m.item ?? null, pid));
-    act<FireMsg>(MSG.fire, (pid, m) => fireStaff(this.world, 'banh_mi', String(m.staffId), pid));
-    act<SetPriceMsg>(MSG.setPrice, (pid, m) => setPrice(this.world, 'banh_mi', m.item, m.price, pid));
+    // Thao tác theo quán: luôn là quán người gửi đang đứng.
+    const here = (pid: string): ShopId => this.world.players[pid]?.location ?? 'banh_mi';
+    act<HireMsg>(MSG.hire, (pid, m) => hireStaff(this.world, here(pid), m.role, m.item ?? null, pid));
+    act<FireMsg>(MSG.fire, (pid, m) => fireStaff(this.world, here(pid), String(m.staffId), pid));
+    act<SetPriceMsg>(MSG.setPrice, (pid, m) => setPrice(this.world, here(pid), m.item, m.price, pid));
     act<RenameMsg>(MSG.rename, (pid, m) => renamePlayer(this.world, pid, m.name));
     act<UpgradePlayerMsg>(MSG.upgradePlayer, (pid, m) => upgradePlayer(this.world, pid, m.kind));
-    act<UpgradeStaffMsg>(MSG.upgradeStaff, (pid, m) => upgradeStaff(this.world, 'banh_mi', m.staffId, pid));
-    act<UpgradeMachineMsg>(MSG.upgradeMachine, (pid, m) => upgradeMachine(this.world, 'banh_mi', m.instanceId, pid));
-    act<RunCampaignMsg>(MSG.runCampaign, (pid, m) => runCampaign(this.world, 'banh_mi', m.campaign, pid));
+    act<UpgradeStaffMsg>(MSG.upgradeStaff, (pid, m) => upgradeStaff(this.world, here(pid), m.staffId, pid));
+    act<UpgradeMachineMsg>(MSG.upgradeMachine, (pid, m) => upgradeMachine(this.world, here(pid), m.instanceId, pid));
+    act<SetMachineEnabledMsg>(MSG.setMachineEnabled, (pid, m) => setMachineEnabled(this.world, here(pid), m.instanceId, m.enabled, pid));
+    act<RunCampaignMsg>(MSG.runCampaign, (pid, m) => runCampaign(this.world, here(pid), m.campaign, pid));
     act<TakeLoanMsg>(MSG.takeLoan, (pid, m) => takeLoan(this.world, m.amount, m.months, pid, m.forMonth));
     act<RepayLoanMsg>(MSG.repayLoan, (pid, m) => repayLoan(this.world, m.loanId, pid));
-    act<SellStationMsg>(MSG.sellStation, (pid, m) => sellStation(this.world, 'banh_mi', m.instanceId, pid, m.forMonth));
-    act<SetOnlinePausedMsg>(MSG.setOnlinePaused, (pid, m) => setOnlinePaused(this.world, 'banh_mi', m.paused, pid));
-    act<Record<string, never>>(MSG.upgradePickup, (pid) => upgradePickup(this.world, 'banh_mi', pid));
+    act<SellStationMsg>(MSG.sellStation, (pid, m) => {
+      const shopId = (SHOP_IDS as unknown[]).includes(m.shopId) ? m.shopId! : here(pid);
+      return sellStation(this.world, shopId, m.instanceId, pid, m.forMonth);
+    });
+    act<SetOnlinePausedMsg>(MSG.setOnlinePaused, (pid, m) => setOnlinePaused(this.world, here(pid), m.paused, pid));
+    act<Record<string, never>>(MSG.upgradePickup, (pid) => upgradePickup(this.world, here(pid), pid));
+    act<RentShopMsg>(MSG.rentShop, (pid, m) => rentShop(this.world, m.shopId, pid));
+    act<TravelMsg>(MSG.travel, (pid, m) => travel(this.world, pid, m.to));
     this.onMessage(MSG.getReport, (client: Client) => {
       if (this.ownedPlayer(client)) client.send(MSG.report, buildReport(this.world));
     });
@@ -129,7 +148,7 @@ export class WorldRoom extends Room {
       }
     }, 1000 / BALANCE.TICK_HZ);
 
-    this.clock.setInterval(() => this.broadcast(MSG.snapshot, toSnapshot(this.world, 'banh_mi')), 1000 / BALANCE.SNAPSHOT_HZ);
+    this.clock.setInterval(() => this.sendSnapshots(), 1000 / BALANCE.SNAPSHOT_HZ);
     this.clock.setInterval(() => void this.save(), BALANCE.AUTOSAVE_SEC * 1000);
   }
 
@@ -181,6 +200,18 @@ export class WorldRoom extends Room {
     WorldRoom.active.set(this.code, entry);
     await done;
     if (WorldRoom.active.get(this.code) === entry) WorldRoom.active.delete(this.code);
+  }
+
+  /** Mỗi client nhận snapshot của quán mình đang đứng (mỗi quán dựng 1 lần). */
+  private sendSnapshots() {
+    const cache = new Map<ShopId, Snapshot>();
+    for (const client of this.clients) {
+      const pid = this.ownedPlayer(client);
+      const loc: ShopId = (pid && this.world.players[pid]?.location) || 'banh_mi';
+      let snap = cache.get(loc);
+      if (!snap) cache.set(loc, (snap = toSnapshot(this.world, loc)));
+      client.send(MSG.snapshot, snap);
+    }
   }
 
   /** playerId nếu client này đang là chủ nhân vật, ngược lại null. */

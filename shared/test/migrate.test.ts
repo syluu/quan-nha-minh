@@ -37,7 +37,7 @@ function v1Save() {
 describe('normalizeLoaded v1 → v2', () => {
   it('fills the new fields with defaults and keeps progress', () => {
     const w = normalizeLoaded(v1Save());
-    expect(w.schemaVersion).toBe(4);
+    expect(w.schemaVersion).toBe(5);
     expect(w.money).toBe(4_200_000);
     expect(w.day).toBe(3);
     expect(w.history).toEqual([]);
@@ -85,7 +85,7 @@ describe('normalizeLoaded v2 → v3', () => {
 
   it('fills v3 defaults and keeps progress', () => {
     const w = normalizeLoaded(v2Save());
-    expect(w.schemaVersion).toBe(4);
+    expect(w.schemaVersion).toBe(5);
     expect(w.loans).toEqual([]);
     expect(w.nextLoanId).toBe(1);
     expect(w.settlement).toBeNull();
@@ -122,7 +122,7 @@ describe('normalizeLoaded v3 → v4', () => {
       delete shop.stations.diem_giao;
     }
     const w = normalizeLoaded(w3);
-    expect(w.schemaVersion).toBe(4);
+    expect(w.schemaVersion).toBe(5);
     const shop = w.shops.banh_mi;
     expect(shop).toMatchObject({ orders: [], nextOrderId: 1, shipper: null, onlinePaused: false });
     expect(shop.stations.diem_giao.unlocked).toBe(false);
@@ -133,5 +133,38 @@ describe('normalizeLoaded v3 → v4', () => {
     const again = normalizeLoaded(JSON.parse(JSON.stringify(w)));
     expect(again.shops.banh_mi.orders).toEqual([]);
     expect(again.shops.banh_mi.shipper).toBeNull();
+  });
+});
+
+describe('normalizeLoaded v4 → v5 (Review Focus 3)', () => {
+  it('puts everyone in the bánh mì cart, adds the two new shops unrented, machines on', () => {
+    const w4 = normalizeLoaded(v1Save()) as unknown as Record<string, any>;
+    w4.schemaVersion = 4;
+    delete w4.extraWagesOwed;
+    delete w4.shops.com_tam;
+    delete w4.shops.pho_cafe;
+    delete w4.shops.banh_mi.owned;
+    for (const st of Object.values<any>(w4.shops.banh_mi.stations)) {
+      delete st.enabled;
+      delete st.seats;
+    }
+    for (const p of Object.values<any>(w4.players)) delete p.location;
+    const w = normalizeLoaded(w4);
+    expect(w.schemaVersion).toBe(5);
+    expect(w.shops.banh_mi.owned).toBe(true);
+    expect(w.shops.com_tam.owned).toBe(false);
+    expect(w.shops.pho_cafe.owned).toBe(false);
+    expect(w.shops.com_tam.stations.noi_com.unlocked).toBe(true);
+    expect(w.shops.banh_mi.stations.lo_banh_mi.enabled).toBe(true);
+    expect(Object.values(w.players).every((p) => p.location === 'banh_mi')).toBe(true);
+    expect(w.extraWagesOwed).toBe(0);
+  });
+
+  it('a player saved in a shop that is no longer owned is moved back to the cart', () => {
+    const w = normalizeLoaded(v1Save());
+    const p = Object.values(w.players)[0];
+    p.location = 'com_tam';
+    const again = normalizeLoaded(JSON.parse(JSON.stringify(w)));
+    expect(Object.values(again.players)[0].location).toBe('banh_mi');
   });
 });

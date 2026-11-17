@@ -12,6 +12,11 @@ export function joinPlayer(world: WorldState, playerId: string, name: string): P
     existing.name = name;
     existing.input = { mx: 0, mz: 0 };
     existing.inMenu = false;
+    if (!world.shops[existing.location]?.owned) {
+      existing.location = 'banh_mi';
+      existing.x = SHOPS.banh_mi.entrance.x;
+      existing.z = SHOPS.banh_mi.entrance.z;
+    }
     return existing;
   }
   const entrance = SHOPS.banh_mi.entrance;
@@ -33,6 +38,7 @@ export function joinPlayer(world: WorldState, playerId: string, name: string): P
     inMenu: false,
     carryLevel: 0,
     speedLevel: 0,
+    location: 'banh_mi',
   };
   world.players[playerId] = p;
   return p;
