@@ -14,7 +14,12 @@ export const BALANCE = {
   INTERACT_DIST: 0.6,
   /** Vùng đứng thu ngân rộng hơn để dễ đứng trúng (có ô vàng vẽ trên sàn). */
   CASHIER_DIST: 1.0,
-  TRANSFER_INTERVAL: 0.2,
+  /** Nhặt từ máy: 0,45 s/món để lấy đúng số món mong muốn. */
+  PICK_INTERVAL: 0.45,
+  /** Đặt lên kệ/bàn ghép hoặc bỏ thùng rác: 0,2 s/món. */
+  DROP_INTERVAL: 0.2,
+  /** Độ dài input dưới ngưỡng này coi là đứng yên. */
+  STILL_INPUT: 0.05,
 
   CUSTOMER_SPEED: 2.0,
   MAX_CUSTOMERS: 20,

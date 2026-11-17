@@ -7,6 +7,7 @@ export * from './stations';
 export { INGREDIENTS } from './ingredients';
 export { ITEMS } from './items';
 export { BALANCE } from './balance';
+export { itemCost } from './costs';
 
 export const SHOPS: Record<ShopId, ShopLayout> = {
   banh_mi: BANH_MI_SHOP,

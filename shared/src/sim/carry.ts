@@ -1,5 +1,6 @@
-import { BALANCE, SHOPS, getStationDef } from '../content';
-import type { PlacedStation, ShopId } from '../content';
+import { BALANCE, SHOPS, getStationDef, itemCost } from '../content';
+import type { ItemId, PlacedStation, ShopId } from '../content';
+import type { SimEvent } from './events';
 import type { PlayerState, ShopState, WorldState } from './world';
 
 /** Khoảng cách từ điểm (x,z) tới cạnh footprint của trạm (0 nếu ở trong). */
@@ -25,48 +26,86 @@ export function nearestStation(shop: ShopState, shopId: ShopId, x: number, z: nu
   return best;
 }
 
-function takeFromCarry(p: PlayerState, accepts: (item: string) => boolean): string | null {
+function takeFromCarry(p: PlayerState, accepts: (item: ItemId) => boolean): ItemId | null {
   for (let i = p.carry.length - 1; i >= 0; i--) {
     if (accepts(p.carry[i])) return p.carry.splice(i, 1)[0];
   }
   return null;
 }
 
-/** Tự động bê: đứng gần trạm thì ưu tiên đặt món phù hợp, không đặt được thì nhặt món ở đầu ra. */
-export function tickCarry(world: WorldState, shopId: ShopId, dt: number): void {
+/**
+ * Tự động bê khi đứng gần trạm:
+ * 1) đặt món phù hợp (kệ/bàn ghép) mỗi DROP_INTERVAL;
+ * 2) đứng yên cạnh thùng rác → bỏ món trên cùng mỗi DROP_INTERVAL;
+ * 3) nhặt từ đầu ra của máy mỗi PICK_INTERVAL (bước ra là dừng).
+ */
+export function tickCarry(world: WorldState, shopId: ShopId, dt: number): SimEvent[] {
+  const events: SimEvent[] = [];
   const shop = world.shops[shopId];
   for (const p of Object.values(world.players)) {
     if (!p.online) continue;
     p.dropCd = Math.max(p.dropCd - dt, 0);
-    if (p.dropCd > 0) continue;
 
     const placed = nearestStation(shop, shopId, p.x, p.z, BALANCE.INTERACT_DIST);
-    if (!placed) continue;
+    if (!placed) {
+      p.pickTimer = 0;
+      p.pickAt = null;
+      continue;
+    }
     const def = getStationDef(placed.def);
     const st = shop.stations[placed.instanceId];
-    let moved = false;
 
-    if (def.kind === 'display' && st.stock < def.cap) {
-      if (takeFromCarry(p, (it) => it === def.item)) {
+    // 1) Đặt
+    let canDrop = false;
+    if (def.kind === 'display') canDrop = st.stock < def.cap && p.carry.includes(def.item);
+    else if (def.kind === 'assembler')
+      canDrop = p.carry.some((it) => def.inputs.some((inp) => inp.item === it && (st.inputs[it] ?? 0) < def.inputCap));
+    if (canDrop) {
+      p.pickTimer = 0;
+      p.pickAt = null;
+      if (p.dropCd > 0) continue;
+      if (def.kind === 'display') {
+        takeFromCarry(p, (it) => it === def.item);
         st.stock += 1;
-        moved = true;
-      }
-    } else if (def.kind === 'assembler') {
-      const item = takeFromCarry(p, (it) =>
-        def.inputs.some((inp) => inp.item === it && (st.inputs[inp.item] ?? 0) < def.inputCap),
-      ) as keyof typeof st.inputs | null;
-      if (item) {
+      } else if (def.kind === 'assembler') {
+        const item = takeFromCarry(p, (it) =>
+          def.inputs.some((inp) => inp.item === it && (st.inputs[it] ?? 0) < def.inputCap),
+        )!;
         st.inputs[item] = (st.inputs[item] ?? 0) + 1;
-        moved = true;
       }
+      p.dropCd = BALANCE.DROP_INTERVAL;
+      continue;
     }
 
-    if (!moved && (def.kind === 'producer' || def.kind === 'assembler') && st.outputCount > 0 && p.carry.length < p.carryCap) {
-      st.outputCount -= 1;
-      p.carry.push(def.output);
-      moved = true;
+    // 2) Thùng rác (chỉ khi đứng yên)
+    if (def.kind === 'trash') {
+      p.pickTimer = 0;
+      p.pickAt = null;
+      const still = Math.hypot(p.input.mx, p.input.mz) <= BALANCE.STILL_INPUT;
+      if (!still || p.dropCd > 0 || p.carry.length === 0) continue;
+      const item = p.carry.pop()!;
+      const value = itemCost(item);
+      world.dayStats.wasted += value;
+      events.push({ type: 'trash', shopId, playerId: p.id, item, value, x: p.x, z: p.z });
+      p.dropCd = BALANCE.DROP_INTERVAL;
+      continue;
     }
 
-    if (moved) p.dropCd = BALANCE.TRANSFER_INTERVAL;
+    // 3) Nhặt dần
+    if ((def.kind === 'producer' || def.kind === 'assembler') && st.outputCount > 0 && p.carry.length < p.carryCap) {
+      if (p.pickAt !== placed.instanceId) p.pickTimer = 0;
+      p.pickAt = placed.instanceId;
+      p.pickTimer += dt;
+      if (p.pickTimer >= BALANCE.PICK_INTERVAL - 1e-6) {
+        p.pickTimer -= BALANCE.PICK_INTERVAL;
+        if (p.pickTimer < 1e-6) p.pickTimer = 0;
+        st.outputCount -= 1;
+        p.carry.push(def.output);
+      }
+    } else {
+      p.pickTimer = 0;
+      p.pickAt = null;
+    }
   }
+  return events;
 }

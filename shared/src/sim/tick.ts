@@ -37,7 +37,7 @@ export function tick(world: WorldState, dt: number): SimEvent[] {
         p.z = next.z;
         p.dir = next.dir;
       }
-      tickCarry(world, shopId, sdt);
+      events.push(...tickCarry(world, shopId, sdt));
       for (const e of tickPayTiles(world, shopId, sdt)) {
         if (e.type === 'unlock') {
           const name = world.players[e.byPlayerId]?.name ?? 'Ai đó';

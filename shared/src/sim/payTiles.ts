@@ -10,9 +10,6 @@ export function isTileVisible(shop: ShopState, placed: PlacedStation): boolean {
   return placed.requires.every((r) => shop.stations[r].unlocked);
 }
 
-/** Ngưỡng coi là "đứng yên" (độ dài input). */
-const STILL_INPUT = 0.05;
-
 /**
  * Tính là đang đứng mua trên ô khi: online, trong bán kính ô, đứng yên (không bấm phím đi),
  * và không đứng trong vùng nhặt/đặt đồ của trạm khác (ô nằm sát máy bên cạnh — tránh trừ tiền oan).
@@ -20,7 +17,7 @@ const STILL_INPUT = 0.05;
 function onTile(world: WorldState, shopId: ShopId, p: PlayerState, placed: PlacedStation): boolean {
   if (!p.online) return false;
   if (Math.hypot(p.x - placed.x, p.z - placed.z) > BALANCE.PAY_TILE_RADIUS) return false;
-  if (Math.hypot(p.input.mx, p.input.mz) > STILL_INPUT) return false;
+  if (Math.hypot(p.input.mx, p.input.mz) > BALANCE.STILL_INPUT) return false;
   return nearestStation(world.shops[shopId], shopId, p.x, p.z, BALANCE.INTERACT_DIST) === null;
 }
 
