@@ -1,0 +1,15 @@
+:root { --bg: #f6f1e7; --ink: #2b2118; --muted: #7a6a58; --card: #fffaf0; --line: #e3d6c0; --accent: #c8452c; }
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+#app { height: 100%; }
+.lobby { max-width: 360px; margin: 10vh auto 0; padding: 28px 24px; background: var(--card); border: 2px solid var(--line); border-radius: 16px; display: flex; flex-direction: column; gap: 12px; }
+.lobby h1 { margin: 0; font-size: 26px; }
+.lobby .sub { margin: 0 0 6px; color: var(--muted); }
+.lobby label { display: flex; flex-direction: column; gap: 4px; font-size: 14px; font-weight: 600; }
+.lobby input { font: inherit; font-weight: 400; padding: 10px 12px; border: 2px solid var(--line); border-radius: 10px; background: #fff; }
+.lobby button { font: inherit; font-weight: 700; padding: 11px; border-radius: 10px; border: 2px solid var(--ink); background: #fff; cursor: pointer; }
+.lobby button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.lobby button:disabled { opacity: .5; cursor: wait; }
+.lobby .or { text-align: center; color: var(--muted); font-size: 13px; }
+.lobby .msg { min-height: 1.4em; margin: 0; color: var(--accent); font-size: 14px; }
+.status { padding: 16px; font-weight: 700; }

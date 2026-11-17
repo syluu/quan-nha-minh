@@ -1,0 +1,19 @@
+{
+  "name": "@qnm/client",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@colyseus/sdk": "^0.18.10",
+    "@qnm/shared": "0.0.0",
+    "three": "^0.181.2",
+    "vite": "^7.3.8"
+  },
+  "devDependencies": {
+    "@types/three": "^0.181.0"
+  }
+}
