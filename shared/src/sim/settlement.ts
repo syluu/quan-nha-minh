@@ -44,6 +44,21 @@ export function buildSettlement(world: WorldState): Settlement {
   };
 }
 
+const pendingEvents = new WeakMap<WorldState, SimEvent[]>();
+
+/** Lấy (và xoá) các sự kiện kết toán sinh ra từ thao tác của người chơi (vay, bán máy…). */
+export function drainSettleEvents(world: WorldState): SimEvent[] {
+  const ev = pendingEvents.get(world) ?? [];
+  pendingEvents.delete(world);
+  return ev;
+}
+
+/** Thử kết toán sau một thao tác của người chơi: sự kiện được giữ lại để máy chủ phát cho mọi người. */
+export function trySettleAfterAction(world: WorldState): void {
+  const ev = trySettle(world);
+  if (ev.length) pendingEvents.set(world, [...(pendingEvents.get(world) ?? []), ...ev]);
+}
+
 /** Đang kết toán và đủ tiền → trả hết, đóng kết toán, sang tháng mới. */
 export function trySettle(world: WorldState): SimEvent[] {
   const st = world.settlement;
@@ -110,7 +125,7 @@ export function sellStation(world: WorldState, shopId: ShopId, instanceId: unkno
   world.money += refund;
   const placed = SHOPS[shopId].stations.find((p) => p.instanceId === instanceId)!;
   addLog(world, `${playerName(world, byPlayerId)} đã bán ${getStationDef(placed.def).name}, thu ${formatK(refund)}`);
-  trySettle(world);
+  trySettleAfterAction(world);
   return { ok: true };
 }
 

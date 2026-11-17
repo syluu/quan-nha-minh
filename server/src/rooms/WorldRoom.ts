@@ -5,7 +5,15 @@ import {
   BALANCE,
   MSG,
   buildReport,
+  drainSettleEvents,
   fireStaff,
+  repayLoan,
+  runCampaign,
+  sellStation,
+  takeLoan,
+  upgradeMachine,
+  upgradePlayer,
+  upgradeStaff,
   hireStaff,
   joinPlayer,
   leavePlayer,
@@ -17,7 +25,10 @@ import {
   tick,
   toSnapshot,
 } from '@qnm/shared';
-import type { ActionResult, FireMsg, HireMsg, InputMsg, JoinOptions, RenameMsg, SetPriceMsg, WorldState } from '@qnm/shared';
+import type {
+  ActionResult, FireMsg, HireMsg, InputMsg, JoinOptions, RenameMsg, RepayLoanMsg, RunCampaignMsg, SellStationMsg, SetPriceMsg,
+  TakeLoanMsg, UpgradeMachineMsg, UpgradePlayerMsg, UpgradeStaffMsg, WorldState,
+} from '@qnm/shared';
 import type { WorldStore } from '../persistence';
 
 interface ClientData {
@@ -87,11 +98,22 @@ export class WorldRoom extends Room {
         if (!pid) return;
         const r = run(pid, (msg ?? {}) as T);
         if (r && !r.ok) client.send(MSG.actionError, { error: r.error });
+        // Vay / bán máy có thể vừa đóng kết toán tháng (hoặc phá sản): báo cho cả nhà và lưu ngay.
+        const settled = drainSettleEvents(this.world);
+        for (const e of settled) this.broadcast(MSG.event, e);
+        if (settled.length) void this.save();
       });
     act<HireMsg>(MSG.hire, (pid, m) => hireStaff(this.world, 'banh_mi', m.role, m.item ?? null, pid));
     act<FireMsg>(MSG.fire, (pid, m) => fireStaff(this.world, 'banh_mi', String(m.staffId), pid));
     act<SetPriceMsg>(MSG.setPrice, (pid, m) => setPrice(this.world, 'banh_mi', m.item, m.price, pid));
     act<RenameMsg>(MSG.rename, (pid, m) => renamePlayer(this.world, pid, m.name));
+    act<UpgradePlayerMsg>(MSG.upgradePlayer, (pid, m) => upgradePlayer(this.world, pid, m.kind));
+    act<UpgradeStaffMsg>(MSG.upgradeStaff, (pid, m) => upgradeStaff(this.world, 'banh_mi', m.staffId, pid));
+    act<UpgradeMachineMsg>(MSG.upgradeMachine, (pid, m) => upgradeMachine(this.world, 'banh_mi', m.instanceId, pid));
+    act<RunCampaignMsg>(MSG.runCampaign, (pid, m) => runCampaign(this.world, 'banh_mi', m.campaign, pid));
+    act<TakeLoanMsg>(MSG.takeLoan, (pid, m) => takeLoan(this.world, m.amount, m.months, pid));
+    act<RepayLoanMsg>(MSG.repayLoan, (pid, m) => repayLoan(this.world, m.loanId, pid));
+    act<SellStationMsg>(MSG.sellStation, (pid, m) => sellStation(this.world, 'banh_mi', m.instanceId, pid));
     this.onMessage(MSG.getReport, (client: Client) => {
       if (this.ownedPlayer(client)) client.send(MSG.report, buildReport(this.world));
     });
@@ -99,7 +121,7 @@ export class WorldRoom extends Room {
     this.setSimulationInterval((deltaMs) => {
       for (const e of tick(this.world, deltaMs / 1000)) {
         this.broadcast(MSG.event, e);
-        if (e.type === 'dayEnd') void this.save();
+        if (e.type === 'dayEnd' || e.type === 'monthEnd' || e.type === 'monthClosed' || e.type === 'bankrupt') void this.save();
       }
     }, 1000 / BALANCE.TICK_HZ);
 

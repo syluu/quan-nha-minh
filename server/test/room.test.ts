@@ -169,3 +169,25 @@ describe('management messages', () => {
     await a.room.leave();
   });
 });
+
+describe('plan 3 messages', () => {
+  it('loan, campaign and player upgrade go through; junk loan is refused', async () => {
+    const code = await newWorld();
+    const a = await join(code, 'p3-token', 'Bố');
+    await sleep(300);
+    const money0 = a.snapshot()!.money;
+    a.room.send(MSG.takeLoan, { amount: 1_000_000, months: 2 });
+    a.room.send(MSG.takeLoan, { amount: 'x', months: 2 });
+    a.room.send(MSG.runCampaign, { campaign: 'to_roi' });
+    a.room.send(MSG.upgradePlayer, { kind: 'carry' });
+    await sleep(400);
+    const s = a.snapshot()!;
+    expect(s.loans).toHaveLength(1);
+    expect(s.campaigns.map((c) => c.id)).toEqual(['to_roi']);
+    expect(s.players[0].cap).toBe(6);
+    expect(a.errors).toEqual(['BAD_AMOUNT']);
+    // tiền: +1.000K vay −200K quảng cáo −300K nâng cấp (± nguyên liệu lò bánh trong lúc chờ)
+    expect(Math.abs(s.money - (money0 + 1_000_000 - 200_000 - 300_000))).toBeLessThan(20_000);
+    await a.room.leave();
+  });
+});

@@ -3,7 +3,7 @@ import type { ShopId } from '../content';
 import { formatK } from '../money';
 import type { ActionResult } from './actions';
 import { addLog, playerName } from './log';
-import { trySettle } from './settlement';
+import { trySettleAfterAction } from './settlement';
 import type { WorldState } from './world';
 
 /** Giá trị một máy: giá mở khoá, riêng bộ khởi đầu dùng STARTER_VALUES. */
@@ -55,7 +55,7 @@ export function takeLoan(world: WorldState, amount: unknown, months: unknown, by
   });
   world.money += amount;
   addLog(world, `${playerName(world, byPlayerId)} vay ${formatK(amount)}, kỳ ${months} tháng (tổng trả ${formatK(totalDue)})`);
-  trySettle(world);
+  trySettleAfterAction(world);
   return { ok: true };
 }
 
@@ -68,6 +68,6 @@ export function repayLoan(world: WorldState, loanId: unknown, byPlayerId: string
   world.money -= remaining;
   world.loans = world.loans.filter((x) => x !== l);
   addLog(world, `${playerName(world, byPlayerId)} trả hết khoản vay ${formatK(l.principal)} (${formatK(remaining)})`);
-  trySettle(world);
+  trySettleAfterAction(world);
   return { ok: true };
 }
