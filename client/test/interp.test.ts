@@ -5,8 +5,8 @@ import { createPredictor } from '../src/game/prediction';
 
 function snap(x: number, cx = 0): Snapshot {
   return {
-    day: 1, secOfDay: 0, money: 0, stars: 3, stations: [], tiles: [], log: [],
-    players: [{ id: 'a', name: 'Bố', color: 0, x, z: 0, dir: 0, carry: [], online: true }],
+    day: 1, secOfDay: 0, money: 0, stars: 3, stations: [], tiles: [], log: [], staff: [], prices: {},
+    players: [{ id: 'a', name: 'Bố', color: 0, x, z: 0, dir: 0, carry: [], online: true, cap: 4, pick: 0, pickAt: null }],
     customers: [{ id: 1, x: cx, z: 0, dir: 0, holding: [] }],
   };
 }

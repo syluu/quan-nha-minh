@@ -6,11 +6,11 @@ import { summaryRows } from '../src/ui/daySummary';
 describe('hudText', () => {
   it('formats money, clock, stars and who is online', () => {
     const s: Snapshot = {
-      day: 1, secOfDay: 33.75, money: 2_987_500, stars: 3.7, stations: [], tiles: [], customers: [], log: [],
+      day: 1, secOfDay: 33.75, money: 2_987_500, stars: 3.7, stations: [], tiles: [], customers: [], log: [], staff: [], prices: {},
       players: [
-        { id: 'a', name: 'Bố', color: 0, x: 0, z: 0, dir: 0, carry: [], online: true },
-        { id: 'b', name: 'Mẹ', color: 0, x: 0, z: 0, dir: 0, carry: [], online: true },
-        { id: 'c', name: 'Con', color: 0, x: 0, z: 0, dir: 0, carry: [], online: false },
+        { id: 'a', name: 'Bố', color: 0, x: 0, z: 0, dir: 0, carry: [], online: true, cap: 4, pick: 0, pickAt: null },
+        { id: 'b', name: 'Mẹ', color: 0, x: 0, z: 0, dir: 0, carry: [], online: true, cap: 4, pick: 0, pickAt: null },
+        { id: 'c', name: 'Con', color: 0, x: 0, z: 0, dir: 0, carry: [], online: false, cap: 4, pick: 0, pickAt: null },
       ],
     };
     expect(hudText(s)).toEqual({ money: '💰 2.987,5K', clock: 'Ngày 1 · 07:30', stars: '★ 3,7', online: 'Bố, Mẹ' });

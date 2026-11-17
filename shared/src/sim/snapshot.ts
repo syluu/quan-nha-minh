@@ -1,4 +1,4 @@
-import { SHOPS } from '../content';
+import { BALANCE, SHOPS } from '../content';
 import type { ShopId } from '../content';
 import type { Snapshot } from '../net/protocol';
 import { migrateV1toV2 } from './migrate';
@@ -17,7 +17,14 @@ export function toSnapshot(world: WorldState, shopId: ShopId): Snapshot {
     stars: stars(shop.ratings),
     players: Object.values(world.players).map((p) => ({
       id: p.id, name: p.name, color: p.color, x: p.x, z: p.z, dir: p.dir, carry: [...p.carry], online: p.online,
+      cap: p.carryCap,
+      pick: Math.min(1, p.pickTimer / BALANCE.PICK_INTERVAL),
+      pickAt: p.pickAt,
     })),
+    staff: shop.staff.map((s) => ({
+      id: s.id, name: s.name, role: s.role, item: s.item, x: s.x, z: s.z, dir: s.dir, carry: [...s.carry],
+    })),
+    prices: { ...shop.prices },
     customers: shop.customers.map((c) => ({ id: c.id, x: c.x, z: c.z, dir: c.dir, holding: [...c.holding] })),
     stations: layout.stations.map((placed) => {
       const st = shop.stations[placed.instanceId];

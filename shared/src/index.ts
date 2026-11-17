@@ -18,3 +18,4 @@ export * from './sim/actions';
 export * from './sim/log';
 export * from './sim/prices';
 export * from './sim/staff';
+export * from './sim/report';
