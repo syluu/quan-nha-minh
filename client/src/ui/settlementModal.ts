@@ -39,7 +39,7 @@ function table(st: Settlement): string {
  * Bảng kết toán cuối tháng cho cả nhà. Thiếu tiền: không đóng được, game dừng; vay hoặc bán máy ngay trong bảng.
  * Đủ tiền (tự trả) hoặc vừa trả xong: hiện thông báo có nút Đóng.
  */
-export function createSettlementModal(root: HTMLElement, conn: GameConnection, setInputEnabled: (on: boolean) => void) {
+export function createSettlementModal(root: HTMLElement, conn: GameConnection, setBlocked: (blocked: boolean) => void) {
   const box = document.createElement('div');
   box.className = 'settle';
   box.hidden = true;
@@ -47,12 +47,14 @@ export function createSettlementModal(root: HTMLElement, conn: GameConnection, s
   let blocking = false;
   let key = '';
   let lastOpened: Settlement | null = null;
+  let confirmSell: string | null = null;
 
   function close() {
     box.hidden = true;
     blocking = false;
     key = '';
-    setInputEnabled(true);
+    confirmSell = null;
+    setBlocked(false);
   }
 
   function showInfo(title: string, body: string) {
@@ -63,19 +65,19 @@ export function createSettlementModal(root: HTMLElement, conn: GameConnection, s
     box.querySelector<HTMLButtonElement>('.close')!.onclick = close;
   }
 
-  conn.onSnapshot((s: Snapshot) => {
+  function render(s: Snapshot) {
     const st = s.settlement;
     if (!st) {
       if (blocking) close();
       return;
     }
     lastOpened = st;
-    const k = JSON.stringify([st, s.money, s.sellable, s.maxLoan]);
+    const k = JSON.stringify([st, s.money, s.sellable, s.maxLoan, confirmSell]);
     if (blocking && k === key) return;
     key = k;
     blocking = true;
     box.hidden = false;
-    setInputEnabled(false);
+    setBlocked(true);
     const short = shortfall(s.money, st);
     box.innerHTML = `
       <h2>Kết toán tháng ${st.month}</h2>
@@ -86,11 +88,41 @@ export function createSettlementModal(root: HTMLElement, conn: GameConnection, s
       <h3>Bán máy (thu về 50%)</h3>
       <div class="sell">${
         s.sellable.length
-          ? s.sellable.map((x) => `<button data-sell="${x.instanceId}">${stationName(x.instanceId)} (+${formatK(x.refund)})</button>`).join('')
-          : '<span class="muted">Không còn máy nào bán được.</span>'
+          ? s.sellable
+              .map((x) =>
+                confirmSell === x.instanceId
+                  ? `<span class="confirm">Bán ${stationName(x.instanceId)}, thu ${formatK(x.refund)}?
+                     <button class="primary" data-sell-yes="${x.instanceId}">Đồng ý</button><button data-sell-no>Thôi</button></span>`
+                  : `<button data-sell="${x.instanceId}">${stationName(x.instanceId)} (+${formatK(x.refund)})</button>`,
+              )
+              .join('')
+          : '<span class="muted">Không còn máy nào bán được (máy của dây chuyền có phụ bếp phải cho phụ bếp nghỉ trước).</span>'
       }</div>`;
-    box.querySelector('.loan-slot')!.append(loanForm(conn, s.maxLoan, suggestedLoan(short)));
-    box.querySelectorAll<HTMLButtonElement>('[data-sell]').forEach((b) => (b.onclick = () => conn.sellStation(b.dataset.sell!)));
+    box.querySelector('.loan-slot')!.append(loanForm(conn, s.maxLoan, suggestedLoan(short), st.month));
+    box.querySelectorAll<HTMLButtonElement>('[data-sell]').forEach((b) => {
+      b.onclick = () => {
+        confirmSell = b.dataset.sell!;
+        render(s);
+      };
+    });
+    box.querySelectorAll<HTMLButtonElement>('[data-sell-no]').forEach((b) => {
+      b.onclick = () => {
+        confirmSell = null;
+        render(s);
+      };
+    });
+    box.querySelectorAll<HTMLButtonElement>('[data-sell-yes]').forEach((b) => {
+      b.onclick = () => {
+        if (b.disabled) return;
+        b.disabled = true;
+        conn.sellStation(b.dataset.sellYes!, st.month);
+        confirmSell = null;
+      };
+    });
+  }
+
+  conn.onSnapshot((s: Snapshot) => {
+    render(s);
   });
 
   conn.onEvent((e: SimEvent) => {
@@ -98,10 +130,10 @@ export function createSettlementModal(root: HTMLElement, conn: GameConnection, s
     else if (e.type === 'monthClosed') {
       const st = lastOpened;
       showInfo(`Đã trả xong tháng ${e.month}`, st ? table(st) : '');
-      setInputEnabled(false);
+      setBlocked(false); // thông báo không khoá di chuyển
     } else if (e.type === 'bankrupt') {
       showInfo('Quán phá sản 😢', '<p>Không còn tiền, không vay thêm được và không còn máy để bán. Quán bắt đầu lại từ xe bánh mì với 5.000K. Tên nhân vật và mã quán vẫn giữ nguyên.</p>');
-      setInputEnabled(false);
+      setBlocked(false);
     }
   });
 }

@@ -25,9 +25,9 @@ export interface GameConnection {
   upgradeStaff(staffId: string): void;
   upgradeMachine(instanceId: string): void;
   runCampaign(campaign: CampaignId): void;
-  takeLoan(amount: number, months: number): void;
+  takeLoan(amount: number, months: number, forMonth?: number): void;
   repayLoan(loanId: string): void;
-  sellStation(instanceId: string): void;
+  sellStation(instanceId: string, forMonth?: number): void;
 }
 
 export function serverEndpoint(): string {
@@ -87,8 +87,8 @@ export async function connect(opts: JoinOptions): Promise<GameConnection> {
     upgradeStaff: (staffId) => room.send(MSG.upgradeStaff, { staffId }),
     upgradeMachine: (instanceId) => room.send(MSG.upgradeMachine, { instanceId }),
     runCampaign: (campaign) => room.send(MSG.runCampaign, { campaign }),
-    takeLoan: (amount, months) => room.send(MSG.takeLoan, { amount, months }),
+    takeLoan: (amount, months, forMonth) => room.send(MSG.takeLoan, { amount, months, forMonth }),
     repayLoan: (loanId) => room.send(MSG.repayLoan, { loanId }),
-    sellStation: (instanceId) => room.send(MSG.sellStation, { instanceId }),
+    sellStation: (instanceId, forMonth) => room.send(MSG.sellStation, { instanceId, forMonth }),
   };
 }

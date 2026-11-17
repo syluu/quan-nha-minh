@@ -2,6 +2,7 @@ import { BALANCE, ITEMS, SHOPS, getStationDef, itemCost } from '../content';
 import type { ItemId, ShopId } from '../content';
 import { formatK } from '../money';
 import type { ActionResult } from './actions';
+import { trySettleAfterAction } from './settlement';
 import { addLog, playerName } from './log';
 import { isOnSale } from './prices';
 import type { StaffRole, StaffState, WorldState } from './world';
@@ -79,8 +80,10 @@ export function fireStaff(world: WorldState, shopId: ShopId, staffId: string, by
   const shop = world.shops[shopId];
   const s = shop.staff.find((x) => x.id === staffId);
   if (!s) return { ok: false, error: 'NOT_FOUND' };
-  if (world.money < s.wageOwed) return { ok: false, error: 'NO_MONEY' };
-  world.money -= s.wageOwed;
+  // Trả lương còn nợ + ngày hôm nay (đã làm trong ngày, chưa được cộng vào nợ).
+  const pay = s.wageOwed + staffWage(s);
+  if (world.money < pay) return { ok: false, error: 'NO_MONEY' };
+  world.money -= pay;
   shop.staff = shop.staff.filter((x) => x !== s);
   // Món đang cầm: trả về chỗ còn nhận được, còn thừa thì tính là hàng bỏ đi.
   for (const item of s.carry) {
@@ -93,8 +96,8 @@ export function fireStaff(world: WorldState, shopId: ShopId, staffId: string, by
     } else world.dayStats.wasted += itemCost(item);
   }
   s.carry = [];
-  const paid = s.wageOwed ? `, trả ${formatK(s.wageOwed)} lương` : '';
-  addLog(world, `${playerName(world, byPlayerId)} đã cho ${s.name} nghỉ${paid}`);
+  addLog(world, `${playerName(world, byPlayerId)} đã cho ${s.name} nghỉ, trả ${formatK(pay)} lương`);
+  trySettleAfterAction(world);
   return { ok: true };
 }
 

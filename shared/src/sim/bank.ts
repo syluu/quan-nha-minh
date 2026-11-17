@@ -3,7 +3,7 @@ import type { ShopId } from '../content';
 import { formatK } from '../money';
 import type { ActionResult } from './actions';
 import { addLog, playerName } from './log';
-import { trySettleAfterAction } from './settlement';
+import { settlementMismatch, trySettleAfterAction } from './settlement';
 import type { WorldState } from './world';
 
 /** Giá trị một máy: giá mở khoá, riêng bộ khởi đầu dùng STARTER_VALUES. */
@@ -37,7 +37,8 @@ export function loanTerms(amount: number, months: number): { totalDue: number; i
   return { totalDue, installment: Math.ceil(totalDue / months / 1000) * 1000 };
 }
 
-export function takeLoan(world: WorldState, amount: unknown, months: unknown, byPlayerId: string): ActionResult {
+export function takeLoan(world: WorldState, amount: unknown, months: unknown, byPlayerId: string, forMonth?: unknown): ActionResult {
+  if (settlementMismatch(world, forMonth)) return { ok: false, error: 'NO_SETTLEMENT' };
   const bad = { ok: false, error: 'BAD_AMOUNT' } as const;
   if (typeof amount !== 'number' || !Number.isFinite(amount) || typeof months !== 'number') return bad;
   if (!(months in BALANCE.LOAN_TERMS)) return bad;

@@ -5,7 +5,7 @@ import type { MenuTab } from './menu';
 import { bankView, loanPreview } from './views';
 
 /** Form vay dùng chung cho tab Ngân hàng và bảng kết toán. */
-export function loanForm(conn: GameConnection, max: number, initial: number): HTMLElement {
+export function loanForm(conn: GameConnection, max: number, initial: number, forMonth?: number): HTMLElement {
   const el = document.createElement('div');
   el.className = 'loan-form';
   if (max < BALANCE.LOAN_MIN) {
@@ -34,7 +34,12 @@ export function loanForm(conn: GameConnection, max: number, initial: number): HT
   range.oninput = update;
   sel.onchange = update;
   update();
-  el.querySelector('button')!.onclick = () => conn.takeLoan(Number(range.value), Number(sel.value));
+  const btn = el.querySelector('button')!;
+  btn.onclick = () => {
+    if (btn.disabled) return;
+    btn.disabled = true; // chống bấm 2 lần; bảng vẽ lại khi máy chủ trả lời
+    conn.takeLoan(Number(range.value), Number(sel.value), forMonth);
+  };
   return el;
 }
 

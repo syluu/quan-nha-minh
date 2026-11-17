@@ -20,3 +20,16 @@ describe('createKeyboardInput.setEnabled (Review Focus 5)', () => {
     input.dispose();
   });
 });
+
+describe('input gate (M3)', () => {
+  it('stays blocked until every reason is cleared', async () => {
+    const { createInputGate } = await import('../src/input');
+    const gate = createInputGate();
+    gate.set('menu', true);
+    gate.set('settle', true);
+    gate.set('menu', false);
+    expect(gate.blocked()).toBe(true);
+    gate.set('settle', false);
+    expect(gate.blocked()).toBe(false);
+  });
+});

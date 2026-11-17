@@ -70,7 +70,8 @@ export function trySettle(world: WorldState): SimEvent[] {
   if (world.money < st.totalDue) {
     // Hết đường xoay: không vay thêm được, không còn máy để bán → phá sản.
     const anySellable = (Object.keys(world.shops) as ShopId[]).some((id) => sellableStations(world, id).length > 0);
-    if (maxLoan(world) === 0 && !anySellable) {
+    // Hạn mức còn dưới mức vay tối thiểu thì coi như không vay được nữa.
+    if (maxLoan(world) < BALANCE.LOAN_MIN && !anySellable) {
       bankrupt(world);
       return [{ type: 'bankrupt' }];
     }
@@ -102,8 +103,13 @@ function payInstallments(world: WorldState): void {
 export function sellableStations(world: WorldState, shopId: ShopId): { instanceId: string; refund: number }[] {
   const shop = world.shops[shopId];
   const layout = SHOPS[shopId];
+  // Kệ và máy làm món của một dây chuyền đang có phụ bếp: không bán (phụ bếp sẽ mất việc mà vẫn ăn lương).
+  const staffedLines = new Set(shop.staff.filter((s) => s.role === 'cook' && s.item).map((s) => s.item));
+  const busy = (def: ReturnType<typeof getStationDef>) =>
+    (def.kind === 'display' && staffedLines.has(def.item)) ||
+    ((def.kind === 'producer' || def.kind === 'assembler') && staffedLines.has(def.output));
   return layout.stations
-    .filter((p) => p.unlockCost > 0 && shop.stations[p.instanceId].unlocked)
+    .filter((p) => p.unlockCost > 0 && shop.stations[p.instanceId].unlocked && !busy(getStationDef(p.def)))
     .filter((p) => !layout.stations.some((o) => shop.stations[o.instanceId].unlocked && o.requires.includes(p.instanceId)))
     .map((p) => ({ instanceId: p.instanceId, refund: sellRefund(world, shopId, p.instanceId) }));
 }
@@ -113,7 +119,13 @@ function sellRefund(world: WorldState, shopId: ShopId, instanceId: string): numb
   return Math.round(BALANCE.SELL_RATIO * (stationValue(shopId, instanceId) + st.upgradeSpent));
 }
 
-export function sellStation(world: WorldState, shopId: ShopId, instanceId: unknown, byPlayerId: string): ActionResult {
+/** forMonth: nút trong bảng kết toán gửi kèm tháng; kết toán đã đóng / khác tháng → NO_SETTLEMENT (chống bấm 2 lần). */
+export function settlementMismatch(world: WorldState, forMonth: unknown): boolean {
+  return forMonth !== undefined && (!world.settlement || world.settlement.month !== forMonth);
+}
+
+export function sellStation(world: WorldState, shopId: ShopId, instanceId: unknown, byPlayerId: string, forMonth?: unknown): ActionResult {
+  if (settlementMismatch(world, forMonth)) return { ok: false, error: 'NO_SETTLEMENT' };
   if (typeof instanceId !== 'string' || !sellableStations(world, shopId).some((x) => x.instanceId === instanceId))
     return { ok: false, error: 'NOT_SELLABLE' };
   const refund = sellRefund(world, shopId, instanceId);

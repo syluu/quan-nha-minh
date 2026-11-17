@@ -28,7 +28,8 @@ export function migrateV2toV3(raw: any): any {
   w.loans ??= [];
   w.nextLoanId ??= 1;
   w.settlement ??= null;
-  w.month ??= 1;
+  // Đánh số tháng theo ngày đã chơi (1 tháng = 7 ngày).
+  w.month ??= Math.floor(((w.day ?? 1) - 1) / 7) + 1;
   w.months ??= [];
   w.dayStats = { marketing: 0, ...w.dayStats };
   for (const h of w.history ?? []) h.marketing ??= 0;

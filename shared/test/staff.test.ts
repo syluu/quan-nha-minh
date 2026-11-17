@@ -57,14 +57,14 @@ describe('staffSlots', () => {
 });
 
 describe('fireStaff', () => {
-  it('removes the person and logs it (no wage owed yet)', () => {
+  it('removes the person, pays today\'s wage and logs it', () => {
     const w = world();
     hireStaff(w, 'banh_mi', 'cashier', null, 'a');
     const id = w.shops.banh_mi.staff[0].id;
     expect(fireStaff(w, 'banh_mi', id, 'a')).toEqual({ ok: true });
     expect(w.shops.banh_mi.staff).toEqual([]);
-    expect(w.money).toBe(5_000_000);
-    expect(w.log.at(-1)?.text).toBe('Mẹ đã cho Lan nghỉ');
+    expect(w.money).toBe(5_000_000 - 120_000);
+    expect(w.log.at(-1)?.text).toBe('Mẹ đã cho Lan nghỉ, trả 120K lương');
     expect(fireStaff(w, 'banh_mi', 'nope', 'a')).toEqual({ ok: false, error: 'NOT_FOUND' });
   });
 });

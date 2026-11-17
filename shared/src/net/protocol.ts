@@ -37,12 +37,15 @@ export interface RunCampaignMsg {
 export interface TakeLoanMsg {
   amount: number;
   months: number;
+  /** Có khi vay từ bảng kết toán: tháng đang kết toán. */
+  forMonth?: number;
 }
 export interface RepayLoanMsg {
   loanId: string;
 }
 export interface SellStationMsg {
   instanceId: string;
+  forMonth?: number;
 }
 
 export interface HireMsg {

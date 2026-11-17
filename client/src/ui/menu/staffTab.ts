@@ -26,7 +26,7 @@ export function staffTab(conn: GameConnection, latest: () => Snapshot | null): M
         const actions = (name: string | null, id: string | null, d: StaffDetail | null, hire: string) => {
           if (!name || !id) return `<button class="primary" data-hire="${hire}">Thuê</button>`;
           if (confirmId === id)
-            return `<span class="confirm">Cho ${name} nghỉ? Trả ngay ${d?.owed ?? '0K'} lương.
+            return `<span class="confirm">Cho ${name} nghỉ? Trả ngay ${d?.payOnFire ?? '0K'} lương (cả hôm nay).
               <button class="primary" data-fire="${id}">Đồng ý</button><button data-cancel>Thôi</button></span>`;
           return `${d?.nextTrain ? `<button data-train="${id}">Nâng cấp (${d.nextTrain})</button>` : '<span class="muted">Cấp tối đa</span>'}
             <button data-ask="${id}">Cho nghỉ</button>`;

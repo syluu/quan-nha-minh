@@ -27,6 +27,6 @@ describe('upgradeView', () => {
 describe('staffView with levels', () => {
   it('describes each person: level, speed, carry, wage, owed, next training cost', () => {
     const v = staffView(snap());
-    expect(v.cashier.detail).toEqual({ level: 2, speedPct: 80, carry: 4, wage: '150K', owed: '450K', nextTrain: '800K' });
+    expect(v.cashier.detail).toEqual({ level: 2, speedPct: 80, carry: 4, wage: '150K', owed: '450K', payOnFire: '600K', nextTrain: '800K' });
   });
 });

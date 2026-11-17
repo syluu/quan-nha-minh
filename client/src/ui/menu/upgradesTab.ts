@@ -16,7 +16,7 @@ export function upgradesTab(conn: GameConnection, latest: () => Snapshot | null,
         const s = latest();
         if (!s) return;
         const v = upgradeView(s, myId);
-        const k = JSON.stringify(v) + s.money;
+        const k = JSON.stringify(v);
         if (k === key) return;
         key = k;
         const row = (label: string, lv: string, now: string, next: string | null, cost: string | null, data: string) => `

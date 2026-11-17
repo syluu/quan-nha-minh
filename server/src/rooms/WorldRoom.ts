@@ -111,9 +111,9 @@ export class WorldRoom extends Room {
     act<UpgradeStaffMsg>(MSG.upgradeStaff, (pid, m) => upgradeStaff(this.world, 'banh_mi', m.staffId, pid));
     act<UpgradeMachineMsg>(MSG.upgradeMachine, (pid, m) => upgradeMachine(this.world, 'banh_mi', m.instanceId, pid));
     act<RunCampaignMsg>(MSG.runCampaign, (pid, m) => runCampaign(this.world, 'banh_mi', m.campaign, pid));
-    act<TakeLoanMsg>(MSG.takeLoan, (pid, m) => takeLoan(this.world, m.amount, m.months, pid));
+    act<TakeLoanMsg>(MSG.takeLoan, (pid, m) => takeLoan(this.world, m.amount, m.months, pid, m.forMonth));
     act<RepayLoanMsg>(MSG.repayLoan, (pid, m) => repayLoan(this.world, m.loanId, pid));
-    act<SellStationMsg>(MSG.sellStation, (pid, m) => sellStation(this.world, 'banh_mi', m.instanceId, pid));
+    act<SellStationMsg>(MSG.sellStation, (pid, m) => sellStation(this.world, 'banh_mi', m.instanceId, pid, m.forMonth));
     this.onMessage(MSG.getReport, (client: Client) => {
       if (this.ownedPlayer(client)) client.send(MSG.report, buildReport(this.world));
     });

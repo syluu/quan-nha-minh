@@ -48,10 +48,10 @@ function enterGame(conn: GameConnection) {
       bankTab(conn, () => latest),
       settingsTab(conn, myName),
     ],
-    (open) => game.setInputEnabled(!open),
+    (open) => game.setInputBlocked('menu', open),
   );
   conn.onActionError((e) => showToast(ui, actionErrorText(e)));
-  createSettlementModal(ui, conn, (on) => game.setInputEnabled(on));
+  createSettlementModal(ui, conn, (blocked) => game.setInputBlocked('settle', blocked));
   applyDisplaySettings();
 
   let prevCarry = 0;

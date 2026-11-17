@@ -64,15 +64,26 @@ describe('wages accrue daily and are paid at month end', () => {
 
 describe('firing pays the owed wage right away (Review Focus 3)', () => {
   it('refuses when there is not enough money, pays the days worked otherwise', () => {
-    const w = world(100_000);
+    const w = world(400_000);
     const lan = putStaff(w, 'Lan', 'cashier');
     lan.wageOwed = 360_000;
     expect(fireStaff(w, 'banh_mi', lan.id, 'a')).toEqual({ ok: false, error: 'NO_MONEY' });
     expect(w.shops.banh_mi.staff).toHaveLength(1);
-    expect(w.money).toBe(100_000);
+    expect(w.money).toBe(400_000);
     w.money = 1_000_000;
     expect(fireStaff(w, 'banh_mi', lan.id, 'a')).toEqual({ ok: true });
-    expect(w.money).toBe(640_000);
-    expect(w.log.at(-1)?.text).toBe('Mẹ đã cho Lan nghỉ, trả 360K lương');
+    // 360K đã nợ + 120K của hôm nay (đã làm trong ngày)
+    expect(w.money).toBe(520_000);
+    expect(w.log.at(-1)?.text).toBe('Mẹ đã cho Lan nghỉ, trả 480K lương');
+  });
+});
+
+describe('hire in the morning, fire in the evening is not free (I3)', () => {
+  it('charges today\'s wage when firing on the day of hiring', () => {
+    const w = world();
+    const lan = putStaff(w, 'Lan', 'cashier');
+    w.secOfDay = 355;
+    expect(fireStaff(w, 'banh_mi', lan.id, 'a')).toEqual({ ok: true });
+    expect(w.money).toBe(5_000_000 - 120_000);
   });
 });

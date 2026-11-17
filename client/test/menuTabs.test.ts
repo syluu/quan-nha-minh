@@ -41,6 +41,8 @@ describe('actionErrorText', () => {
     expect(actionErrorText('BAD_ITEM')).toBe('Món này chưa bán');
     expect(actionErrorText('NOT_FOUND')).toBe('Không tìm thấy');
     expect(actionErrorText('NO_MONEY')).toBe('Không đủ tiền');
+    expect(actionErrorText('PAUSED')).toBe('Đang kết toán cuối tháng — trả xong rồi mới mua được');
+    expect(actionErrorText('NO_SETTLEMENT')).toBe('Tháng này đã kết toán xong');
     expect(actionErrorText('???')).toBe('Không thực hiện được');
   });
 });

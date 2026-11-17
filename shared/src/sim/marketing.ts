@@ -10,6 +10,7 @@ const isCampaign = (id: unknown): id is CampaignId => typeof id === 'string' && 
 
 /** Chạy một chiến dịch quảng cáo cho quán: trả tiền ngay, có hiệu lực trong số ngày của chiến dịch. */
 export function runCampaign(world: WorldState, shopId: ShopId, id: unknown, byPlayerId: string): ActionResult {
+  if (world.settlement) return { ok: false, error: 'PAUSED' };
   if (!isCampaign(id)) return { ok: false, error: 'BAD_ITEM' };
   const c = BALANCE.CAMPAIGNS[id];
   if (world.money < c.cost) return { ok: false, error: 'NO_MONEY' };

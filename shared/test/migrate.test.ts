@@ -98,6 +98,12 @@ describe('normalizeLoaded v2 → v3', () => {
     expect(w.money).toBe(4_200_000);
   });
 
+  it('numbers the month from the saved day (M6)', () => {
+    const raw = v2Save();
+    raw.day = 13;
+    expect(normalizeLoaded(raw).month).toBe(2);
+  });
+
   it('keeps an open month-end settlement across a server restart (Review Focus 2)', () => {
     const w = normalizeLoaded(v2Save());
     w.settlement = { month: 1, revenue: 1, ingredientCost: 2, marketing: 0, wages: 840_000, rent: 0, loanDue: 0, totalDue: 840_000 };

@@ -21,6 +21,8 @@ export interface StaffDetail {
   carry: number;
   wage: string;
   owed: string;
+  /** Cho nghỉ phải trả ngay: lương còn nợ + hôm nay. */
+  payOnFire: string;
   nextTrain: string | null;
 }
 
@@ -34,6 +36,7 @@ function staffDetail(x: Snapshot['staff'][number] | undefined): StaffDetail | nu
     carry: lv.carry,
     wage: formatK(lv.wage),
     owed: formatK(x.wageOwed),
+    payOnFire: formatK(x.wageOwed + lv.wage),
     nextTrain: next ? formatK(next.train) : null,
   };
 }
@@ -72,6 +75,8 @@ const ERRORS: Record<string, string> = {
   BAD_AMOUNT: 'Số tiền hoặc kỳ hạn không hợp lệ',
   NOT_SELLABLE: 'Máy này không bán được (máy khởi đầu hoặc máy khác đang cần nó)',
   BAD_ROLE: 'Thao tác không hợp lệ',
+  PAUSED: 'Đang kết toán cuối tháng — trả xong rồi mới mua được',
+  NO_SETTLEMENT: 'Tháng này đã kết toán xong',
 };
 
 export function actionErrorText(e: string): string {

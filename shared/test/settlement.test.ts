@@ -48,9 +48,11 @@ describe('settling with two people acting at once (Review Focus 1)', () => {
     expect(w.settlement).toBeNull();
     expect(w.money).toBe(0);
     expect(w.months).toHaveLength(1);
-    expect(sellStation(w, 'banh_mi', 'ban_bm_trung', 'a')).toEqual({ ok: true });
+    // Nút "Bán" trong bảng kết toán gửi kèm tháng: kết toán đã đóng thì bị từ chối (I4)
+    expect(sellStation(w, 'banh_mi', 'ban_bm_trung', 'a', 1)).toEqual({ ok: false, error: 'NO_SETTLEMENT' });
+    expect(takeLoan(w, 500_000, 1, 'a', 1)).toEqual({ ok: false, error: 'NO_SETTLEMENT' });
     expect(w.months).toHaveLength(1);
-    expect(w.money).toBe(750_000);
+    expect(w.money).toBe(0);
   });
 });
 
@@ -79,5 +81,52 @@ describe('bankruptcy (Review Focus 5)', () => {
     expect(Object.values(w.players).map((p) => [p.name, p.online])).toEqual([['Bố', true], ['Mẹ', false]]);
     expect(w.players.a).toMatchObject({ carryLevel: 0, carryCap: 4, x: 7.5, z: 5.2, carry: [] });
     expect(w.log.at(-1)?.text).toBe('Quán phá sản — bắt đầu lại từ xe bánh mì');
+  });
+});
+
+describe('no permanent freeze (C1)', () => {
+  it('goes bankrupt when the remaining limit is below the minimum loan and nothing can be sold', () => {
+    const w = createWorld('ABC-DEF', 3);
+    joinPlayer(w, 'a', 'Bố');
+    w.money = 0;
+    expect(takeLoan(w, 1_500_000, 2, 'a')).toEqual({ ok: true }); // hạn mức còn 300K < 500K
+    w.money = 0;
+    putStaff(w, 'Lan', 'cashier').wageOwed = 2_000_000;
+    w.settlement = buildSettlement(w);
+    expect(trySettle(w)).toEqual([{ type: 'bankrupt' }]);
+    expect(w.settlement).toBeNull();
+  });
+});
+
+describe('selling a line with a hired cook (I2)', () => {
+  it('is not offered while the cook works that line', async () => {
+    const { hireStaff } = await import('../src/sim/staff');
+    const w = world();
+    w.shops.banh_mi.stations.binh_tra.unlocked = true;
+    w.shops.banh_mi.stations.ke_tra_da.unlocked = true;
+    expect(sellableStations(w, 'banh_mi').map((s) => s.instanceId)).toContain('ke_tra_da');
+    hireStaff(w, 'banh_mi', 'cook', 'tra_da', 'a');
+    expect(sellableStations(w, 'banh_mi').map((s) => s.instanceId)).not.toContain('ke_tra_da');
+    expect(sellStation(w, 'banh_mi', 'ke_tra_da', 'a')).toEqual({ ok: false, error: 'NOT_SELLABLE' });
+  });
+});
+
+describe('while the month is being settled (M1, M2)', () => {
+  it('firing refreshes the amount due; spending on upgrades and ads is paused', async () => {
+    const { fireStaff } = await import('../src/sim/staff');
+    const { upgradePlayer } = await import('../src/sim/upgrades');
+    const { runCampaign } = await import('../src/sim/marketing');
+    const w = world();
+    w.money = 1_000_000;
+    putStaff(w, 'Lan', 'cashier').wageOwed = 700_000;
+    const hung = putStaff(w, 'Hùng');
+    hung.wageOwed = 700_000;
+    w.settlement = buildSettlement(w);
+    expect(trySettle(w)).toEqual([]);
+    expect(upgradePlayer(w, 'a', 'carry')).toEqual({ ok: false, error: 'PAUSED' });
+    expect(runCampaign(w, 'banh_mi', 'to_roi', 'a')).toEqual({ ok: false, error: 'PAUSED' });
+    expect(fireStaff(w, 'banh_mi', hung.id, 'a')).toEqual({ ok: true }); // trả 820K, còn 180K
+    // còn nợ Lan 700K, tiền 180K → bảng phải cập nhật
+    expect(w.settlement?.wages).toBe(700_000);
   });
 });

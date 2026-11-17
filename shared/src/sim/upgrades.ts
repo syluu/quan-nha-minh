@@ -11,6 +11,7 @@ const round500 = (n: number) => Math.round(n / 500) * 500;
 
 /** Nâng cấp nhân vật của chính người chơi: 'carry' (mang nhiều hơn) hoặc 'speed' (đi nhanh hơn). */
 export function upgradePlayer(world: WorldState, playerId: string, kind: unknown): ActionResult {
+  if (world.settlement) return { ok: false, error: 'PAUSED' };
   const p = world.players[playerId];
   if (!p) return { ok: false, error: 'NOT_FOUND' };
   if (kind !== 'carry' && kind !== 'speed') return { ok: false, error: 'BAD_ROLE' };
@@ -33,6 +34,7 @@ export function upgradePlayer(world: WorldState, playerId: string, kind: unknown
 
 /** Đào tạo một nhân viên lên cấp tiếp theo (đi nhanh hơn, mang nhiều hơn, lương cao hơn). */
 export function upgradeStaff(world: WorldState, shopId: ShopId, staffId: unknown, byPlayerId: string): ActionResult {
+  if (world.settlement) return { ok: false, error: 'PAUSED' };
   const s = world.shops[shopId].staff.find((x) => x.id === staffId);
   if (!s) return { ok: false, error: 'NOT_FOUND' };
   if (s.level >= BALANCE.STAFF_LEVELS.length) return { ok: false, error: 'MAXED' };
@@ -60,6 +62,7 @@ export function effectiveOutputCap(def: StationDef, st: Pick<StationState, 'leve
 
 /** Nâng cấp một máy làm món đã mở (nhanh hơn, chứa nhiều hơn). */
 export function upgradeMachine(world: WorldState, shopId: ShopId, instanceId: unknown, byPlayerId: string): ActionResult {
+  if (world.settlement) return { ok: false, error: 'PAUSED' };
   const placed = SHOPS[shopId].stations.find((p) => p.instanceId === instanceId);
   if (!placed) return { ok: false, error: 'BAD_ITEM' };
   const def = getStationDef(placed.def);

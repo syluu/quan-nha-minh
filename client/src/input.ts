@@ -60,3 +60,15 @@ export function createKeyboardInput(): { read(): { mx: number; mz: number }; dis
     },
   };
 }
+
+/** Nhiều lý do cùng khoá di chuyển (menu, bảng kết toán…): chỉ mở lại khi mọi lý do đã gỡ. */
+export function createInputGate() {
+  const reasons = new Set<string>();
+  return {
+    set(reason: string, on: boolean) {
+      if (on) reasons.add(reason);
+      else reasons.delete(reason);
+    },
+    blocked: () => reasons.size > 0,
+  };
+}

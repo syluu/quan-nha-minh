@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { BALANCE, ITEMS, SHOPS } from '@qnm/shared';
 import type { Snapshot } from '@qnm/shared';
-import { createKeyboardInput } from '../input';
+import { createInputGate, createKeyboardInput } from '../input';
 import type { GameConnection } from '../net';
 import { createFollowCamera } from '../render/camera';
 import { createCharacter } from '../render/characters';
@@ -14,8 +14,8 @@ import { createInterpolator } from './interp';
 import { createPredictor } from './prediction';
 
 export interface GameHandle {
-  /** Tắt/bật điều khiển di chuyển (khi mở/đóng menu). */
-  setInputEnabled(on: boolean): void;
+  /** Khoá/mở điều khiển di chuyển theo từng lý do ('menu', 'settle'…). */
+  setInputBlocked(reason: string, blocked: boolean): void;
   /** Chiếu một điểm thế giới ra toạ độ màn hình (px) — dùng cho chữ nổi. */
   project(x: number, y: number, z: number): { x: number; y: number };
 }
@@ -28,6 +28,7 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
   const interp = createInterpolator(100);
   const predictor = createPredictor();
   const input = createKeyboardInput();
+  const gate = createInputGate();
 
   const stationViews = new Map(layout.stations.map((p) => [p.instanceId, createStationView(p)]));
   const tileViews = new Map(layout.stations.map((p) => [p.instanceId, createTileView(p)]));
@@ -133,7 +134,7 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
         const moving = !!prevPos && Math.hypot(st.x - prevPos.x, st.z - prevPos.z) > 0.002;
         lastPos.set(key, { x: st.x, z: st.z });
         v.setPose(st.x, st.z, st.dir, moving, t);
-        v.setCarry(st.carry, BALANCE.STAFF_LEVELS[0].carry);
+        v.setCarry(st.carry, BALANCE.STAFF_LEVELS[st.level - 1]?.carry ?? BALANCE.STAFF_LEVELS[0].carry);
       }
       for (const [id, v] of staffViews) if (!seenS.has(id)) (v.dispose(), staffViews.delete(id), lastPos.delete(`s${id}`));
 
@@ -158,7 +159,9 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
 
   const v = new THREE.Vector3();
   return {
-    setInputEnabled(on) {
+    setInputBlocked(reason, blocked) {
+      gate.set(reason, blocked);
+      const on = !gate.blocked();
       input.setEnabled(on);
       menuOpen = !on;
       menuChanged = true;
