@@ -78,6 +78,7 @@ export function migrateV4toV5(raw: any, freshShops: Record<string, any>): any {
   w.extraWagesOwed ??= 0;
   for (const [id, shop] of Object.entries<any>(w.shops ?? {})) {
     shop.owned ??= id === 'banh_mi';
+    shop.rentedDay ??= 0;
     for (const st of Object.values<any>(shop.stations ?? {})) {
       st.enabled ??= true;
       st.seats ??= [];

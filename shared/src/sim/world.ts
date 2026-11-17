@@ -125,6 +125,8 @@ export interface ShopState {
   id: ShopId;
   /** Đã thuê (bánh mì luôn true). Quán chưa thuê không chạy. */
   owned: boolean;
+  /** Ngày bắt đầu thuê (tính tiền thuê tháng đầu theo số ngày). */
+  rentedDay: number;
   stations: Record<string, StationState>;
   customers: Customer[];
   prices: Partial<Record<ItemId, number>>;
@@ -249,7 +251,7 @@ export function createShop(id: ShopId, owned: boolean): ShopState {
   const stations: Record<string, StationState> = {};
   for (const p of layout.stations) stations[p.instanceId] = createStationState(p.instanceId, p.unlockCost === 0, p.seatPoints?.length ?? 0);
   return {
-    id, owned, stations, customers: [], prices: {}, ratings: [], nextCustomerIn: 1, nextCustomerId: 1,
+    id, owned, rentedDay: 0, stations, customers: [], prices: {}, ratings: [], nextCustomerIn: 1, nextCustomerId: 1,
     staff: [], nextStaffId: 1, firedToday: 0, campaigns: [],
     orders: [], nextOrderId: 1, nextOrderIn: 5, shipper: null, onlinePaused: false,
   };

@@ -1,4 +1,4 @@
-import { BALANCE, SHOPS, getStationDef } from '../content';
+import { BALANCE, SHOP_META, SHOPS, getStationDef } from '../content';
 import type { ShopId } from '../content';
 import type { ActionResult } from './actions';
 import { maxLoan, stationValue } from './bank';
@@ -6,13 +6,14 @@ import { formatK } from '../money';
 import type { SimEvent } from './events';
 import { addLog, playerName } from './log';
 import { clearOnline, dropUnsellableOrders } from './online';
+import { RETURN_SHOP_ID, canReturn, returnRefund, returnShop } from './shops';
 import { createWorld } from './world';
 import type { Loan, Settlement, WorldState } from './world';
 
 const MONTHS_KEPT = 12;
 
 function owedWages(world: WorldState): number {
-  let n = 0;
+  let n = world.extraWagesOwed ?? 0;
   for (const id of Object.keys(world.shops) as ShopId[]) for (const s of world.shops[id].staff) n += s.wageOwed;
   return n;
 }
@@ -26,12 +27,26 @@ function isDue(world: WorldState, l: Loan): boolean {
   return (l.firstDueMonth ?? 0) <= world.month;
 }
 
+/** Tiền thuê mặt bằng tháng này: quán thuê giữa tháng chỉ trả theo số ngày đã thuê (làm tròn nghìn). */
+export function rentDue(world: WorldState): number {
+  const monthStart = world.day - BALANCE.MONTH_DAYS + 1;
+  let n = 0;
+  for (const id of Object.keys(world.shops) as ShopId[]) {
+    const shop = world.shops[id];
+    const perMonth = SHOP_META[id].rentPerMonth;
+    if (!shop.owned || perMonth <= 0) continue;
+    const days = Math.min(BALANCE.MONTH_DAYS, Math.max(1, world.day - Math.max(shop.rentedDay, monthStart) + 1));
+    n += Math.round((perMonth * days) / BALANCE.MONTH_DAYS / 1000) * 1000;
+  }
+  return n;
+}
+
 /** Lập bảng kết toán: số liệu 7 ngày gần nhất + lương còn nợ + góp nợ đến hạn. */
 export function buildSettlement(world: WorldState): Settlement {
   const days = world.history.slice(-BALANCE.MONTH_DAYS);
   const sum = (k: 'revenue' | 'ingredientCost' | 'marketing' | 'commission') => days.reduce((n, d) => n + (d[k] ?? 0), 0);
   const wages = owedWages(world);
-  const rent = 0;
+  const rent = rentDue(world);
   const loanDue = loanInstallmentsDue(world);
   return {
     month: world.month,
@@ -82,6 +97,7 @@ export function trySettle(world: WorldState): SimEvent[] {
 
   world.money -= st.totalDue;
   for (const id of Object.keys(world.shops) as ShopId[]) for (const s of world.shops[id].staff) s.wageOwed = 0;
+  world.extraWagesOwed = 0;
   payInstallments(world);
   world.months.push({ ...st });
   while (world.months.length > MONTHS_KEPT) world.months.shift();
@@ -105,6 +121,9 @@ function payInstallments(world: WorldState): void {
 export function sellableStations(world: WorldState, shopId: ShopId): { instanceId: string; refund: number }[] {
   const shop = world.shops[shopId];
   const layout = SHOPS[shopId];
+  if (!shop.owned) return [];
+  // Mặt bằng thuê: trả lại được (mục riêng, cuối danh sách).
+  const lease = canReturn(world, shopId) ? [{ instanceId: RETURN_SHOP_ID, refund: returnRefund(world, shopId) }] : [];
   // Kệ và máy làm món của một dây chuyền đang có phụ bếp: không bán (phụ bếp sẽ mất việc mà vẫn ăn lương).
   const staffedLines = new Set(shop.staff.filter((s) => s.role === 'cook' && s.item).map((s) => s.item));
   const hasCourier = shop.staff.some((s) => s.role === 'courier');
@@ -115,7 +134,8 @@ export function sellableStations(world: WorldState, shopId: ShopId): { instanceI
   return layout.stations
     .filter((p) => p.unlockCost > 0 && shop.stations[p.instanceId].unlocked && !busy(getStationDef(p.def)))
     .filter((p) => !layout.stations.some((o) => shop.stations[o.instanceId].unlocked && o.requires.includes(p.instanceId)))
-    .map((p) => ({ instanceId: p.instanceId, refund: sellRefund(world, shopId, p.instanceId) }));
+    .map((p) => ({ instanceId: p.instanceId, refund: sellRefund(world, shopId, p.instanceId) }))
+    .concat(lease);
 }
 
 function sellRefund(world: WorldState, shopId: ShopId, instanceId: string): number {
@@ -130,6 +150,7 @@ export function settlementMismatch(world: WorldState, forMonth: unknown): boolea
 
 export function sellStation(world: WorldState, shopId: ShopId, instanceId: unknown, byPlayerId: string, forMonth?: unknown): ActionResult {
   if (settlementMismatch(world, forMonth)) return { ok: false, error: 'NO_SETTLEMENT' };
+  if (instanceId === RETURN_SHOP_ID) return returnShop(world, shopId, byPlayerId, forMonth);
   if (typeof instanceId !== 'string' || !sellableStations(world, shopId).some((x) => x.instanceId === instanceId))
     return { ok: false, error: 'NOT_SELLABLE' };
   const refund = sellRefund(world, shopId, instanceId);
