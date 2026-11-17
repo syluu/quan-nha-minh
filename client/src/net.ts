@@ -1,6 +1,6 @@
 import { Client } from '@colyseus/sdk';
 import { MSG } from '@qnm/shared';
-import type { JoinOptions, SimEvent, Snapshot, WelcomeMsg } from '@qnm/shared';
+import type { ItemId, JoinOptions, Report, SimEvent, Snapshot, StaffRole, WelcomeMsg } from '@qnm/shared';
 
 export type ConnStatus = 'connected' | 'reconnecting' | 'left';
 
@@ -12,6 +12,14 @@ export interface GameConnection {
   onStatus(cb: (s: ConnStatus, code?: number) => void): void;
   sendInput(mx: number, mz: number): void;
   leave(): void;
+  requestReport(): void;
+  /** Đăng ký nhận báo cáo; trả về hàm huỷ đăng ký. */
+  onReport(cb: (r: Report) => void): () => void;
+  onActionError(cb: (error: string) => void): void;
+  hire(role: StaffRole, item: ItemId | null): void;
+  fire(staffId: string): void;
+  setPrice(item: ItemId, price: number): void;
+  rename(name: string): void;
 }
 
 export function serverEndpoint(): string {
@@ -37,6 +45,10 @@ export async function connect(opts: JoinOptions): Promise<GameConnection> {
   });
   room.onMessage(MSG.snapshot, (s: Snapshot) => snapshotCbs.forEach((cb) => cb(s)));
   room.onMessage(MSG.event, (e: SimEvent) => eventCbs.forEach((cb) => cb(e)));
+  const reportCbs: ((r: Report) => void)[] = [];
+  const errorCbs: ((e: string) => void)[] = [];
+  room.onMessage(MSG.report, (r: Report) => reportCbs.forEach((cb) => cb(r)));
+  room.onMessage(MSG.actionError, (m: { error: string }) => errorCbs.forEach((cb) => cb(m.error)));
   room.onDrop(() => statusCbs.forEach((cb) => cb('reconnecting')));
   room.onReconnect(() => statusCbs.forEach((cb) => cb('connected')));
   room.onLeave((code: number) => statusCbs.forEach((cb) => cb('left', code)));
@@ -50,5 +62,18 @@ export async function connect(opts: JoinOptions): Promise<GameConnection> {
     onStatus: (cb) => statusCbs.push(cb),
     sendInput: (mx, mz) => room.send(MSG.input, { mx, mz }),
     leave: () => void room.leave(),
+    requestReport: () => room.send(MSG.getReport, {}),
+    onReport: (cb) => {
+      reportCbs.push(cb);
+      return () => {
+        const i = reportCbs.indexOf(cb);
+        if (i >= 0) reportCbs.splice(i, 1);
+      };
+    },
+    onActionError: (cb) => errorCbs.push(cb),
+    hire: (role, item) => room.send(MSG.hire, { role, item }),
+    fire: (staffId) => room.send(MSG.fire, { staffId }),
+    setPrice: (item, price) => room.send(MSG.setPrice, { item, price }),
+    rename: (name) => room.send(MSG.rename, { name }),
   };
 }

@@ -10,6 +10,8 @@ import { showDaySummary } from './ui/daySummary';
 import { createEventLog } from './ui/eventLog';
 import { createFloatText } from './ui/floatText';
 import { createHud } from './ui/hud';
+import { createMenu } from './ui/menu/menu';
+import { reportTab } from './ui/menu/reportTab';
 
 const root = document.getElementById('app')!;
 
@@ -22,6 +24,7 @@ function enterGame(conn: GameConnection) {
   hud.setCode(conn.code);
   const log = createEventLog(ui);
   const floats = createFloatText(ui, game.project);
+  createMenu(ui, conn, [reportTab(conn)], () => {});
 
   let prevCarry = 0;
   let pending: SimEvent[] = [];

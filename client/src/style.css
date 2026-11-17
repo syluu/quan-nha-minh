@@ -22,7 +22,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); 
 .pill.code { margin-left: auto; background: rgba(200,69,44,.9); }
 .conn { position: absolute; top: 56px; left: 50%; transform: translateX(-50%); background: #c8452c; color: #fff; font-weight: 700; padding: 8px 14px; border-radius: 10px; }
 .hint { position: absolute; bottom: 12px; left: 12px; color: var(--muted); font-size: 13px; background: rgba(255,250,240,.8); padding: 4px 10px; border-radius: 8px; }
-.log { position: absolute; top: 56px; right: 12px; display: flex; flex-direction: column; gap: 4px; max-width: 320px; }
+.log { position: absolute; top: 96px; right: 12px; display: flex; flex-direction: column; gap: 4px; max-width: 320px; }
 .log div { background: rgba(255,250,240,.9); border: 1px solid var(--line); padding: 4px 10px; border-radius: 8px; font-size: 13px; }
 .float { position: absolute; left: 0; top: 0; font-weight: 800; font-size: 18px; text-shadow: 0 0 3px #fff, 0 0 6px #fff; will-change: transform; }
 .float.gain { color: #1f8a3a; }
@@ -34,3 +34,26 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); 
 .summary td:last-child { text-align: right; font-weight: 700; }
 .summary p { margin: 10px 0 0; color: var(--muted); font-size: 12px; text-align: center; }
 .float.waste { color: #7a7a7a; }
+.menu-btn { pointer-events: auto; position: absolute; top: 52px; right: 12px; font: inherit; font-weight: 700; font-size: 14px; padding: 6px 12px; border-radius: 999px; border: 2px solid #2b2118; background: #fffaf0; cursor: pointer; }
+.menu { pointer-events: auto; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(860px, calc(100vw - 32px)); max-height: calc(100vh - 80px); display: flex; flex-direction: column; background: var(--card); border: 2px solid var(--line); border-radius: 16px; box-shadow: 0 16px 50px rgba(0,0,0,.25); }
+.menu[hidden] { display: none; }
+.menu-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 2px solid var(--line); }
+.menu-tabs { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; }
+.menu-tabs button, .menu-close { font: inherit; font-weight: 700; font-size: 14px; padding: 7px 12px; border-radius: 10px; border: 2px solid transparent; background: transparent; cursor: pointer; color: var(--ink); }
+.menu-tabs button.active { background: #2b2118; color: #fff; }
+.menu-tabs button:hover:not(.active), .menu-close:hover { border-color: var(--line); }
+.menu-body { padding: 14px 18px 18px; overflow: auto; }
+.menu-body h3 { margin: 6px 0 8px; font-size: 16px; }
+.menu-body .note { color: var(--muted); font-size: 13px; }
+.chart { width: 100%; height: auto; display: block; }
+.chart .axis { stroke: #b9a98f; stroke-width: 1; }
+.chart .bar-rev { fill: #2f7d4f; } .chart .bar-profit { fill: #e08a2c; } .chart .bar-loss { fill: #c8452c; }
+.chart .bar-label { font-size: 10px; fill: #7a6a58; text-anchor: middle; }
+.legend { font-size: 12px; color: var(--muted); display: flex; gap: 6px; align-items: center; margin-bottom: 8px; }
+.legend .sw { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-left: 8px; }
+.legend .sw.rev { background: #2f7d4f; } .legend .sw.profit { background: #e08a2c; } .legend .sw.loss { background: #c8452c; }
+.table-wrap { overflow-x: auto; }
+table.report { border-collapse: collapse; font-size: 13px; width: 100%; white-space: nowrap; }
+table.report th, table.report td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; }
+table.report th:first-child, table.report td:first-child { text-align: left; }
+table.report tr.today { background: #fff3d6; font-weight: 700; }
