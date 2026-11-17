@@ -108,9 +108,17 @@ export function normalizeLoaded(raw: unknown): WorldState {
     p.pickTimer = 0;
     p.pickAt = null;
     p.inMenu = false;
-    // Món lạ / sai ô (nội dung đổi) → về đồ mặc định của ô đó.
-    for (const slot of COSTUME_SLOTS) if (COSTUMES[p.outfit[slot]]?.slot !== slot) p.outfit[slot] = DEFAULT_OUTFIT[slot];
-    p.wardrobe = p.wardrobe.filter((id) => COSTUMES[id]);
+    // Dữ liệu trang phục hỏng / món lạ / sai ô / chưa mua → về đồ mặc định của ô đó.
+    const wardrobe: unknown[] = Array.isArray(p.wardrobe) ? p.wardrobe : [];
+    p.wardrobe = [...new Set(wardrobe.filter((id): id is string => typeof id === 'string' && Object.hasOwn(COSTUMES, id)))];
+    const outfit = (p.outfit && typeof p.outfit === 'object' ? p.outfit : {}) as Record<string, unknown>;
+    p.outfit = { ...DEFAULT_OUTFIT };
+    for (const slot of COSTUME_SLOTS) {
+      const id = outfit[slot];
+      if (typeof id !== 'string' || !Object.hasOwn(COSTUMES, id)) continue;
+      const c = COSTUMES[id];
+      if (c.slot === slot && (c.price === 0 || p.wardrobe.includes(id))) p.outfit[slot] = id;
+    }
     if (!world.shops[p.location]?.owned) {
       p.location = 'banh_mi';
       p.x = SHOPS.banh_mi.entrance.x;

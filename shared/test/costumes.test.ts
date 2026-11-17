@@ -87,3 +87,29 @@ describe('keeping costumes (Review Focus 2, 3)', () => {
     expect(again.players.a.wardrobe).toEqual([]);
   });
 });
+
+describe('plan 7 review fixes: malformed costume data in saves', () => {
+  it.each([
+    ['v7 outfit null', 7, null, []],
+    ['v7 wardrobe object', 7, { hat: 'non_la' }, {}],
+    ['v6 outfit string', 6, 'x', []],
+    ['v7 junk wardrobe + unowned hat', 7, { hat: 'mu_phot', shirt: 'ao_do' }, ['__proto__', 'constructor', 'ao_do', 'ao_do', 5]],
+  ])('%s loads with sane defaults', (_name, version, outfit, wardrobe) => {
+    const w = createWorld('ABC-DEF', 1);
+    joinPlayer(w, 'a', 'Bố');
+    const raw = JSON.parse(JSON.stringify(w));
+    raw.schemaVersion = version;
+    raw.players.a.outfit = outfit;
+    raw.players.a.wardrobe = wardrobe;
+    const loaded = normalizeLoaded(raw);
+    const p = loaded.players.a;
+    expect(Array.isArray(p.wardrobe)).toBe(true);
+    expect(new Set(p.wardrobe).size).toBe(p.wardrobe.length);
+    for (const id of p.wardrobe) expect(Object.hasOwn(COSTUMES, id)).toBe(true);
+    for (const slot of ['hat', 'shirt', 'pants', 'apron'] as const) {
+      const c = COSTUMES[p.outfit[slot]];
+      expect(c.slot).toBe(slot);
+      expect(c.price === 0 || p.wardrobe.includes(c.id)).toBe(true);
+    }
+  });
+});

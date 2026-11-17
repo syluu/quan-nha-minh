@@ -6,9 +6,10 @@ import type { WorldState } from './world';
 
 /** Món này người chơi mặc được chưa: đồ mặc định (giá 0) hoặc đã mua. */
 export function ownsCostume(world: WorldState, playerId: string, id: string): boolean {
+  if (!Object.hasOwn(COSTUMES, id)) return false;
   const c = COSTUMES[id];
   const p = world.players[playerId];
-  return !!c && !!p && (c.price === 0 || p.wardrobe.includes(id));
+  return !!p && (c.price === 0 || p.wardrobe.includes(id));
 }
 
 /** Mua (ví chung) một món trang phục cho chính mình và mặc ngay; món đã có thì chỉ mặc. */

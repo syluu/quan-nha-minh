@@ -1,5 +1,5 @@
 import {
-  BALANCE, COSTUME_LIST, COSTUME_SLOTS, INGREDIENTS, ITEMS, SHOP_META, SHOPS, effectiveCycle, isFarm, effectiveOutputCap, formatK, getStationDef, loanTerms, machineUpgradeCost,
+  BALANCE, COSTUME_LIST, COSTUME_SLOTS, DEFAULT_OUTFIT, INGREDIENTS, ITEMS, SHOP_META, SHOPS, effectiveCycle, isFarm, effectiveOutputCap, formatK, getStationDef, loanTerms, machineUpgradeCost,
   marketingMultiplier, priceRange,
 } from '@qnm/shared';
 import type { CampaignId, ItemId, ShopState, Snapshot, StationState } from '@qnm/shared';
@@ -296,8 +296,8 @@ export function costumeView(s: Snapshot, myId: string) {
     slot,
     title: SLOT_NAMES[slot],
     items: COSTUME_LIST.filter((c) => c.slot === slot).map((c) => {
-      const owned = c.price === 0 || !!me?.wardrobe.includes(c.id);
-      const wearing = me?.outfit[slot] === c.id;
+      const owned = c.price === 0 || !!me?.wardrobe?.includes(c.id);
+      const wearing = (me?.outfit?.[slot] ?? DEFAULT_OUTFIT[slot]) === c.id;
       return {
         id: c.id,
         name: c.name,

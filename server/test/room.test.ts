@@ -316,3 +316,19 @@ describe('plan 7: costumes', () => {
     await b.room.leave();
   });
 });
+
+describe('plan 7 review: a broken save does not lock the shop code', () => {
+  it('a world that fails to load can be retried (no WORLD_BUSY forever)', async () => {
+    const code = await newWorld();
+    const raw = (await store.load(code)) as Record<string, any>;
+    const good = structuredClone(raw);
+    raw.schemaVersion = 99;
+    await store.save(raw as never);
+    await expect(new Client(base).joinOrCreate('world', { code, token: 'broken', name: 'x' })).rejects.toThrow();
+    await store.save(good as never);
+    const a = await join(code, 'broken', 'Bố');
+    await sleep(200);
+    expect(a.snapshot()).not.toBeNull();
+    await a.room.leave();
+  });
+});

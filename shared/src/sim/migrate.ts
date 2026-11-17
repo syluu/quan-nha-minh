@@ -109,8 +109,8 @@ export function migrateV6toV7(raw: any, defaultOutfit: Record<string, string>): 
   const w = structuredClone(raw);
   w.schemaVersion = 7;
   for (const p of Object.values<any>(w.players ?? {})) {
-    p.outfit ??= { ...defaultOutfit };
-    p.wardrobe ??= [];
+    if (!p.outfit || typeof p.outfit !== 'object') p.outfit = { ...defaultOutfit };
+    if (!Array.isArray(p.wardrobe)) p.wardrobe = [];
   }
   return w;
 }

@@ -93,7 +93,13 @@ export class WorldRoom extends Room {
       WorldRoom.active.delete(code);
       throw new Error('WORLD_NOT_FOUND');
     }
-    this.world = normalizeLoaded(raw);
+    try {
+      this.world = normalizeLoaded(raw);
+    } catch (err) {
+      // File lưu hỏng / phiên bản lạ: nhả mã quán để lần sau còn thử lại được (không kẹt WORLD_BUSY).
+      WorldRoom.active.delete(code);
+      throw err;
+    }
 
     this.onMessage(MSG.input, (client: Client, msg: InputMsg) => {
       const pid = this.ownedPlayer(client);
