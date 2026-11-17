@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { BALANCE, ITEMS, SHOPS } from '@qnm/shared';
+import { BALANCE, SHOPS } from '@qnm/shared';
 import type { Snapshot } from '@qnm/shared';
 import { createInputGate, createKeyboardInput } from '../input';
 import type { GameConnection } from '../net';
@@ -7,6 +7,7 @@ import { createFollowCamera } from '../render/camera';
 import { createCharacter } from '../render/characters';
 import { createPickRing } from '../render/pickRing';
 import { createShipperView } from '../render/shipper';
+import { staffLabel } from '../ui/menu/views';
 import type { CharacterView } from '../render/characters';
 import { createScene } from '../render/scene';
 import { createStationView } from '../render/stations';
@@ -61,6 +62,16 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
   let prev = performance.now();
 
   function frame(now: number) {
+    // Hẹn khung hình sau trước: một lỗi vẽ (dữ liệu lạ) không được làm đứng cả màn hình.
+    requestAnimationFrame(frame);
+    try {
+      drawFrame(now);
+    } catch (err) {
+      console.error('[game] lỗi khi vẽ khung hình', err);
+    }
+  }
+
+  function drawFrame(now: number) {
     const dt = Math.min(0.1, (now - prev) / 1000);
     prev = now;
     const t = now / 1000;
@@ -126,8 +137,7 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
         seenS.add(st.id);
         let v = staffViews.get(st.id);
         if (!v) {
-          const job = st.role === 'cashier' ? 'thu ngân' : ITEMS[st.item!].name;
-          v = createCharacter(0x7a8b99, { look: 'staff', name: `${st.name} · ${job}` });
+          v = createCharacter(0x7a8b99, { look: 'staff', name: staffLabel(st) });
           staffViews.set(st.id, v);
           scene.add(v.group);
         }
@@ -157,7 +167,6 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
       }
     }
     renderer.render(scene, camera);
-    requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
 

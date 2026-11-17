@@ -198,3 +198,9 @@ export function onlineView(s: Snapshot) {
     hint: o.registered ? '' : 'Mở ô "Điểm giao hàng" (2.000K) ở cuối lối bếp bên phải để bắt đầu nhận đơn.',
   };
 }
+
+/** Nhãn trên đầu nhân viên: "Lan · thu ngân", "Mai · giao đơn", "Hùng · Bánh mì". */
+export function staffLabel(st: { name: string; role: string; item: ItemId | null }): string {
+  const job = st.role === 'cashier' ? 'thu ngân' : st.role === 'courier' ? 'giao đơn' : st.item ? ITEMS[st.item].name : 'phụ bếp';
+  return `${st.name} · ${job}`;
+}

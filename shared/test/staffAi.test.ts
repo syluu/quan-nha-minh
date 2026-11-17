@@ -150,3 +150,25 @@ describe('courier (plan 4)', () => {
     expect(w.shops.banh_mi.staff[0].carry).toEqual([]);
   });
 });
+
+describe('courier with a leftover item (I2)', () => {
+  it('still fetches what the shipper needs while holding bread nobody wants', () => {
+    const w = idleWorld();
+    w.shops.banh_mi.nextCustomerIn = 1e9;
+    w.shops.banh_mi.nextOrderIn = 1e9;
+    const st = w.shops.banh_mi.stations;
+    st.diem_giao.unlocked = true;
+    st.binh_tra.unlocked = true;
+    st.ke_tra_da.unlocked = true;
+    st.ke_tra_da.stock = 5;
+    st.ke_banh_mi.stock = 10; // kệ bánh mì đầy: không trả được bánh thừa
+    hireStaff(w, 'banh_mi', 'courier', null, 'owner');
+    const courier = w.shops.banh_mi.staff[0];
+    courier.carry = ['banh_mi'];
+    w.shops.banh_mi.orders.push({ id: 1, items: ['tra_da'], delivered: [], total: 3000, createdSec: 0 });
+    w.shops.banh_mi.nextOrderId = 2;
+    for (let i = 0; i < 1400; i++) tick(w, 0.05);
+    expect(w.dayStats.onlineOrders).toBe(1);
+    expect(w.dayStats.onlineCancelled).toBe(0);
+  });
+});

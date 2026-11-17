@@ -8,6 +8,7 @@ export function settlementRows(st: Settlement): [string, string][] {
     ['Doanh thu', formatK(st.revenue)],
     ['Nguyên liệu (đã chi)', formatK(-st.ingredientCost)],
     ['Quảng cáo (đã chi)', formatK(-st.marketing)],
+    ['Hoa hồng app (đã trừ)', formatK(-(st.commission ?? 0))],
     ['Lương nhân viên', formatK(-st.wages)],
     ['Thuê mặt bằng', formatK(-st.rent)],
     ['Góp nợ ngân hàng', formatK(-st.loanDue)],

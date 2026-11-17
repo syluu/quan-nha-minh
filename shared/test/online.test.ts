@@ -220,3 +220,55 @@ describe('online actions and snapshot', async () => {
     });
   });
 });
+
+describe('review fixes (plan 4)', async () => {
+  const { buildSettlement, sellStation } = await import('../src/sim/settlement');
+  const { tickShipper } = await import('../src/sim/online');
+
+  it('the month statement lists the app commission (I3)', () => {
+    const w = onlineWorld();
+    for (let d = 1; d <= 2; d++) w.history.push({ day: d, revenue: 100_000, ingredientCost: 0, unlockSpend: 0, served: 0, lost: 0, wages: 0, wasted: 0, sold: {}, marketing: 0, commission: 4_000, onlineOrders: 2, onlineCancelled: 0, operatingProfit: 0, stars: 3 });
+    expect(buildSettlement(w).commission).toBe(8_000);
+  });
+
+  it('a car waits for the oldest order using absolute time across midnight (M4)', () => {
+    const w = onlineWorld();
+    w.shops.banh_mi.stations.diem_giao.level = 1;
+    w.day = 2;
+    w.secOfDay = 10; // sáng hôm sau
+    w.shops.banh_mi.orders.push({ id: 1, items: ['banh_mi'], delivered: [], total: 5000, createdSec: 330 }); // tối hôm trước: ngày 1, giây 330 (tính tuyệt đối)
+    tickShipper(w, 'banh_mi', 0.05);
+    expect(w.shops.banh_mi.shipper?.vehicle).toBe('car');
+  });
+
+  it('selling a machine drops waiting orders for items no longer on sale, without a star penalty (M5)', () => {
+    const w = onlineWorld();
+    const st = w.shops.banh_mi.stations;
+    st.binh_tra.unlocked = true;
+    st.ke_tra_da.unlocked = true;
+    w.shops.banh_mi.orders.push(
+      { id: 1, items: ['tra_da'], delivered: [], total: 3000, createdSec: 0 },
+      { id: 2, items: ['banh_mi'], delivered: [], total: 5000, createdSec: 0 },
+    );
+    w.settlement = buildSettlement(w);
+    expect(sellStation(w, 'banh_mi', 'ke_tra_da', 'a', w.settlement.month)).toEqual({ ok: true });
+    expect(w.shops.banh_mi.orders.map((o) => o.id)).toEqual([2]);
+    expect(w.shops.banh_mi.ratings).toEqual([]);
+  });
+
+  it('selling the pickup point also clears the pause (M9)', () => {
+    const w = onlineWorld();
+    w.shops.banh_mi.onlinePaused = true;
+    w.settlement = buildSettlement(w);
+    sellStation(w, 'banh_mi', 'diem_giao', 'a', w.settlement.month);
+    expect(w.shops.banh_mi.onlinePaused).toBe(false);
+  });
+
+  it('a paused shop still sends a shipper for orders already accepted (Review Focus 2)', () => {
+    const w = onlineWorld();
+    w.shops.banh_mi.orders.push({ id: 1, items: ['banh_mi'], delivered: [], total: 5000, createdSec: 0 });
+    w.shops.banh_mi.onlinePaused = true;
+    tickShipper(w, 'banh_mi', 0.05);
+    expect(w.shops.banh_mi.shipper).not.toBeNull();
+  });
+});

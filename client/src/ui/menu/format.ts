@@ -2,7 +2,7 @@ import { ITEMS, formatK } from '@qnm/shared';
 import type { DaySummary, ItemId, Report } from '@qnm/shared';
 import { formatStars } from '../hud';
 
-export const REPORT_COLUMNS = ['Doanh thu', 'Nguyên liệu', 'Lương', 'Bỏ đi', 'Hoa hồng', 'Lãi hoạt động', 'Mở rộng', 'Khách', 'Đơn online', 'Bỏ về', 'Sao'];
+export const REPORT_COLUMNS = ['Doanh thu', 'Nguyên liệu', 'Lương', 'Bỏ đi', 'Hoa hồng', 'Lãi hoạt động', 'Mở rộng', 'Khách', 'Đơn online', 'Đơn huỷ', 'Bỏ về', 'Sao'];
 
 function cells(d: DaySummary): string[] {
   return [
@@ -15,6 +15,7 @@ function cells(d: DaySummary): string[] {
     formatK(-d.unlockSpend),
     String(d.served),
     String(d.onlineOrders ?? 0),
+    String(d.onlineCancelled ?? 0),
     String(d.lost),
     formatStars(d.stars),
   ];

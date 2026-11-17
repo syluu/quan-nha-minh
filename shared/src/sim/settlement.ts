@@ -5,7 +5,7 @@ import { maxLoan, stationValue } from './bank';
 import { formatK } from '../money';
 import type { SimEvent } from './events';
 import { addLog, playerName } from './log';
-import { clearOnline } from './online';
+import { clearOnline, dropUnsellableOrders } from './online';
 import { createWorld } from './world';
 import type { Loan, Settlement, WorldState } from './world';
 
@@ -29,7 +29,7 @@ function isDue(world: WorldState, l: Loan): boolean {
 /** Lập bảng kết toán: số liệu 7 ngày gần nhất + lương còn nợ + góp nợ đến hạn. */
 export function buildSettlement(world: WorldState): Settlement {
   const days = world.history.slice(-BALANCE.MONTH_DAYS);
-  const sum = (k: 'revenue' | 'ingredientCost' | 'marketing') => days.reduce((n, d) => n + (d[k] ?? 0), 0);
+  const sum = (k: 'revenue' | 'ingredientCost' | 'marketing' | 'commission') => days.reduce((n, d) => n + (d[k] ?? 0), 0);
   const wages = owedWages(world);
   const rent = 0;
   const loanDue = loanInstallmentsDue(world);
@@ -38,6 +38,7 @@ export function buildSettlement(world: WorldState): Settlement {
     revenue: sum('revenue'),
     ingredientCost: sum('ingredientCost'),
     marketing: sum('marketing'),
+    commission: sum('commission'),
     wages,
     rent,
     loanDue,
@@ -140,6 +141,7 @@ export function sellStation(world: WorldState, shopId: ShopId, instanceId: unkno
   world.money += refund;
   const placed = SHOPS[shopId].stations.find((p) => p.instanceId === instanceId)!;
   if (getStationDef(placed.def).kind === 'pickup') clearOnline(world, shopId);
+  else dropUnsellableOrders(world, shopId);
   addLog(world, `${playerName(world, byPlayerId)} đã bán ${getStationDef(placed.def).name}, thu ${formatK(refund)}`);
   trySettleAfterAction(world);
   return { ok: true };

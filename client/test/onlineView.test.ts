@@ -34,3 +34,12 @@ describe('courier and pickup in menus', () => {
     expect(upgradeView(snap(true), 'x').pickup).toEqual({ vehicle: 'Xe máy', cost: '5.000K' });
   });
 });
+
+describe('staff label over the head (C1)', async () => {
+  const { staffLabel } = await import('../src/ui/menu/views');
+  it('names every role, including the courier (item null)', () => {
+    expect(staffLabel({ name: 'Lan', role: 'cashier', item: null })).toBe('Lan · thu ngân');
+    expect(staffLabel({ name: 'Mai', role: 'courier', item: null })).toBe('Mai · giao đơn');
+    expect(staffLabel({ name: 'Hùng', role: 'cook', item: 'banh_mi' })).toBe('Hùng · Bánh mì');
+  });
+});

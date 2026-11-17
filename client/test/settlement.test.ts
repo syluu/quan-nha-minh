@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Settlement } from '@qnm/shared';
 import { settlementRows, shortfall, suggestedLoan } from '../src/ui/settlementModal';
 
-const st: Settlement = { month: 2, revenue: 3_200_000, ingredientCost: 1_100_000, marketing: 200_000, wages: 1_680_000, rent: 0, loanDue: 545_000, totalDue: 2_225_000 };
+const st: Settlement = { month: 2, revenue: 3_200_000, ingredientCost: 1_100_000, marketing: 200_000, commission: 64_000, wages: 1_680_000, rent: 0, loanDue: 545_000, totalDue: 2_225_000 };
 
 describe('settlement modal helpers', () => {
   it('lists the month in Vietnamese with K money', () => {
@@ -10,6 +10,7 @@ describe('settlement modal helpers', () => {
       ['Doanh thu', '3.200K'],
       ['Nguyên liệu (đã chi)', '-1.100K'],
       ['Quảng cáo (đã chi)', '-200K'],
+      ['Hoa hồng app (đã trừ)', '-64K'],
       ['Lương nhân viên', '-1.680K'],
       ['Thuê mặt bằng', '0K'],
       ['Góp nợ ngân hàng', '-545K'],

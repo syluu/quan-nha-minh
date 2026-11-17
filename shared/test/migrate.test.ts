@@ -106,7 +106,7 @@ describe('normalizeLoaded v2 → v3', () => {
 
   it('keeps an open month-end settlement across a server restart (Review Focus 2)', () => {
     const w = normalizeLoaded(v2Save());
-    w.settlement = { month: 1, revenue: 1, ingredientCost: 2, marketing: 0, wages: 840_000, rent: 0, loanDue: 0, totalDue: 840_000 };
+    w.settlement = { month: 1, revenue: 1, ingredientCost: 2, marketing: 0, commission: 0, wages: 840_000, rent: 0, loanDue: 0, totalDue: 840_000 };
     const again = normalizeLoaded(JSON.parse(JSON.stringify(w)));
     expect(again.settlement).toEqual(w.settlement);
   });

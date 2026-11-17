@@ -103,6 +103,8 @@ export interface Settlement {
   revenue: number;
   ingredientCost: number;
   marketing: number;
+  /** Hoa hồng app giao đồ ăn trong tháng (đã trừ khi nhận tiền). */
+  commission: number;
   wages: number;
   rent: number;
   loanDue: number;

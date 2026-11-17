@@ -4,12 +4,18 @@ import { formatK } from '../money';
 import type { ActionResult } from './actions';
 import type { SimEvent } from './events';
 import { addLog, playerName } from './log';
+import { isOnSale } from './prices';
 import { pushRating } from './rating';
 import { chooseWants, hourMultiplier, priceOf, trafficMultiplier } from './customers';
 import { effectiveStars, marketingMultiplier } from './marketing';
 import { gameHour } from './time';
 import type { Order, ShopState, Shipper, WorldState } from './world';
 import { nextRandom } from './world';
+
+/** Thời gian tuyệt đối (giây) kể từ đầu ngày 1 — để tính chờ qua đêm. */
+export function absTime(world: WorldState): number {
+  return (world.day - 1) * BALANCE.DAY_REAL_SEC + world.secOfDay;
+}
 
 /** Điểm giao hàng của quán (trạm kind 'pickup'). */
 export function pickupOf(shopId: ShopId): PlacedStation | undefined {
@@ -33,7 +39,7 @@ export function spawnOrder(world: WorldState, shopId: ShopId): Order | null {
     items: kept,
     delivered: [],
     total: kept.reduce((s, it) => s + priceOf(shop, it), 0),
-    createdSec: world.secOfDay,
+    createdSec: absTime(world),
   };
   shop.orders.push(order);
   return order;
@@ -140,7 +146,7 @@ export function tickShipper(world: WorldState, shopId: ShopId, dt: number): SimE
     if (vehicle === 'bike') take = shop.orders.slice(0, BALANCE.ONLINE.bike.batch);
     else {
       const car = BALANCE.ONLINE.car;
-      const oldestWait = world.secOfDay - shop.orders[0].createdSec;
+      const oldestWait = absTime(world) - shop.orders[0].createdSec;
       if (shop.orders.length >= car.batchMin || oldestWait >= car.waitOldest) take = shop.orders.slice(0, car.batchMax);
     }
     if (!take.length) return [];
@@ -210,6 +216,19 @@ export function upgradePickup(world: WorldState, shopId: ShopId, byPlayerId: str
 export function clearOnline(world: WorldState, shopId: ShopId): void {
   world.shops[shopId].orders = [];
   world.shops[shopId].shipper = null;
+  world.shops[shopId].onlinePaused = false;
+}
+
+/** Sau khi bán máy/kệ: bỏ các đơn có món không còn bán (không trừ sao — quán không có lỗi giao chậm). */
+export function dropUnsellableOrders(world: WorldState, shopId: ShopId): void {
+  const shop = world.shops[shopId];
+  const dropped = shop.orders.filter((o) => o.items.some((it) => !isOnSale(world, shopId, it))).map((o) => o.id);
+  if (!dropped.length) return;
+  shop.orders = shop.orders.filter((o) => !dropped.includes(o.id));
+  if (shop.shipper) {
+    shop.shipper.orderIds = shop.shipper.orderIds.filter((id) => !dropped.includes(id));
+    if (!shop.shipper.orderIds.length && shop.shipper.state !== 'leaving') shop.shipper.state = 'leaving';
+  }
 }
 
 export function onlineSnapshot(world: WorldState, shopId: ShopId) {

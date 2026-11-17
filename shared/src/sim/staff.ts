@@ -232,7 +232,9 @@ function tickCourier(world: WorldState, shopId: ShopId, s: StaffState, dt: numbe
       // Món không còn ai cần (đơn bị huỷ): trả về chỗ nhận được.
       const to = targetForCarry(world, shopId, s.carry[0]);
       if (to) s.task = { from: to, to, item: s.carry[0], phase: 'toTarget' };
-    } else {
+    }
+    // Không có chỗ trả món thừa vẫn đi lấy món shipper cần nếu tay còn chỗ.
+    if (!s.task && s.carry.length < staffStats(s).carry) {
       for (const item of needs) {
         const from = courierSource(world, shopId, item);
         if (from) {

@@ -97,7 +97,7 @@ export function createStationView(placed: PlacedStation): StationView {
 
   const name = makeLabel(def.name, { color: '#2b2118', bg: 'rgba(255,250,240,.85)', size: 26, scale: 0.006 });
   name.position.set(0, topY + 0.9, 0);
-  name.visible = def.kind !== 'cashier';
+  name.visible = def.kind !== 'cashier' && def.kind !== 'pickup';
   group.add(name);
 
   if (def.kind === 'cashier') {

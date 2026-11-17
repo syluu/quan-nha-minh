@@ -57,6 +57,11 @@ export function createShipperView(scene: THREE.Scene) {
     if (label) disposeLabel(label);
     label = null;
     labelKey = '';
+    // Giải phóng hình khối riêng của xe (bánh xe, đầu, mũ dùng chung thì giữ lại).
+    group?.traverse((o) => {
+      const m = o as THREE.Mesh;
+      if (m.isMesh && m.geometry !== wheelGeo && m.geometry !== headGeo && m.geometry !== helmetGeo) m.geometry.dispose();
+    });
     group?.removeFromParent();
     group = null;
     kind = null;
@@ -89,7 +94,7 @@ export function createShipperView(scene: THREE.Scene) {
         }
         if (text) {
           label = makeLabel(text, { bg: left <= 15 ? '#c8452c' : '#1f8a3a', size: 32, scale: 0.0075 });
-          label.position.y = s.vehicle === 'car' ? 2.0 : 2.0;
+          label.position.y = 2.0;
           group.add(label);
         }
       }
