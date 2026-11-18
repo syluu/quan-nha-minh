@@ -30,6 +30,8 @@ export interface CharacterView {
   setSitting(on: boolean): void;
   /** Trang phục người chơi (mũ, tóc, áo/váy, quần/chân váy, tạp dề) — đổi cả kiểu dáng. */
   setOutfit(outfit: Outfit): void;
+  /** Bong bóng trên đầu (cảm xúc khách, biểu cảm người chơi); null = ẩn. */
+  setBubble(text: string | null): void;
   dispose(): void;
 }
 
@@ -337,9 +339,27 @@ export function createCharacter(color: number, opts: { look: CharacterLook; name
     group.add(badge);
   }
 
+  let bubble: THREE.Sprite | null = null;
+  let bubbleText: string | null = null;
+  function setBubble(text: string | null) {
+    if (text === bubbleText) return;
+    bubbleText = text;
+    if (bubble) {
+      group.remove(bubble);
+      disposeLabel(bubble);
+      bubble = null;
+    }
+    if (!text) return;
+    bubble = makeLabel(text, { bg: 'rgba(255,255,255,.92)', color: '#2b2118', size: 38, scale: 0.0075 });
+    bubble.position.y = opts.name ? 2.7 : 2.05;
+    group.add(bubble);
+  }
+
   return {
     group,
+    setBubble,
     setPose(x, z, dir, moving, t) {
+      if (bubble) bubble.position.y = (opts.name ? 2.7 : 2.05) + Math.sin(t * 4) * 0.04;
       group.position.set(x, 0, z);
       inner.rotation.y = sitting ? 0 : dir;
       inner.position.y = sitting ? 0.12 : moving ? Math.abs(Math.sin(t * 10)) * 0.04 : 0;
@@ -377,6 +397,7 @@ export function createCharacter(color: number, opts: { look: CharacterLook; name
     dispose() {
       if (label) disposeLabel(label);
       if (badge) disposeLabel(badge);
+      if (bubble) disposeLabel(bubble);
       group.removeFromParent();
     },
   };

@@ -13,7 +13,8 @@ export function createScene(container: HTMLElement) {
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0xe9dfcc);
-  scene.add(new THREE.HemisphereLight(0xffffff, 0xb59a7a, 1.6));
+  const hemi = new THREE.HemisphereLight(0xffffff, 0xb59a7a, 1.6);
+  scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xffffff, 1.4);
   sun.position.set(5, 10, 6);
   scene.add(sun);
@@ -32,7 +33,7 @@ export function createScene(container: HTMLElement) {
   window.addEventListener('resize', resize);
   resize();
 
-  return { renderer, scene, camera, resize };
+  return { renderer, scene, camera, resize, hemi, sun };
 }
 
 /** Nền của một quán: sàn caro, vỉa hè, đường bên phải, tường sau và biển hiệu theo loại quán. */

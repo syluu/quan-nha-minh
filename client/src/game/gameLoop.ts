@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { BALANCE, SHOPS } from '@qnm/shared';
+import { BALANCE, EMOTES, FUN, SHOPS } from '@qnm/shared';
 import type { ShopId, Snapshot } from '@qnm/shared';
 import { createInputGate, createKeyboardInput } from '../input';
 import { createPointerControls, dragToWorld } from '../pointer';
@@ -10,6 +10,8 @@ import { createPickRing } from '../render/pickRing';
 import { createShipperView } from '../render/shipper';
 import { createAdDecor } from '../render/adDecor';
 import { createPromoDecor } from '../render/promoDecor';
+import { createFunFx } from '../render/funFx';
+import { createAmbient } from '../render/ambient';
 import { createFarmLand } from '../render/farmLand';
 import { staffLabel } from '../ui/menu/views';
 import type { CharacterView } from '../render/characters';
@@ -27,11 +29,14 @@ export interface GameHandle {
   setInputBlocked(reason: string, blocked: boolean): void;
   /** Chiếu một điểm thế giới ra toạ độ màn hình (px) — dùng cho chữ nổi. */
   project(x: number, y: number, z: number): { x: number; y: number };
+  /** Pháo giấy tại một điểm trong quán (null = quanh nhân vật của mình). */
+  confetti(x?: number, z?: number): void;
 }
 
 /** Vòng lặp vẽ: nhận snapshot → nội suy; nhân vật của mình dùng dự đoán; camera đi theo. */
 export function startGame(conn: GameConnection, container: HTMLElement): GameHandle {
-  const { renderer, scene, camera } = createScene(container);
+  const { renderer, scene, camera, hemi, sun } = createScene(container);
+  const ambient = createAmbient(scene, hemi, sun);
   const cam = createFollowCamera(camera, renderer.domElement);
   const interp = createInterpolator(100);
   const predictor = createPredictor();
@@ -55,6 +60,7 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
   const shipperView = createShipperView(scene);
   const adDecor = createAdDecor(scene);
   const promoDecor = createPromoDecor(scene);
+  const funFx = createFunFx(scene);
   const farmLand = createFarmLand(scene);
   const lastPos = new Map<string, { x: number; z: number }>();
   let latest: Snapshot | null = null;
@@ -125,7 +131,8 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
     }
     // Tốc độ thật của mình (đã nâng cấp) để dự đoán khớp với máy chủ.
     const meNow = latest?.players.find((p) => p.id === conn.playerId);
-    const mySpeed = BALANCE.PLAYER_SPEED * (1 + BALANCE.PLAYER_SPEED_STEP * (meNow?.speedLevel ?? 0));
+    const mySpeed =
+      BALANCE.PLAYER_SPEED * (1 + BALANCE.PLAYER_SPEED_STEP * (meNow?.speedLevel ?? 0)) * (meNow?.boost ? FUN.HIFIVE_SPEED : 1);
     const myPose = predictor.ready() ? predictor.step(local, dt, solid, mySpeed) : null;
     const iAmWalking = Math.hypot(local.mx, local.mz) > BALANCE.STILL_INPUT;
 
@@ -155,6 +162,12 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
         v.setCarry(p.carry, p.cap);
         v.setName(p.name);
         if (p.outfit) v.setOutfit(p.outfit);
+        // Biểu cảm / đập tay / đang tăng tốc.
+        v.setBubble(
+          p.emote === 'hifive' ? '🙌 Đập tay nào!' : p.emote === 'hifive_ok' ? '🙌 Yeah!' : p.emote && EMOTES[p.emote]
+            ? `${EMOTES[p.emote].icon} ${EMOTES[p.emote].text}`
+            : p.boost ? '⚡' : null,
+        );
       }
       for (const [id, v] of players) if (!seen.has(id)) (v.dispose(), players.delete(id));
 
@@ -174,6 +187,7 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
         v.setSitting(c.sitting);
         v.setPose(c.x, c.z, c.dir, moving && !c.sitting, t);
         v.setCarry(c.holding);
+        v.setBubble(c.mood ? (c.tourist ? `${c.mood} 📷` : c.mood) : c.tourist ? '📷' : null);
       }
       for (const [id, v] of customers) if (!seenC.has(id)) (v.dispose(), customers.delete(id), lastPos.delete(`c${id}`));
 
@@ -199,6 +213,7 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
       shipperView.update(latest?.online.shipper ?? null, dt);
       if (shopId) adDecor.update(shopId, latest?.ads, dt);
       if (latest) promoDecor.update(latest, dt, t);
+      if (latest) funFx.update(latest, dt, t);
       if (latest) farmLand.update(latest.shopId === 'farm', latest.farm?.level ?? 0);
 
       // Vòng tiến trình nhặt món của chính mình
@@ -215,6 +230,7 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
           cameraSnapped = true;
         }
         cam.follow(focus.x, focus.z, dt);
+        if (latest) ambient.update(latest, dt, t, focus);
       }
     }
     renderer.render(scene, camera);
@@ -230,6 +246,10 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
       pointer.setEnabled(on);
       menuOpen = !on;
       menuChanged = true;
+    },
+    confetti(x, z) {
+      const me = latest?.players.find((p) => p.id === conn.playerId);
+      funFx.confetti(x ?? me?.x ?? 0, z ?? me?.z ?? 0);
     },
     project(x, y, z) {
       v.set(x, y, z).project(camera);

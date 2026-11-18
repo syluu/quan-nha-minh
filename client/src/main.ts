@@ -1,5 +1,6 @@
 import './style.css';
-import { formatK } from '@qnm/shared';
+import { BADGES, SHOP_META, SHOPS, formatK } from '@qnm/shared';
+import type { ShopId } from '@qnm/shared';
 import type { SimEvent, Snapshot } from '@qnm/shared';
 import { audio } from './audio/instance';
 import { cuesFor } from './audio/cues';
@@ -13,6 +14,8 @@ import { createHud } from './ui/hud';
 import { createSettlementModal } from './ui/settlementModal';
 import { createShipperAlert } from './ui/shipperAlert';
 import { createPromoAlert } from './ui/promoAlert';
+import { createQuestPanel } from './ui/questPanel';
+import { badgeTab } from './ui/menu/badgeTab';
 import { createMenu } from './ui/menu/menu';
 import { pricesTab } from './ui/menu/pricesTab';
 import { reportTab } from './ui/menu/reportTab';
@@ -26,8 +29,16 @@ import { farmTab } from './ui/menu/farmTab';
 import { costumeTab } from './ui/menu/costumeTab';
 import { actionErrorText } from './ui/menu/views';
 import { showToast } from './ui/toast';
+import { createEmoteBar } from './ui/emoteBar';
+import { createRao } from './audio/rao';
 
 const root = document.getElementById('app')!;
+
+/** Toạ độ một trạm (để bắn pháo giấy khi vừa mở). */
+function stationXZ(shopId: ShopId, instanceId: string): [number, number] {
+  const p = SHOPS[shopId].stations.find((x) => x.instanceId === instanceId);
+  return [p?.x ?? 0, p?.z ?? 0];
+}
 
 
 function enterGame(conn: GameConnection) {
@@ -43,6 +54,7 @@ function enterGame(conn: GameConnection) {
   ui.append(side);
   const shipperAlert = createShipperAlert(side);
   const promoAlert = createPromoAlert(side);
+  const questPanel = createQuestPanel(side);
   const floats = createFloatText(ui, game.project);
   let latest: Snapshot | null = null;
   conn.onSnapshot((s) => (latest = s));
@@ -62,11 +74,15 @@ function enterGame(conn: GameConnection) {
       marketingTab(conn, () => latest),
       bankTab(conn, () => latest),
       costumeTab(conn, () => latest, conn.playerId),
+      badgeTab(() => latest),
       settingsTab(conn, myName),
     ],
     (open) => game.setInputBlocked('menu', open),
   );
   conn.onActionError((e) => showToast(ui, actionErrorText(e)));
+  createEmoteBar(ui, conn);
+  const rao = createRao();
+  let lastRao = performance.now();
   createSettlementModal(ui, conn, (blocked) => game.setInputBlocked('settle', blocked));
   applyDisplaySettings();
 
@@ -78,9 +94,13 @@ function enterGame(conn: GameConnection) {
     prevCarry = mine;
     pending = [];
     hud.update(s);
+    const now = performance.now();
+    if (SHOP_META[s.shopId].kind === 'shop') rao.update((now - lastRao) / 1000, s.shopId);
+    lastRao = now;
     log.update(s.log);
     shipperAlert.update(s);
     promoAlert.update(s);
+    questPanel.update(s);
     // Chỉ khi chạy dev: cho phép script kiểm thử đọc trạng thái.
     if (import.meta.env.DEV) Object.assign(window, { __qnm: { snapshot: s, playerId: conn.playerId } });
   });
@@ -88,8 +108,28 @@ function enterGame(conn: GameConnection) {
     // Sự kiện của quán khác (người nhà đang ở quán khác): không hiện chữ nổi ở đây.
     if ('shopId' in e && latest && e.shopId !== latest.shopId) return;
     pending.push(e);
-    if (e.type === 'sale') floats.spawn(`+${formatK(e.amount)}`, 'gain', e.x, e.z);
-    else if (e.type === 'customerLost') floats.spawn('-1★', 'loss', e.x, e.z);
+    if (e.type === 'sale') {
+      floats.spawn(`+${formatK(e.amount)}`, 'gain', e.x, e.z);
+      if (e.tip) setTimeout(() => floats.spawn(`💰 +${formatK(e.tip!)} boa`, 'gain', e.x, e.z), 350);
+    } else if (e.type === 'combo') {
+      floats.spawn(`🔥 Combo ×${e.n}! +${formatK(e.bonus)}`, 'gain', e.x, e.z);
+      game.confetti(e.x, e.z);
+    } else if (e.type === 'unlock') game.confetti(...stationXZ(e.shopId, e.instanceId));
+    else if (e.type === 'catFed') {
+      floats.spawn('😺 Mèo ở lại quán! +⭐', 'gain', e.x, e.z);
+      game.confetti(e.x, e.z);
+    } else if (e.type === 'highFive') {
+      floats.spawn(`🙌 ${e.names.join(' & ')} đập tay! Chạy nhanh 10 giây`, 'gain', e.x, e.z);
+      game.confetti(e.x, e.z);
+    } else if (e.type === 'questDone') {
+      showToast(ui, `📋 Xong nhiệm vụ: ${e.text} (+${formatK(e.reward)})`);
+      game.confetti();
+    } else if (e.type === 'badge') {
+      const b = BADGES.find((x) => x.id === e.id);
+      if (b) showToast(ui, `🏅 Huy hiệu mới: ${b.icon} ${b.name}`);
+      game.confetti();
+    }
+    else if (e.type === 'customerLost') floats.spawn('😡 -1★', 'loss', e.x, e.z);
     else if (e.type === 'trash') floats.spawn(`-${formatK(e.value)}`, 'waste', e.x, e.z);
     else if (e.type === 'orderDone') floats.spawn(`+${formatK(e.net)} online`, 'gain', e.x, e.z);
     else if (e.type === 'stored') floats.spawn('📦 Vào kho', 'gain', e.x, e.z);

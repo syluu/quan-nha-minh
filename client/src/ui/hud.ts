@@ -15,11 +15,13 @@ export function carryBadge(count: number, cap: number): { text: string; full: bo
 export function hudText(
   s: Snapshot,
   myId = '',
-): { shop: string; money: string; clock: string; stars: string; online: string; basket: string } {
+): { shop: string; money: string; clock: string; sky: string; stars: string; online: string; basket: string } {
   const me = s.players.find((p) => p.id === myId);
   return {
     shop: `🏠 ${SHOP_META[s.shopId].name}`,
     money: `💰 ${formatK(s.money)}`,
+    // Thời tiết + ngày lễ (nếu có).
+    sky: `${s.fun?.weather === 'rain' ? '🌧️ Mưa' : '☀️ Nắng'}${s.fun?.festival ? ` · ${s.fun.festival.icon} ${s.fun.festival.name}` : ''}`,
     clock: `Ngày ${s.day} · ${formatClock(s.secOfDay)}`,
     stars: SHOP_META[s.shopId].kind === 'farm' ? '★ —' : formatStars(s.stars),
     // Người ở quán khác ghi kèm tên quán.
@@ -39,6 +41,7 @@ export function createHud(root: HTMLElement, myId: string) {
     <span class="pill" data-k="shop"></span>
     <span class="pill" data-k="money"></span>
     <span class="pill" data-k="clock"></span>
+    <span class="pill" data-k="sky"></span>
     <span class="pill stars" data-k="stars"></span>
     <span class="pill" data-k="basket"></span>
     <span class="pill online" data-k="online"></span>
@@ -64,6 +67,7 @@ export function createHud(root: HTMLElement, myId: string) {
       el('shop').textContent = t.shop;
       el('money').textContent = t.money;
       el('clock').textContent = t.clock;
+      el('sky').textContent = t.sky;
       el('stars').textContent = t.stars;
       el('online').textContent = `👥 ${t.online}`;
       el('basket').textContent = t.basket;

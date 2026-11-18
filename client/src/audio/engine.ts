@@ -102,6 +102,28 @@ export function createAudio() {
           tone(659, t, 0.25, 'triangle', 0.4);
           tone(523, t + 0.25, 0.35, 'triangle', 0.4);
           break;
+        case 'tip':
+          [1568, 2093].forEach((f, i) => tone(f, t + 0.12 + i * 0.07, 0.25, 'sine', 0.25));
+          break;
+        case 'combo':
+          [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, t + i * 0.05, 0.18, 'square', 0.18));
+          break;
+        case 'cheer':
+          [784, 988, 1175, 1568].forEach((f, i) => tone(f, t + i * 0.1, 0.35, 'triangle', 0.35));
+          tone(1568, t + 0.45, 0.6, 'sine', 0.3);
+          break;
+        case 'meow':
+          tone(700, t, 0.35, 'sine', 0.3, 1100);
+          tone(1100, t + 0.2, 0.3, 'sine', 0.25, 600);
+          break;
+        case 'bus':
+          tone(392, t, 0.25, 'square', 0.22);
+          tone(330, t + 0.28, 0.35, 'square', 0.22);
+          break;
+        case 'clap':
+          noise(t, 0.08, 0.5);
+          noise(t + 0.12, 0.08, 0.4);
+          break;
       }
     },
     /** Trạng thái AudioContext (để kiểm tra): 'none' khi chưa mở khoá. */

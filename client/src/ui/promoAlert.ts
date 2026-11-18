@@ -24,6 +24,9 @@ export function promoAlertsView(s: Snapshot): PromoAlert[] {
     if (ph) out.push({ key: id, text: `${id === 'review' ? '⭐' : '📰'} ${who} ${ph.state === 'leave' ? 'đang ra về' : `đang ăn thử tới khoảng ${visitUntil(REVIEW_VISIT)}`}` });
   }
   if (ids.has('livestream')) out.push({ key: 'live', text: '🔴 Đang livestream bán hàng — đơn online tăng' });
+  if (s.fun?.tourBus) out.push({ key: 'tour', text: '🚌 Đoàn khách du lịch vừa tới — khách xuống xe đông lắm, mua nhiều, boa hậu!' });
+  if (s.fun?.cat === 'stray') out.push({ key: 'cat', text: '🐱 Có mèo hoang ghé quán (vỉa hè bên trái) — cầm món ăn đứng cạnh để cho mèo ăn' });
+  if ((s.fun?.combo ?? 0) >= 3) out.push({ key: 'combo', text: `🔥 Combo phục vụ nhanh ×${s.fun.combo}` });
   return out;
 }
 

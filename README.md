@@ -103,6 +103,19 @@ Mở `http://localhost:5173` ở 2 cửa sổ (hoặc 2 máy cùng wifi qua `htt
 - Đồ thuộc về người mua, mặc ngay; đồ đã có đổi mặc lại miễn phí. Người khác trong nhà thấy ngay.
 - Quán phá sản vẫn **giữ trang phục** đã mua (cùng tên nhân vật và mã quán).
 
+### Vui nhộn, sinh động
+
+- **Khách có cảm xúc**: bong bóng 😋 😍 🙂 😐 🤔 😤 😡 💸 trên đầu; phục vụ nhanh thì khách **boa** (khách du lịch boa nhiều, ngày lễ gấp đôi).
+- **Combo**: phục vụ nhanh liên tiếp, cứ mỗi 5 khách được thưởng thêm, có pháo giấy.
+- **Đoàn khách du lịch**: có ngày xe buýt đỗ trước quán, 10 khách 📷 xuống mua nhiều, chịu giá cao.
+- **Mèo hoang** ghé quán: cầm món ăn đứng cạnh để cho ăn → mèo ở lại làm **mèo của quán**, +sao.
+- **Biểu cảm**: thanh 👋 😂 👍 🆘 ❤️ (phím 1–5); **🙌 đập tay** (phím H) với người nhà đứng cạnh → cả hai chạy nhanh 10 giây.
+- **Báo cuối ngày**: tít báo vui theo kết quả + **bảng vinh danh** (Vua bê hàng, Thu ngân thần tốc, Dọn bàn chăm nhất, Nông dân giỏi).
+- **Khói, lửa, hơi nước** ở máy đang làm; **tiếng rao** (nếu trình duyệt có giọng tiếng Việt).
+- **Ngày – đêm** (trời chiều tà, tối dần), **trời mưa** (ít khách đi bộ, nhiều đơn online), **phố xá** có xe máy, người đi bộ, cây xanh.
+- **Nhiệm vụ hằng ngày** (bảng bên trái, có thưởng), **🏅 Huy hiệu** (Menu → Huy hiệu, giữ khi phá sản).
+- **Ngày lễ** (cứ 10 ngày): Tết, Trung thu, Giáng sinh, Quốc khánh — trang trí riêng, khách đông, tiền boa gấp đôi.
+
 ## Test
 
 ```bash
