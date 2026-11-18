@@ -46,9 +46,23 @@ export function mapTab(conn: GameConnection, latest: () => Snapshot | null, clos
           </tbody></table>
           ${v.hint ? `<p class="note">${v.hint}</p>` : ''}
           <h3>Kho tổng</h3>
-          <p>${v.warehouse || '<span class="muted">Trống — thu hoạch ở trang trại rồi bê thùng lên xe chở hàng.</span>'}</p>
+          ${
+            v.stock.length
+              ? `<table class="staff"><tbody>${v.stock
+                  .map(
+                    (it) => `<tr><td><b>${it.name}</b><div class="muted">Còn ${it.qty} · bán ra chợ ${it.unit}/đơn vị</div></td>
+                    <td class="act"><button data-sell="${it.id}" data-qty="10" ${it.qty < 10 ? 'disabled' : ''}>Bán 10</button>
+                    <button class="primary" data-sell="${it.id}" data-qty="all">Bán hết (+${it.all})</button></td></tr>`,
+                  )
+                  .join('')}</tbody></table>
+                 <p class="note">Dùng không hết thì bán ra chợ lấy tiền (được 60% giá chợ). Bán được cả lúc kết toán cuối tháng.</p>`
+              : '<p class="muted">Trống — thu hoạch ở trang trại rồi bê thùng lên xe chở hàng.</p>'
+          }
           <p class="note">Máy ở các quán lấy nguyên liệu trong kho trước, thiếu mới mua chợ. Phí xe chở hàng 50K cho mỗi quán đã dùng hàng trong kho hôm đó.</p>
           <p class="note">Mọi quán vẫn chạy khi không có ai đứng ở đó (nhân viên làm thay). Tiền thuê trả cuối tháng cùng lương. Đồ đang cầm mang theo khi đi.</p>`;
+        body.querySelectorAll<HTMLButtonElement>('[data-sell]').forEach((b) => {
+          b.onclick = () => conn.sellWarehouse(b.dataset.sell as never, b.dataset.qty === 'all' ? 'all' : Number(b.dataset.qty));
+        });
         body.querySelectorAll<HTMLButtonElement>('[data-go]').forEach((b) => {
           b.onclick = () => {
             conn.travel(b.dataset.go as Snapshot['shopId']);

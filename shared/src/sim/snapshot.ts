@@ -3,7 +3,7 @@ import { canRent, isShopComplete } from './shops';
 import type { ShopId } from '../content';
 import type { Snapshot } from '../net/protocol';
 import { maxLoan } from './bank';
-import { migrateV1toV2, migrateV2toV3, migrateV3toV4, migrateV4toV5, migrateV5toV6, migrateV6toV7 } from './migrate';
+import { migrateV1toV2, migrateV2toV3, migrateV3toV4, migrateV4toV5, migrateV5toV6, migrateV6toV7, migrateV7toV8 } from './migrate';
 import { onlineSnapshot } from './online';
 import { sellableStations } from './settlement';
 import { isTileVisible } from './payTiles';
@@ -45,6 +45,7 @@ export function toSnapshot(world: WorldState, shopId: ShopId): Snapshot {
     month: world.month,
     daysToMonthEnd: BALANCE.MONTH_DAYS - ((world.day - 1) % BALANCE.MONTH_DAYS),
     campaigns: shop.campaigns.map((c) => ({ ...c })),
+    ads: [...shop.ads],
     loans: world.loans.map((l) => ({
       id: l.id, principal: l.principal, remaining: l.totalDue - l.paid, installment: l.installment, monthsLeft: l.monthsLeft,
     })),
@@ -76,16 +77,17 @@ export function toSnapshot(world: WorldState, shopId: ShopId): Snapshot {
 /** Chuẩn hoá thế giới vừa tải từ DB: nâng version, dọn trạng thái tạm, bổ sung trạm mới thêm vào nội dung. */
 export function normalizeLoaded(raw: unknown): WorldState {
   const version = raw && typeof raw === 'object' ? (raw as { schemaVersion?: unknown }).schemaVersion : undefined;
-  if (version !== 1 && version !== 2 && version !== 3 && version !== 4 && version !== 5 && version !== 6 && version !== 7) throw new Error('UNSUPPORTED_SCHEMA');
+  if (version !== 1 && version !== 2 && version !== 3 && version !== 4 && version !== 5 && version !== 6 && version !== 7 && version !== 8) throw new Error('UNSUPPORTED_SCHEMA');
   let w: unknown = raw;
   if (version === 1) w = migrateV1toV2(w);
   if (version === 1 || version === 2) w = migrateV2toV3(w);
-  if (version !== 4 && version !== 5 && version !== 6 && version !== 7) w = migrateV3toV4(w);
+  if (version !== 4 && version !== 5 && version !== 6 && version !== 7 && version !== 8) w = migrateV3toV4(w);
   const code = (w as { code: string }).code;
   const fresh = createWorld(code, 0);
-  if (version !== 5 && version !== 6 && version !== 7) w = migrateV4toV5(w, fresh.shops);
-  if (version !== 6 && version !== 7) w = migrateV5toV6(w, fresh.shops);
-  if (version !== 7) w = migrateV6toV7(w, DEFAULT_OUTFIT);
+  if (version !== 5 && version !== 6 && version !== 7 && version !== 8) w = migrateV4toV5(w, fresh.shops);
+  if (version !== 6 && version !== 7 && version !== 8) w = migrateV5toV6(w, fresh.shops);
+  if (version !== 7 && version !== 8) w = migrateV6toV7(w, DEFAULT_OUTFIT);
+  if (version !== 8) w = migrateV7toV8(w);
   const world = w as WorldState;
   world.deliveredTo ??= [];
   for (const id of Object.keys(fresh.shops) as ShopId[]) {

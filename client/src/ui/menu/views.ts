@@ -1,9 +1,9 @@
 import {
   BALANCE, COSTUMES, COSTUME_LIST, COSTUME_SLOTS, DEFAULT_OUTFIT, INGREDIENTS, ITEMS, SHOP_META, SHOPS, effectiveCycle, isFarm, effectiveOutputCap, formatK, getStationDef, loanTerms, machineUpgradeCost,
-  marketingMultiplier, priceRange,
+  marketingMultiplier, onlineMarketingMultiplier, priceRange, warehouseSellPrice,
 } from '@qnm/shared';
 import type { Outfit } from '@qnm/shared';
-import type { CampaignId, ItemId, ShopState, Snapshot, StationState } from '@qnm/shared';
+import type { AdId, CampaignId, IngredientId, ItemId, ShopState, Snapshot, StationState } from '@qnm/shared';
 
 /** Các món có kệ đang mở, theo thứ tự trong bố cục quán. */
 function openItems(s: Snapshot): ItemId[] {
@@ -174,19 +174,53 @@ export function loanPreview(amount: number, months: number): { total: number; in
   return { total: t.totalDue, installment: t.installment };
 }
 
+const pct = (n: number) => `+${Math.round(n * 100)}%`;
+const oneDec = (n: number) => String(n).replace('.', ',');
+
+/** Mô tả hiệu quả: "+50% khách · +30% đơn online · +0,3 sao". */
+function effectText(c: { boost: number; onlineBoost: number; starBonus: number }): string {
+  const parts: string[] = [];
+  if (c.boost) parts.push(`${pct(c.boost)} khách`);
+  if (c.onlineBoost) parts.push(`${pct(c.onlineBoost)} đơn online`);
+  if (c.starBonus) parts.push(`+${oneDec(c.starBonus)} sao`);
+  return parts.join(' · ');
+}
+
+/** Tab Quảng cáo: chiến dịch ngắn ngày (chạy / gia hạn) + đầu tư lâu dài (mua một lần) + hệ số hiện tại. */
 export function marketingView(s: Snapshot) {
-  const cards = (Object.entries(BALANCE.CAMPAIGNS) as [CampaignId, (typeof BALANCE.CAMPAIGNS)[CampaignId]][]).map(([id, c]) => ({
+  const ads = s.ads ?? [];
+  const cards = (Object.entries(BALANCE.CAMPAIGNS) as [CampaignId, (typeof BALANCE.CAMPAIGNS)[CampaignId]][]).map(([id, c]) => {
+    const running = s.campaigns.find((x) => x.id === id);
+    return {
+      id,
+      icon: c.icon,
+      name: c.name,
+      desc: c.desc,
+      cost: formatK(c.cost),
+      effect: effectText(c),
+      days: `${c.days} ngày`,
+      running: running ? running.daysLeft : 0,
+      affordable: s.money >= c.cost && !s.settlement,
+    };
+  });
+  const perm = (Object.entries(BALANCE.ADS) as [AdId, (typeof BALANCE.ADS)[AdId]][]).map(([id, a]) => ({
     id,
-    name: c.name,
-    cost: formatK(c.cost),
-    effect: `+${Math.round(c.boost * 100)}% khách${c.starBonus ? `, +${String(c.starBonus).replace('.', ',')} sao` : ''}`,
-    days: `${c.days} ngày`,
+    icon: a.icon,
+    name: a.name,
+    desc: a.desc,
+    cost: formatK(a.cost),
+    effect: `${effectText(a)} (lâu dài)`,
+    owned: ads.includes(id),
+    affordable: s.money >= a.cost && !s.settlement,
   }));
-  const mult = marketingMultiplier({ campaigns: s.campaigns } as ShopState);
+  const shop = { campaigns: s.campaigns, ads } as Pick<ShopState, 'campaigns' | 'ads'>;
+  const fmt = (n: number) => `×${(Math.round(n * 100) / 100).toString().replace('.', ',')}`;
   return {
     cards,
-    running: s.campaigns.map((c) => ({ name: BALANCE.CAMPAIGNS[c.id].name, daysLeft: c.daysLeft })),
-    multiplier: `×${(Math.round(mult * 100) / 100).toString().replace('.', ',')}`,
+    perm,
+    running: s.campaigns.map((c) => ({ name: BALANCE.CAMPAIGNS[c.id]?.name ?? c.id, daysLeft: c.daysLeft })),
+    multiplier: fmt(marketingMultiplier(shop)),
+    onlineMultiplier: fmt(onlineMarketingMultiplier(shop)),
   };
 }
 
@@ -260,6 +294,16 @@ export function mapView(s: Snapshot) {
         farm: x.kind === 'farm',
         // Trang trại thuê lúc nào cũng được (đủ tiền); quán mới cần mở hết các quán đang có.
         canRent: (x.kind === 'farm' || s.canRent) && s.money >= x.deposit && !s.settlement,
+      })),
+    /** Kho tổng: từng nguyên liệu còn hàng, giá bán ra chợ (60% giá chợ). */
+    stock: (Object.entries(s.warehouse) as [IngredientId, number][])
+      .filter(([, n]) => n > 0)
+      .map(([id, n]) => ({
+        id,
+        name: INGREDIENTS[id].name,
+        qty: n,
+        unit: formatK(warehouseSellPrice(id)),
+        all: formatK(warehouseSellPrice(id) * n),
       })),
     warehouse: (Object.entries(s.warehouse) as [keyof typeof INGREDIENTS, number][])
       .filter(([, n]) => n > 0)

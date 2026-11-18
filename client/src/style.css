@@ -120,3 +120,10 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .costume { cursor: pointer; }
 .costume.trying { border-color: #2f6db5; box-shadow: 0 0 0 2px rgba(47, 109, 181, 0.25); }
 @media (max-width: 720px) { .costume-layout { grid-template-columns: 1fr; } .try-col { position: static; } }
+.ad-card { display: flex; flex-direction: column; gap: 4px; }
+.ad-card.on { border-color: #1f8a3a; }
+.ad-head { display: flex; align-items: center; gap: 8px; }
+.ad-icon { font-size: 22px; }
+.ad-eff { font-weight: 700; color: #1f6a3a; }
+.mk-sum { background: rgba(255, 250, 240, 0.8); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; }
+.pos { color: #1f8a3a; }

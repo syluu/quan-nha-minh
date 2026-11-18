@@ -3,6 +3,7 @@ export const V3 = {
   month: 1,
   daysToMonthEnd: 7,
   campaigns: [],
+  ads: [],
   loans: [],
   maxLoan: 2_000_000,
   settlement: null,

@@ -22,6 +22,8 @@ import {
   findPlayerByName,
   rentShop,
   buyCostume,
+  buyAd,
+  sellWarehouse,
   wearCostume,
   setMachineEnabled,
   travel,
@@ -37,7 +39,7 @@ import {
 import type {
   ActionResult, FireMsg, HireMsg, InputMsg, JoinOptions, RenameMsg, RepayLoanMsg, RunCampaignMsg, SellStationMsg, SetPriceMsg,
   SetOnlinePausedMsg, TakeLoanMsg, UpgradeMachineMsg, UpgradePlayerMsg, UpgradeStaffMsg, WorldState,
-  CostumeMsg, RentShopMsg, SetMachineEnabledMsg, ShopId, Snapshot, TravelMsg,
+  BuyAdMsg, CostumeMsg, SellWarehouseMsg, RentShopMsg, SetMachineEnabledMsg, ShopId, Snapshot, TravelMsg,
 } from '@qnm/shared';
 import type { WorldStore } from '../persistence';
 
@@ -146,6 +148,8 @@ export class WorldRoom extends Room {
     act<Record<string, never>>(MSG.upgradePickup, (pid) => upgradePickup(this.world, here(pid), pid));
     act<RentShopMsg>(MSG.rentShop, (pid, m) => rentShop(this.world, m.shopId, pid));
     act<TravelMsg>(MSG.travel, (pid, m) => travel(this.world, pid, m.to));
+    act<BuyAdMsg>(MSG.buyAd, (pid, m) => buyAd(this.world, here(pid), m.ad, pid));
+    act<SellWarehouseMsg>(MSG.sellWarehouse, (pid, m) => sellWarehouse(this.world, m.ingredient, m.qty, pid));
     act<CostumeMsg>(MSG.buyCostume, (pid, m) => buyCostume(this.world, pid, m.id));
     act<CostumeMsg>(MSG.wearCostume, (pid, m) => wearCostume(this.world, pid, m.id));
     this.onMessage(MSG.getReport, (client: Client) => {

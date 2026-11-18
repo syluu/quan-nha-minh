@@ -1,5 +1,5 @@
 import type { IngredientId, ItemId, Outfit, ShopId } from '../content';
-import type { CampaignId, DaySummary, LogEntry, SeatState, Settlement, StaffRole, StationState } from '../sim/world';
+import type { AdId, CampaignId, DaySummary, LogEntry, SeatState, Settlement, StaffRole, StationState } from '../sim/world';
 
 export const MSG = {
   input: 'input',
@@ -26,9 +26,18 @@ export const MSG = {
   travel: 'travel',
   setMachineEnabled: 'setMachineEnabled',
   buyCostume: 'buyCostume',
+  buyAd: 'buyAd',
+  sellWarehouse: 'sellWarehouse',
   wearCostume: 'wearCostume',
 } as const;
 
+export interface BuyAdMsg {
+  ad: AdId;
+}
+export interface SellWarehouseMsg {
+  ingredient: IngredientId;
+  qty: number | 'all';
+}
 export interface CostumeMsg {
   id: string;
 }
@@ -152,6 +161,8 @@ export interface Snapshot {
   month: number;
   daysToMonthEnd: number;
   campaigns: { id: CampaignId; daysLeft: number }[];
+  /** Quảng cáo lâu dài của quán đang đứng. */
+  ads: AdId[];
   loans: { id: string; principal: number; remaining: number; installment: number; monthsLeft: number }[];
   maxLoan: number;
   settlement: Settlement | null;

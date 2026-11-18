@@ -7,7 +7,7 @@ import { addLog, playerName } from './log';
 import { isOnSale } from './prices';
 import { pushRating } from './rating';
 import { chooseWants, hourMultiplier, priceOf, trafficMultiplier } from './customers';
-import { effectiveStars, marketingMultiplier } from './marketing';
+import { effectiveStars, onlineMarketingMultiplier } from './marketing';
 import { gameHour } from './time';
 import type { Order, ShopState, Shipper, WorldState } from './world';
 import { nextRandom } from './world';
@@ -58,7 +58,7 @@ export function tickOrders(world: WorldState, shopId: ShopId, dt: number): void 
   }
   spawnOrder(world, shopId);
   const t = trafficMultiplier(effectiveStars(shop));
-  const mean = BALANCE.ONLINE.baseIntervalSec / (hm * t * t * marketingMultiplier(shop));
+  const mean = BALANCE.ONLINE.baseIntervalSec / (hm * t * t * onlineMarketingMultiplier(shop));
   shop.nextOrderIn = -Math.log(1 - nextRandom(world)) * mean;
 }
 

@@ -10,7 +10,7 @@ describe('createWorld', () => {
     expect(w.day).toBe(1);
     expect(w.secOfDay).toBe(0);
     expect(w.code).toBe('ABC-DEF');
-    expect(w.schemaVersion).toBe(7);
+    expect(w.schemaVersion).toBe(8);
     expect(w.history).toEqual([]);
     expect(Object.keys(w.players)).toEqual([]);
   });

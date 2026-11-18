@@ -60,10 +60,28 @@ export const BALANCE = {
     ruong_rau: K(1000), xe_cho_hang: K(2000),
   } as Record<string, number>,
 
+  /**
+   * Quảng cáo ngắn ngày (theo quán): boost = tăng khách tại quán, onlineBoost = tăng đơn app giao đồ ăn,
+   * starBonus = cộng sao hiển thị trong thời gian chạy. Chạy lại khi đang chạy = gia hạn thêm ngày.
+   */
   CAMPAIGNS: {
-    to_roi: { name: 'Phát tờ rơi', cost: K(200), boost: 0.2, days: 1, starBonus: 0 },
-    mxh: { name: 'Quảng cáo mạng xã hội', cost: K(1000), boost: 0.5, days: 3, starBonus: 0 },
-    review: { name: 'Mời người review đồ ăn', cost: K(5000), boost: 1.0, days: 2, starBonus: 0.3 },
+    to_roi: { icon: '📄', name: 'Phát tờ rơi', cost: K(200), boost: 0.2, onlineBoost: 0, days: 1, starBonus: 0, desc: 'Phát tờ rơi ở ngã tư, chợ gần quán.' },
+    bang_ron: { icon: '🎌', name: 'Treo băng rôn khuyến mãi', cost: K(400), boost: 0.3, onlineBoost: 0, days: 3, starBonus: 0, desc: 'Băng rôn "Khai trương — giảm giá" trước cửa.' },
+    xe_loa: { icon: '📢', name: 'Thuê xe loa chạy quanh phố', cost: K(600), boost: 0.45, onlineBoost: 0, days: 1, starBonus: 0, desc: 'Xe loa đọc quảng cáo khắp phường cả ngày.' },
+    an_thu: { icon: '🍽️', name: 'Mời ăn thử miễn phí', cost: K(800), boost: 0.35, onlineBoost: 0, days: 2, starBonus: 0.2, desc: 'Bàn ăn thử trước cửa, khách quen kéo khách mới.' },
+    mxh: { icon: '📱', name: 'Quảng cáo mạng xã hội', cost: K(1000), boost: 0.5, onlineBoost: 0.3, days: 3, starBonus: 0, desc: 'Chạy quảng cáo trên mạng xã hội quanh khu vực.' },
+    app_top: { icon: '🛵', name: 'Đẩy quán lên đầu app giao đồ ăn', cost: K(1500), boost: 0, onlineBoost: 1.0, days: 3, starBonus: 0, desc: 'Quán hiện đầu danh sách trên app — đơn online tăng mạnh.' },
+    livestream: { icon: '🎥', name: 'Livestream bán hàng', cost: K(2000), boost: 0.4, onlineBoost: 0.8, days: 1, starBonus: 0, desc: 'Phát trực tiếp cảnh làm món, chốt đơn ngay trên live.' },
+    review: { icon: '⭐', name: 'Mời người review đồ ăn', cost: K(5000), boost: 1.0, onlineBoost: 0.3, days: 2, starBonus: 0.3, desc: 'Một người review ẩm thực tới ăn và đăng bài.' },
+    bao_chi: { icon: '📰', name: 'Lên báo ẩm thực', cost: K(8000), boost: 0.8, onlineBoost: 0.3, days: 5, starBonus: 0.3, desc: 'Bài viết giới thiệu quán trên trang ẩm thực.' },
+    kol: { icon: '🌟', name: 'Thuê KOL / TikToker nổi tiếng review', cost: K(15000), boost: 2.0, onlineBoost: 1.0, days: 3, starBonus: 0.5, desc: 'Người nổi tiếng quay video ăn tại quán — khách xếp hàng dài.' },
+  },
+  /** Đầu tư quảng cáo lâu dài (theo quán): mua một lần, tác dụng mãi (mất khi trả mặt bằng / phá sản). */
+  ADS: {
+    ghim_ban_do: { icon: '📍', name: 'Ghim quán lên bản đồ online + ảnh đẹp', cost: K(500), boost: 0.08, onlineBoost: 0.1, starBonus: 0, desc: 'Khách tìm "quán ăn gần đây" là thấy quán.' },
+    den_long: { icon: '🏮', name: 'Đèn lồng, trang trí mặt tiền', cost: K(1200), boost: 0.08, onlineBoost: 0, starBonus: 0, desc: 'Mặt tiền rực rỡ, người đi đường dễ để ý.' },
+    the_tich_diem: { icon: '💳', name: 'Thẻ tích điểm khách quen', cost: K(2000), boost: 0.1, onlineBoost: 0, starBonus: 0.1, desc: 'Ăn đủ 10 lần tặng 1 phần — khách quay lại nhiều hơn.' },
+    bien_led: { icon: '💡', name: 'Biển quảng cáo LED chữ chạy', cost: K(3000), boost: 0.15, onlineBoost: 0, starBonus: 0, desc: 'Biển LED sáng rực trước quán, chạy chữ tên món và khuyến mãi.' },
   },
 
   /** Kỳ hạn (tháng) → tổng lãi. */
@@ -83,6 +101,8 @@ export const BALANCE = {
     carUpgradeCost: K(5000),
   },
 
+  /** Bán nguyên liệu dư trong kho tổng ra chợ: được 60% giá chợ. */
+  WAREHOUSE_SELL_RATIO: 0.6,
   /** Bán máy thu về 50% (giá trị + tiền đã nâng cấp). */
   SELL_RATIO: 0.5,
   /** Số ngày giữ trong báo cáo. */

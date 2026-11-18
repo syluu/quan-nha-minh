@@ -81,7 +81,7 @@ describe('keeping costumes (Review Focus 2, 3)', () => {
     delete raw.players.a.outfit;
     delete raw.players.a.wardrobe;
     const loaded = normalizeLoaded(raw);
-    expect(loaded.schemaVersion).toBe(7);
+    expect(loaded.schemaVersion).toBe(8);
     expect(loaded.players.a.outfit).toEqual(DEFAULT_OUTFIT);
     loaded.players.a.outfit.hat = 'ao_do'; // sai ô
     loaded.players.a.wardrobe = ['khong_co_mon_nay'];

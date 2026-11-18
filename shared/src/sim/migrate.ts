@@ -114,3 +114,11 @@ export function migrateV6toV7(raw: any, defaultOutfit: Record<string, string>): 
   }
   return w;
 }
+
+/** Kế hoạch 7 → 8: quảng cáo lâu dài theo quán. */
+export function migrateV7toV8(raw: any): any {
+  const w = structuredClone(raw);
+  w.schemaVersion = 8;
+  for (const shop of Object.values<any>(w.shops ?? {})) if (!Array.isArray(shop.ads)) shop.ads = [];
+  return w;
+}

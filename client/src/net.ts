@@ -1,6 +1,6 @@
 import { Client } from '@colyseus/sdk';
 import { MSG } from '@qnm/shared';
-import type { CampaignId, ItemId, JoinOptions, Report, ShopId, SimEvent, Snapshot, StaffRole, WelcomeMsg } from '@qnm/shared';
+import type { AdId, CampaignId, IngredientId, ItemId, JoinOptions, Report, ShopId, SimEvent, Snapshot, StaffRole, WelcomeMsg } from '@qnm/shared';
 
 export type ConnStatus = 'connected' | 'reconnecting' | 'left';
 
@@ -34,6 +34,8 @@ export interface GameConnection {
   travel(to: ShopId): void;
   setMachineEnabled(instanceId: string, enabled: boolean): void;
   buyCostume(id: string): void;
+  buyAd(ad: AdId): void;
+  sellWarehouse(ingredient: IngredientId, qty: number | 'all'): void;
   wearCostume(id: string): void;
 }
 
@@ -107,6 +109,8 @@ export async function connect(opts: JoinOptions): Promise<GameConnection> {
     rentShop: (shopId) => room.send(MSG.rentShop, { shopId }),
     travel: (to) => room.send(MSG.travel, { to }),
     buyCostume: (id) => room.send(MSG.buyCostume, { id }),
+    buyAd: (ad) => room.send(MSG.buyAd, { ad, shopId: here }),
+    sellWarehouse: (ingredient, qty) => room.send(MSG.sellWarehouse, { ingredient, qty }),
     wearCostume: (id) => room.send(MSG.wearCostume, { id }),
     setMachineEnabled: (instanceId, enabled) => room.send(MSG.setMachineEnabled, { instanceId, enabled, shopId: here }),
   };

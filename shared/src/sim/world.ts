@@ -75,7 +75,8 @@ export interface StaffState {
   path?: { x: number; z: number }[];
 }
 
-export type CampaignId = 'to_roi' | 'mxh' | 'review';
+export type CampaignId = keyof typeof BALANCE.CAMPAIGNS;
+export type AdId = keyof typeof BALANCE.ADS;
 
 /** Đơn online: món cần giao và món đã đưa cho shipper. */
 export interface Order {
@@ -141,6 +142,8 @@ export interface ShopState {
   /** Số người bị cho nghỉ hôm nay (vẫn phải trả lương ngày đó). */
   firedToday: number;
   campaigns: { id: CampaignId; daysLeft: number }[];
+  /** Quảng cáo lâu dài đã mua (biển LED, đèn lồng…). */
+  ads: AdId[];
   orders: Order[];
   nextOrderId: number;
   nextOrderIn: number;
@@ -206,7 +209,7 @@ export interface LogEntry {
 }
 
 export interface WorldState {
-  schemaVersion: 7;
+  schemaVersion: 8;
   code: string;
   money: number;
   day: number;
@@ -262,14 +265,14 @@ export function createShop(id: ShopId, owned: boolean): ShopState {
   for (const p of layout.stations) stations[p.instanceId] = createStationState(p.instanceId, p.unlockCost === 0, p.seatPoints?.length ?? 0);
   return {
     id, owned, rentedDay: 0, stations, customers: [], prices: {}, ratings: [], nextCustomerIn: 1, nextCustomerId: 1,
-    staff: [], nextStaffId: 1, firedToday: 0, campaigns: [],
+    staff: [], nextStaffId: 1, firedToday: 0, campaigns: [], ads: [],
     orders: [], nextOrderId: 1, nextOrderIn: 5, shipper: null, onlinePaused: false,
   };
 }
 
 export function createWorld(code: string, seed: number): WorldState {
   return {
-    schemaVersion: 7,
+    schemaVersion: 8,
     code,
     money: BALANCE.START_MONEY,
     day: 1,

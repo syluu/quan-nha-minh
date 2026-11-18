@@ -52,7 +52,9 @@ Mở `http://localhost:5173` ở 2 cửa sổ (hoặc 2 máy cùng wifi qua `htt
 - **Kết toán cuối tháng**: hiện bảng doanh thu, nguyên liệu, quảng cáo, lương, mặt bằng, góp nợ. Thiếu tiền thì **cả quán tạm dừng** tới khi ai đó vay ngân hàng hoặc bán máy ngay trong bảng. Hết cách → **phá sản**: quán về xe bánh mì ban đầu, giữ tên nhân vật và mã quán.
 - **Menu → Nhân sự**: nâng cấp **từng nhân viên** (cấp 1–4: đi nhanh hơn, mang nhiều hơn, lương 120K → 210K/ngày).
 - **Menu → Nâng cấp**: sức mang và tốc độ của chính bạn; từng máy (nhanh hơn 15%, chứa thêm 50% mỗi cấp).
-- **Menu → Quảng cáo**: tờ rơi, mạng xã hội, mời người review — tăng lượng khách trong vài ngày.
+- **Menu → Quảng cáo** (theo từng quán):
+  - **Ngắn ngày**: phát tờ rơi, băng rôn khuyến mãi, xe loa, mời ăn thử, quảng cáo mạng xã hội, đẩy quán lên đầu app giao đồ ăn, livestream bán hàng, mời người review, lên báo ẩm thực, **thuê KOL/TikToker review** — tăng khách tại quán, đơn online và/hoặc sao trong vài ngày; chạy lại để gia hạn.
+  - **Lâu dài** (mua một lần): ghim quán lên bản đồ online, đèn lồng trang trí mặt tiền, thẻ tích điểm khách quen, **biển quảng cáo LED chữ chạy** (hiện trước quán).
 - **Menu → Ngân hàng**: vay 1/2/4 tháng (lãi 5/9/15%), góp cuối tháng, trả sớm không phạt.
 
 ### Bán online (Kế hoạch 4)
@@ -81,6 +83,7 @@ Mở `http://localhost:5173` ở 2 cửa sổ (hoặc 2 máy cùng wifi qua `htt
 - Mở thêm lô bằng ô trả tiền: ruộng lúa mì (bột mì), ruộng lúa (gạo), chuồng gà (trứng), chuồng lợn (thịt lợn), chuồng bò (thịt bò + xương bò). Mỗi lô chạy như một cái máy: trả tiền giống/thức ăn mỗi mẻ, ra **thùng hàng**.
 - Bê thùng hàng tới **xe chở hàng** → nguyên liệu vào **kho tổng** (xem trong Bản đồ). Máy ở mọi quán lấy kho trước, thiếu mới mua chợ — rẻ hơn khoảng một nửa.
 - Phí xe chở hàng: 50K cho mỗi quán đã dùng hàng trong kho hôm đó (tính cuối ngày).
+- Dùng không hết: **Bản đồ → Kho tổng → Bán 10 / Bán hết** để bán nguyên liệu ra chợ (60% giá chợ), bán được cả lúc kết toán cuối tháng.
 - **Nhân sự** ở trang trại: tối đa 2 **người làm trang trại**, tự bê thùng hàng ra xe.
 
 ### Trang phục (Kế hoạch 7)

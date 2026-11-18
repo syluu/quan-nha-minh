@@ -8,6 +8,7 @@ import { createFollowCamera } from '../render/camera';
 import { createCharacter } from '../render/characters';
 import { createPickRing } from '../render/pickRing';
 import { createShipperView } from '../render/shipper';
+import { createAdDecor } from '../render/adDecor';
 import { staffLabel } from '../ui/menu/views';
 import type { CharacterView } from '../render/characters';
 import { createScene, createShopBackdrop } from '../render/scene';
@@ -50,6 +51,7 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
   const staffViews = new Map<string, CharacterView>();
   const pickRing = createPickRing(scene);
   const shipperView = createShipperView(scene);
+  const adDecor = createAdDecor(scene);
   const lastPos = new Map<string, { x: number; z: number }>();
   let latest: Snapshot | null = null;
   let cameraSnapped = false;
@@ -191,6 +193,7 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
       for (const [id, v] of staffViews) if (!seenS.has(id)) (v.dispose(), staffViews.delete(id), lastPos.delete(`s${id}`));
 
       shipperView.update(latest?.online.shipper ?? null, dt);
+      if (shopId) adDecor.update(shopId, latest?.ads, dt);
 
       // Vòng tiến trình nhặt món của chính mình
       const meSnap = latest?.players.find((p) => p.id === conn.playerId);

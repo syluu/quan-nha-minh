@@ -22,15 +22,17 @@ describe('loanPreview', () => {
 });
 
 describe('marketingView', () => {
-  it('lists the three campaigns, what is running and the customer multiplier', () => {
+  it('lists short campaigns (with run/extend state), long-term ads and both multipliers', () => {
     const v = marketingView(snap());
-    expect(v.cards.map((c) => [c.id, c.cost, c.effect, c.days])).toEqual([
-      ['to_roi', '200K', '+20% khách', '1 ngày'],
-      ['mxh', '1.000K', '+50% khách', '3 ngày'],
-      ['review', '5.000K', '+100% khách, +0,3 sao', '2 ngày'],
-    ]);
+    const byId = Object.fromEntries(v.cards.map((c) => [c.id, c]));
+    expect(byId.to_roi).toMatchObject({ cost: '200K', effect: '+20% khách', days: '1 ngày', running: 0 });
+    expect(byId.mxh).toMatchObject({ cost: '1.000K', effect: '+50% khách · +30% đơn online', running: 2 });
+    expect(byId.review.effect).toBe('+100% khách · +30% đơn online · +0,3 sao');
+    expect(byId.kol.icon).toBe('🌟');
+    expect(v.perm.find((a) => a.id === 'bien_led')).toMatchObject({ owned: false, effect: '+15% khách (lâu dài)' });
     expect(v.running).toEqual([{ name: 'Quảng cáo mạng xã hội', daysLeft: 2 }]);
     expect(v.multiplier).toBe('×1,5');
+    expect(v.onlineMultiplier).toBe('×1,3');
   });
 });
 

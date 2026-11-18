@@ -23,7 +23,7 @@ function snap(over: Partial<Snapshot> = {}): Snapshot {
     ],
     stations: [st('noi_com', true, [], false), st('ke_com_tam_suon', true), st('thu_ngan', true), st('ban_an_1', true, ['dirty', 'free'])],
     staff: [],
-    month: 2, daysToMonthEnd: 5, campaigns: [], loans: [], maxLoan: 0, settlement: null, sellable: [],
+    month: 2, daysToMonthEnd: 5, campaigns: [], ads: [], loans: [], maxLoan: 0, settlement: null, sellable: [],
     online: { registered: false, paused: false, vehicle: 'bike', pending: 0, shipper: null, ordersToday: 0, cancelledToday: 0 },
     ...over,
   };
