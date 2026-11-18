@@ -166,7 +166,7 @@ describe('quests and badges', () => {
     delete raw.lifetime;
     delete raw.dayStats.tips;
     const w = normalizeLoaded(raw);
-    expect(w.schemaVersion).toBe(10);
+    expect(w.schemaVersion).toBe(11);
     expect(w.badges).toEqual([]);
     expect(w.lifetime.quests).toBe(0);
     expect(w.dayStats.tips).toBe(0);

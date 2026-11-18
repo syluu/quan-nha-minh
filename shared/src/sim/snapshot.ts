@@ -1,15 +1,16 @@
-import { BALANCE, COSTUMES, festivalOfDay, getStationDef, COSTUME_SLOTS, DEFAULT_OUTFIT, SHOP_IDS, SHOP_META, SHOPS } from '../content';
+import { BALANCE, COSTUMES, SHOP_TIERS, festivalOfDay, getStationDef, COSTUME_SLOTS, DEFAULT_OUTFIT, SHOP_IDS, SHOP_META, SHOPS } from '../content';
 import { canRent, isShopComplete } from './shops';
 import { plotDef } from './farm';
 import { catSpot, questProgress, questText, tourBusSpot } from './fun';
 import type { ShopId } from '../content';
 import type { Snapshot } from '../net/protocol';
 import { maxLoan } from './bank';
-import { migrateV1toV2, migrateV2toV3, migrateV3toV4, migrateV4toV5, migrateV5toV6, migrateV6toV7, migrateV7toV8, migrateV8toV9, migrateV9toV10 } from './migrate';
+import { migrateV1toV2, migrateV2toV3, migrateV3toV4, migrateV4toV5, migrateV5toV6, migrateV6toV7, migrateV7toV8, migrateV8toV9, migrateV9toV10, migrateV10toV11 } from './migrate';
 import { onlineSnapshot } from './online';
 import { sellableStations } from './settlement';
 import { isTileVisible } from './payTiles';
 import { effectiveStars } from './marketing';
+import { energyOf, shopTier } from './life';
 import { createWorld } from './world';
 import type { WorldState } from './world';
 
@@ -84,8 +85,15 @@ export function toSnapshot(world: WorldState, shopId: ShopId): Snapshot {
     },
     staff: shop.staff.map((s) => ({
       id: s.id, name: s.name, role: s.role, item: s.item, x: s.x, z: s.z, dir: s.dir, carry: [...s.carry],
-      level: s.level, wageOwed: s.wageOwed,
+      level: s.level, wageOwed: s.wageOwed, energy: Math.round(energyOf(s)), cheer: (s.cheer ?? 0) > 0,
     })),
+    life: {
+      tier: shopTier(shop),
+      earned: shop.earned ?? 0,
+      nextTierAt: SHOP_TIERS[shopTier(shop) + 1]?.min ?? null,
+      regulars: (world.regulars ?? []).map((r) => ({ id: r.id, shopId: r.shopId, fav: r.fav, love: r.love, visits: r.visits })),
+      party: world.party ? { ...world.party } : null,
+    },
     month: world.month,
     daysToMonthEnd: BALANCE.MONTH_DAYS - ((world.day - 1) % BALANCE.MONTH_DAYS),
     campaigns: shop.campaigns.map((c) => ({ ...c })),
@@ -101,7 +109,8 @@ export function toSnapshot(world: WorldState, shopId: ShopId): Snapshot {
     online: onlineSnapshot(world, shopId),
     prices: { ...shop.prices },
     customers: shop.customers.map((c) => ({ id: c.id, x: c.x, z: c.z, dir: c.dir, holding: [...c.holding], sitting: c.state === 'eating',
-      mood: customerMood(c), tourist: !!c.tourist })),
+      mood: customerMood(c), tourist: !!c.tourist, regular: c.regular ?? null,
+      eat: c.state === 'eating' ? Math.min(1, c.eatTimer / BALANCE.EAT_SEC) : 0 })),
     stations: layout.stations.map((placed) => {
       const st = shop.stations[placed.instanceId];
       return {
@@ -124,11 +133,11 @@ export function toSnapshot(world: WorldState, shopId: ShopId): Snapshot {
 /** Chuẩn hoá thế giới vừa tải từ DB: nâng version, dọn trạng thái tạm, bổ sung trạm mới thêm vào nội dung. */
 export function normalizeLoaded(raw: unknown): WorldState {
   const version = raw && typeof raw === 'object' ? (raw as { schemaVersion?: unknown }).schemaVersion : undefined;
-  if (version !== 1 && version !== 2 && version !== 3 && version !== 4 && version !== 5 && version !== 6 && version !== 7 && version !== 8 && version !== 9 && version !== 10) throw new Error('UNSUPPORTED_SCHEMA');
+  if (version !== 1 && version !== 2 && version !== 3 && version !== 4 && version !== 5 && version !== 6 && version !== 7 && version !== 8 && version !== 9 && version !== 10 && version !== 11) throw new Error('UNSUPPORTED_SCHEMA');
   let w: unknown = raw;
   if (version === 1) w = migrateV1toV2(w);
   if (version === 1 || version === 2) w = migrateV2toV3(w);
-  if (version !== 4 && version !== 5 && version !== 6 && version !== 7 && version !== 8 && version !== 9 && version !== 10) w = migrateV3toV4(w);
+  if (version !== 4 && version !== 5 && version !== 6 && version !== 7 && version !== 8 && version !== 9 && version !== 10 && version !== 11) w = migrateV3toV4(w);
   const code = (w as { code: string }).code;
   const fresh = createWorld(code, 0);
   if (version < 5) w = migrateV4toV5(w, fresh.shops);
@@ -137,6 +146,7 @@ export function normalizeLoaded(raw: unknown): WorldState {
   if (version < 8) w = migrateV7toV8(w);
   if (version < 9) w = migrateV8toV9(w);
   if (version < 10) w = migrateV9toV10(w);
+  if (version < 11) w = migrateV10toV11(w);
   const world = w as WorldState;
   world.deliveredTo ??= [];
   for (const id of Object.keys(fresh.shops) as ShopId[]) {

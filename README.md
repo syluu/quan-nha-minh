@@ -117,6 +117,14 @@ Mở `http://localhost:5173` ở 2 cửa sổ (hoặc 2 máy cùng wifi qua `htt
 - **Nhiệm vụ hằng ngày** (bảng bên trái, có thưởng), **🏅 Huy hiệu** (Menu → Huy hiệu, giữ khi phá sản).
 - **Ngày lễ** (cứ 10 ngày): Tết, Trung thu, Giáng sinh, Quốc khánh — trang trí riêng, khách đông, tiền boa gấp đôi.
 
+### Quán có hồn
+
+- **Sức nhân viên**: làm liên tục thì mệt dần (thanh sức ở Menu → Nhân sự, mồ hôi trên đầu) và đi chậm lại, kiệt sức thì rất chậm; rảnh thì tự hồi. **Mời trà đá 🧋** (10K): đứng cạnh nhân viên bấm phím **T**, hoặc bấm nút ở Menu → Nhân sự → hồi đầy sức, làm nhanh hơn 30 giây.
+- **Khách quen** (Menu → ❤️ Khách quen): mỗi quán có dần tới 3 người (Cô Ba vé số, Anh Tư xe ôm, Bé Na…), mỗi ngày ghé một lần, có tên trên đầu, chào và gọi **món ruột**. Bán nhanh thì thân dần: *khách quen* hay dẫn bạn tới, *khách ruột* boa gấp đôi và mang quà (+⭐). Để chờ tới bỏ về hoặc đặt giá quá cao thì khách giận.
+- **Đơn đặt tiệc** (từ ngày 3, quán đã mở điểm giao): có khách gọi đặt 12–24 món cho tiệc cưới, sinh nhật, liên hoan… Bấm **Nhận đơn** ở bảng bên trái, mang món tới **điểm giao** (nhân viên giao đơn cũng phụ) trước giờ hẹn → nhận 150% giá bán. Trễ hẹn thì chỉ được giá thường cho phần đã giao.
+- **Quán lên đời** theo doanh thu cộng dồn: 🪑 Quán cóc → 🏠 Khang trang (3 triệu) → ⭐ Nổi tiếng (15 triệu) → 🏮 Nhà hàng (50 triệu). Mỗi cấp trang trí đẹp hơn (cây, quạt, đồng hồ, tranh, dây đèn, bảng thực đơn, thảm đỏ, lẵng hoa) và thêm 5% khách đi bộ.
+- **Khách ngồi ăn**: món bày ra bàn, gắp ăn, tô nóng bốc khói, ăn vơi dần; ăn xong để lại bát đĩa, đũa, ly, giấy ăn cho người dọn.
+
 ## Test
 
 ```bash

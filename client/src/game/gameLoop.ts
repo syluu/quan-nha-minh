@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { BALANCE, EMOTES, FUN, SHOPS } from '@qnm/shared';
+import { BALANCE, EMOTES, FUN, ITEMS, SHOPS, loveLevel, regularDef } from '@qnm/shared';
 import type { ShopId, Snapshot } from '@qnm/shared';
 import { createInputGate, createKeyboardInput } from '../input';
 import { createPointerControls, dragToWorld } from '../pointer';
@@ -13,6 +13,7 @@ import { createPromoDecor } from '../render/promoDecor';
 import { createFunFx } from '../render/funFx';
 import { createAmbient } from '../render/ambient';
 import { createFarmLand } from '../render/farmLand';
+import { createLifeDecor } from '../render/lifeDecor';
 import { staffLabel } from '../ui/menu/views';
 import type { CharacterView } from '../render/characters';
 import { createScene, createShopBackdrop } from '../render/scene';
@@ -25,6 +26,8 @@ import { createInterpolator } from './interp';
 import { createChatter } from './chatter';
 import { loadSettings } from '../settings';
 import { createPredictor } from './prediction';
+
+const THANKS = ['Cảm ơn sếp! 🧋', 'Đã quá! Làm tiếp nè 💪', 'Sếp là nhất! 🧋', 'Mát cả ruột! 😆'];
 
 export interface GameHandle {
   /** Khoá/mở điều khiển di chuyển theo từng lý do ('menu', 'settle'…). */
@@ -66,6 +69,10 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
   const promoDecor = createPromoDecor(scene);
   const funFx = createFunFx(scene);
   const farmLand = createFarmLand(scene);
+  const lifeDecor = createLifeDecor(scene);
+  /** Lúc thấy khách lần đầu (để khách quen chào một câu khi mới tới). */
+  const firstSeen = new Map<number, number>();
+  const cheerSeen = new Map<string, boolean>();
   const lastPos = new Map<string, { x: number; z: number }>();
   let latest: Snapshot | null = null;
   let cameraSnapped = false;
@@ -184,26 +191,45 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
 
       const seenC = new Set<number>();
       const guideId = Math.min(...s.customers.filter((c) => c.tourist).map((c) => c.id));
+      const eating = new Set<number>();
       for (const c of s.customers) {
         seenC.add(c.id);
         let v = customers.get(c.id);
+        const reg = c.regular ? regularDef(c.regular) : undefined;
         if (!v) {
-          v = createCharacter([0x3d7dd8, 0xd8573d, 0x5aa34a, 0x9b59b6, 0xe0a020, 0x2aa3a3][c.id % 6], { look: 'customer', variant: c.id });
+          v = createCharacter(reg?.color ?? [0x3d7dd8, 0xd8573d, 0x5aa34a, 0x9b59b6, 0xe0a020, 0x2aa3a3][c.id % 6], { look: 'customer', variant: c.id });
           customers.set(c.id, v);
           scene.add(v.group);
+          firstSeen.set(c.id, t);
+        }
+        // Khách quen: tên + tim trên đầu.
+        if (reg) {
+          const love = s.life?.regulars.find((r) => r.id === c.regular)?.love ?? 0;
+          v.setName(`${reg.name} ${['🤍', '💛', '❤️'][loveLevel(love)]}`);
         }
         const key = `c${c.id}`;
         const prevPos = lastPos.get(key);
         const moving = !!prevPos && Math.hypot(c.x - prevPos.x, c.z - prevPos.z) > 0.002;
         lastPos.set(key, { x: c.x, z: c.z });
         v.setSitting(c.sitting);
+        v.setEating(c.sitting);
         v.setPose(c.x, c.z, c.dir, moving && !c.sitting, t);
-        v.setCarry(c.holding);
+        // Ngồi ăn: món bày ra bàn trước mặt (không cầm trên tay nữa).
+        if (c.sitting && c.holding.length) {
+          eating.add(c.id);
+          lifeDecor.meal(c.id, c.holding, c.x, c.z, c.eat ?? 0, dt);
+          v.setCarry([]);
+        } else v.setCarry(c.holding);
         // Khách đoàn: 📷; người đầu đoàn (số nhỏ nhất) là hướng dẫn viên cầm cờ 🚩.
         const guide = c.tourist && c.id === guideId;
-        v.setBubble(guide ? '🚩 Hướng dẫn viên' : c.mood ? (c.tourist ? `${c.mood} 📷` : c.mood) : c.tourist ? '📷' : null);
+        // Khách quen mới tới: chào một câu + gọi món ruột.
+        const fav = c.regular ? s.life?.regulars.find((r) => r.id === c.regular)?.fav : undefined;
+        const greet = reg && t - (firstSeen.get(c.id) ?? t) < 5 ? `${reg.hi}${fav ? ` Cho ${ITEMS[fav].name.toLowerCase()}!` : ''}` : null;
+        v.setBubble(guide ? '🚩 Hướng dẫn viên' : greet ?? (c.mood ? (c.tourist ? `${c.mood} 📷` : c.mood) : c.tourist ? '📷' : null));
       }
-      for (const [id, v] of customers) if (!seenC.has(id)) (v.dispose(), customers.delete(id), lastPos.delete(`c${id}`));
+      lifeDecor.keepMeals(eating);
+      for (const [id, v] of customers)
+        if (!seenC.has(id)) (v.dispose(), customers.delete(id), lastPos.delete(`c${id}`), firstSeen.delete(id));
 
       // Nhân viên
       const seenS = new Set<string>();
@@ -221,16 +247,22 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
         lastPos.set(key, { x: st.x, z: st.z });
         v.setPose(st.x, st.z, st.dir, moving, t);
         v.setCarry(st.carry, BALANCE.STAFF_LEVELS[st.level - 1]?.carry ?? BALANCE.STAFF_LEVELS[0].carry);
-        // Thỉnh thoảng than mệt khi làm liên tục, khoe rảnh khi đứng không.
-        const line = chatter.staff(st.id, dt, moving, st.carry.length > 0);
+        // Vừa được mời trà đá: cảm ơn ngay.
+        if (st.cheer && !cheerSeen.get(st.id)) chatter.say(st.id, THANKS[Math.floor(Math.random() * THANKS.length)]);
+        cheerSeen.set(st.id, st.cheer);
+        // Thỉnh thoảng than mệt khi đuối sức, khoe rảnh khi đứng không.
+        const line = chatter.staff(st.id, dt, moving, st.carry.length > 0, st.energy);
         v.setBubble(chatterOn ? line : null);
+        lifeDecor.staff(st.id, v.group, st.energy ?? 100, !!st.cheer, st.dir, t);
       }
-      for (const [id, v] of staffViews) if (!seenS.has(id)) (v.dispose(), staffViews.delete(id), lastPos.delete(`s${id}`));
+      lifeDecor.forgetStaff(seenS);
+      for (const [id, v] of staffViews) if (!seenS.has(id)) (v.dispose(), staffViews.delete(id), lastPos.delete(`s${id}`), cheerSeen.delete(id));
 
       shipperView.update(latest?.online.shipper ?? null, dt);
       if (shopId) adDecor.update(shopId, latest?.ads, dt);
       if (latest) promoDecor.update(latest, dt, t);
       if (latest) funFx.update(latest, dt, t);
+      if (latest) lifeDecor.update(latest, dt, t);
       if (latest) farmLand.update(latest.shopId === 'farm', latest.farm?.level ?? 0);
 
       // Vòng tiến trình nhặt món của chính mình

@@ -28,3 +28,4 @@ export * from './sim/shops';
 export * from './sim/farm';
 export * from './sim/fun';
 export * from './sim/costumes';
+export * from './sim/life';

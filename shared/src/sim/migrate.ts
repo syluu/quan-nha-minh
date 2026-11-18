@@ -150,3 +150,16 @@ export function migrateV9toV10(raw: any): any {
   }
   return w;
 }
+
+/** v10 → v11: khách quen, đơn đặt tiệc, doanh thu cộng dồn từng quán (quán lên đời), sức nhân viên. */
+export function migrateV10toV11(raw: any): any {
+  const w = structuredClone(raw);
+  w.schemaVersion = 11;
+  if (!Array.isArray(w.regulars)) w.regulars = [];
+  w.party ??= null;
+  // Doanh thu cũ không tách theo quán: chia đều doanh thu các ngày đã lưu cho các quán đang có.
+  const shops = Object.values<any>(w.shops ?? {}).filter((s) => s.owned && s.id !== 'farm');
+  const past = (w.history ?? []).reduce((n: number, h: any) => n + (h.revenue ?? 0), 0) + (w.dayStats?.revenue ?? 0);
+  for (const s of Object.values<any>(w.shops ?? {})) if (typeof s.earned !== 'number') s.earned = shops.includes(s) ? Math.round(past / shops.length) : 0;
+  return w;
+}

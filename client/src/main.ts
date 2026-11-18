@@ -1,5 +1,5 @@
 import './style.css';
-import { BADGES, SHOP_META, SHOPS, formatK } from '@qnm/shared';
+import { BADGES, SHOP_META, SHOP_TIERS, SHOPS, formatK } from '@qnm/shared';
 import type { ShopId } from '@qnm/shared';
 import type { SimEvent, Snapshot } from '@qnm/shared';
 import { audio } from './audio/instance';
@@ -16,6 +16,8 @@ import { createShipperAlert } from './ui/shipperAlert';
 import { createPromoAlert } from './ui/promoAlert';
 import { createQuestPanel } from './ui/questPanel';
 import { badgeTab } from './ui/menu/badgeTab';
+import { regularsTab } from './ui/menu/regularsTab';
+import { createPartyAlert, createTeaPrompt } from './ui/lifeUi';
 import { createMenu } from './ui/menu/menu';
 import { pricesTab } from './ui/menu/pricesTab';
 import { reportTab } from './ui/menu/reportTab';
@@ -55,6 +57,7 @@ function enterGame(conn: GameConnection) {
   const shipperAlert = createShipperAlert(side);
   const promoAlert = createPromoAlert(side, (x, z) => game.lookAt(x, z));
   const questPanel = createQuestPanel(side);
+  const partyAlert = createPartyAlert(side, conn, (x, z) => game.lookAt(x, z));
   const floats = createFloatText(ui, game.project);
   let latest: Snapshot | null = null;
   conn.onSnapshot((s) => (latest = s));
@@ -74,6 +77,7 @@ function enterGame(conn: GameConnection) {
       marketingTab(conn, () => latest),
       bankTab(conn, () => latest),
       costumeTab(conn, () => latest, conn.playerId),
+      regularsTab(() => latest),
       badgeTab(() => latest),
       settingsTab(conn, myName),
     ],
@@ -81,6 +85,7 @@ function enterGame(conn: GameConnection) {
   );
   conn.onActionError((e) => showToast(ui, actionErrorText(e)));
   createEmoteBar(ui, conn);
+  const teaPrompt = createTeaPrompt(ui, conn, conn.playerId);
   const rao = createRao();
   let lastRao = performance.now();
   createSettlementModal(ui, conn, (blocked) => game.setInputBlocked('settle', blocked));
@@ -101,6 +106,8 @@ function enterGame(conn: GameConnection) {
     shipperAlert.update(s);
     promoAlert.update(s);
     questPanel.update(s);
+    partyAlert.update(s);
+    teaPrompt.update(s);
     // Chỉ khi chạy dev: cho phép script kiểm thử đọc trạng thái.
     if (import.meta.env.DEV) Object.assign(window, { __qnm: { snapshot: s, playerId: conn.playerId } });
   });
@@ -135,6 +142,16 @@ function enterGame(conn: GameConnection) {
     else if (e.type === 'stored') floats.spawn('📦 Vào kho', 'gain', e.x, e.z);
     else if (e.type === 'orderCancelled') floats.spawn('Huỷ đơn -1★', 'loss', e.x, e.z);
     else if (e.type === 'dayEnd') showDaySummary(ui, e.summary);
+    else if (e.type === 'shopTier') {
+      const t = SHOP_TIERS[e.tier];
+      showToast(ui, `${t.icon} Quán lên đời: ${t.name}! Trang trí mới, khách đông hơn`);
+      game.confetti();
+    } else if (e.type === 'regular') floats.spawn(e.text, 'gain', e.x, e.z);
+    else if (e.type === 'partyDone') {
+      floats.spawn(`🎉 Xong đơn tiệc! +${formatK(e.reward)}`, 'gain', e.x, e.z);
+      game.confetti(e.x, e.z);
+    } else if (e.type === 'partyOffer') showToast(ui, '📞 Có đơn đặt tiệc mới — xem bảng bên trái!');
+    else if (e.type === 'partyFailed') showToast(ui, `😢 Trễ hẹn đơn tiệc (${e.delivered}/${e.qty})`);
   });
   conn.onStatus((st, code) => {
     if (st === 'reconnecting') hud.setStatus('Mất kết nối — đang kết nối lại…');

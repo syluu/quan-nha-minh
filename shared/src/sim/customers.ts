@@ -1,4 +1,4 @@
-import { BALANCE, FUN, ITEMS, SHOP_META, SHOPS, festivalOfDay, getStationDef } from '../content';
+import { BALANCE, FUN, ITEMS, LIFE, SHOP_META, SHOPS, festivalOfDay, getStationDef } from '../content';
 import { bumpCombo, credit, tourDoor, walkInMultiplier } from './fun';
 import type { ItemId, PlacedStation, ShopId, ShopLayout } from '../content';
 import { distanceToFootprint } from './carry';
@@ -6,8 +6,9 @@ import type { SimEvent } from './events';
 import { effectiveStars, marketingMultiplier } from './marketing';
 import { pushRating } from './rating';
 import { gameHour } from './time';
-import type { Customer, ShopState, WorldState } from './world';
+import type { Customer, Regular, ShopState, WorldState } from './world';
 import { nextRandom } from './world';
+import { addEarned, changeLove, dueRegulars, loveLevel, maybeGift, staffSpeedMult, tierTrafficMultiplier } from './life';
 
 const ARRIVE = 0.05;
 /** Nhịp xuống xe của đoàn khách (không cần lưu). */
@@ -45,12 +46,16 @@ function displayFor(shopId: ShopId, item: ItemId): PlacedStation | undefined {
 }
 
 export function isCashierManned(world: WorldState, shopId: ShopId): boolean {
+  return cashierRate(world, shopId) > 0;
+}
+
+/** Tốc độ tính tiền: 0 = không ai đứng quầy; người chơi = 1; thu ngân thuê thì theo sức (mệt thì chậm). */
+export function cashierRate(world: WorldState, shopId: ShopId): number {
   const cashier = cashierOf(shopId);
   const near = (x: number, z: number) => distanceToFootprint(cashier, x, z) <= BALANCE.CASHIER_DIST;
-  return (
-    Object.values(world.players).some((p) => p.online && p.location === shopId && near(p.x, p.z)) ||
-    world.shops[shopId].staff.some((s) => s.role === 'cashier' && near(s.x, s.z))
-  );
+  if (Object.values(world.players).some((p) => p.online && p.location === shopId && near(p.x, p.z))) return 1;
+  const s = world.shops[shopId].staff.find((x) => x.role === 'cashier' && near(x.x, x.z));
+  return s ? Math.min(1, staffSpeedMult(s)) : 0;
 }
 
 function pickWeighted<T>(world: WorldState, list: T[], weight: (t: T) => number): T {
@@ -92,11 +97,19 @@ export function chooseWants(world: WorldState, shopId: ShopId, tourist = false):
 }
 
 /** Sinh một khách ở lối vào và quyết định họ muốn mua gì theo giá. */
-export function spawnCustomer(world: WorldState, shopId: ShopId, tourist = false): Customer | null {
+export function spawnCustomer(world: WorldState, shopId: ShopId, tourist = false, regular?: Regular): Customer | null {
   const shop = world.shops[shopId];
   const layout = SHOPS[shopId];
-  const { candidates, kept } = chooseWants(world, shopId, tourist);
+  const chosen = chooseWants(world, shopId, tourist);
+  const { candidates } = chosen;
+  let kept = chosen.kept;
   if (candidates.length === 0) return null;
+  if (regular) {
+    // Khách quen: luôn gọi món ruột (nếu giá không quá cao); quen rồi thì thỉnh thoảng gọi thêm một món.
+    const okPrice = priceOf(shop, regular.fav) <= ITEMS[regular.fav].basePrice * BALANCE.WTP_MAX;
+    const extra = loveLevel(regular.love) >= 1 && nextRandom(world) < 0.5 ? kept.filter((it) => it !== regular.fav).slice(0, 1) : [];
+    kept = okPrice && candidates.includes(regular.fav) ? [regular.fav, ...extra] : [];
+  }
 
   // Khách đoàn du lịch bước xuống từ cửa xe đỗ ngoài đường.
   const start = tourist ? tourDoor(shopId) : layout.entrance;
@@ -116,6 +129,7 @@ export function spawnCustomer(world: WorldState, shopId: ShopId, tourist = false
     seat: 0,
     eatTimer: 0,
     ...(tourist ? { tourist: true } : {}),
+    ...(regular ? { regular: regular.id } : {}),
   };
   if (!kept.length) {
     pushRating(shop, BALANCE.SCORE_PRICEY);
@@ -193,10 +207,21 @@ export function tickCustomers(world: WorldState, shopId: ShopId, dt: number): Si
     } else {
       spawnCustomer(world, shopId);
       const mean =
-        layout.baseCustomerIntervalSec / (hm * trafficMultiplier(effectiveStars(shop)) * marketingMultiplier(shop) * walkInMultiplier(world));
+        layout.baseCustomerIntervalSec / (hm * trafficMultiplier(effectiveStars(shop)) * marketingMultiplier(shop) * walkInMultiplier(world) * tierTrafficMultiplier(shop));
       shop.nextCustomerIn = -Math.log(1 - nextRandom(world)) * mean;
     }
   }
+
+  // Khách quen tới giờ ghé (mỗi người một lần mỗi ngày); quen rồi thì hay dẫn bạn theo.
+  if (gameHour(world.secOfDay) < BALANCE.LAST_SPAWN_HOUR && shop.customers.length < BALANCE.MAX_CUSTOMERS)
+    for (const r of dueRegulars(world, shopId)) {
+      r.visitedDay = world.day;
+      r.visits += 1;
+      const c = spawnCustomer(world, shopId, false, r);
+      if (!c) continue;
+      if (!c.wants.length) events.push(...changeLove(world, r, LIFE.LOVE_PRICEY, c.x, c.z));
+      else if (loveLevel(r.love) >= 1 && nextRandom(world) < LIFE.FRIEND_CHANCE) spawnCustomer(world, shopId);
+    }
 
   // Đoàn khách du lịch xuống xe lần lượt.
   if (shop.tourLeft && shop.customers.length < BALANCE.MAX_CUSTOMERS) {
@@ -211,7 +236,8 @@ export function tickCustomers(world: WorldState, shopId: ShopId, dt: number): Si
   }
 
   const cashier = cashierOf(shopId);
-  const manned = isCashierManned(world, shopId);
+  const rate = cashierRate(world, shopId);
+  const manned = rate > 0;
   let queueIndex = 0;
 
   for (const c of [...shop.customers]) {
@@ -253,7 +279,7 @@ export function tickCustomers(world: WorldState, shopId: ShopId, dt: number): Si
         if (c.state === 'toQueue') c.state = 'inQueue';
         if (i === 0 && manned) {
           c.state = 'paying';
-          c.payTimer += dt;
+          c.payTimer += dt * rate;
           if (c.payTimer >= BALANCE.CASHIER_SERVICE_SEC - 1e-6) {
             world.money += c.bill;
             world.dayStats.revenue += c.bill;
@@ -267,8 +293,11 @@ export function tickCustomers(world: WorldState, shopId: ShopId, dt: number): Si
             c.state = seat === 'seated' ? 'toTable' : 'leaving';
             // Phục vụ nhanh thì khách vui và boa (khách du lịch boa nhiều, ngày lễ gấp đôi).
             const fast = c.waited <= BALANCE.SCORE_FAST_SEC;
+            const reg = c.regular ? world.regulars.find((r) => r.id === c.regular) : undefined;
+            // Khách ruột boa gấp đôi.
+            const tipMult = (festivalOfDay(world.day) ? FUN.FESTIVAL_TIP : 1) * (reg && loveLevel(reg.love) >= 2 ? 2 : 1);
             const tip = fast
-              ? Math.round((c.bill * (c.tourist ? FUN.TOURIST_TIP_RATE : FUN.TIP_RATE) * (festivalOfDay(world.day) ? FUN.FESTIVAL_TIP : 1)) / 500) * 500
+              ? Math.round((c.bill * (c.tourist ? FUN.TOURIST_TIP_RATE : FUN.TIP_RATE) * tipMult) / 500) * 500
               : 0;
             if (tip > 0) {
               world.money += tip;
@@ -281,6 +310,11 @@ export function tickCustomers(world: WorldState, shopId: ShopId, dt: number): Si
             );
             if (cashierPlayer) credit(world, cashierPlayer.id, 'served');
             events.push({ type: 'sale', shopId, amount: c.bill, x: c.x, z: c.z, ...(tip ? { tip } : {}) });
+            events.push(...addEarned(world, shopId, c.bill + tip));
+            if (reg) {
+              events.push(...changeLove(world, reg, LIFE.LOVE_SERVED + (fast ? LIFE.LOVE_FAST : 0), c.x, c.z));
+              events.push(...maybeGift(world, shop, reg, c.x, c.z));
+            }
             events.push(...bumpCombo(world, shop, fast, c.waited > BALANCE.SCORE_OK_SEC, c.x, c.z));
           }
         } else c.waited += dt;
@@ -318,6 +352,8 @@ export function tickCustomers(world: WorldState, shopId: ShopId, dt: number): Si
       c.holding = [];
       c.face = '😡';
       shop.combo = 0;
+      const reg = c.regular ? world.regulars.find((r) => r.id === c.regular) : undefined;
+      if (reg) changeLove(world, reg, LIFE.LOVE_LOST, c.x, c.z);
       world.dayStats.lost += 1;
       events.push({ type: 'customerLost', shopId, x: c.x, z: c.z });
     }

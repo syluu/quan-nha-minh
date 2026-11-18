@@ -33,7 +33,14 @@ export const MSG = {
   setPlotCrop: 'setPlotCrop',
   sellWarehouse: 'sellWarehouse',
   wearCostume: 'wearCostume',
+  treatStaff: 'treatStaff',
+  acceptParty: 'acceptParty',
+  declineParty: 'declineParty',
 } as const;
+
+export interface TreatStaffMsg {
+  staffId: string;
+}
 
 export interface EmoteMsg {
   kind: string;
@@ -193,7 +200,23 @@ export interface Snapshot {
     id: string; name: string; role: StaffRole; item: ItemId | null; x: number; z: number; dir: number; carry: ItemId[];
     level: number;
     wageOwed: number;
+    /** Sức 0–100 (mệt thì đi chậm) và đang hăng hái sau ly trà đá. */
+    energy: number;
+    cheer: boolean;
   }[];
+  /** Quán có hồn: cấp quán, khách quen, đơn đặt tiệc. */
+  life: {
+    tier: number;
+    earned: number;
+    /** Doanh thu cộng dồn cần để lên cấp sau (null = cấp cao nhất). */
+    nextTierAt: number | null;
+    regulars: { id: string; shopId: ShopId; fav: ItemId; love: number; visits: number }[];
+    party: {
+      kind: string; shopId: ShopId; item: ItemId; qty: number; delivered: number; dueSec: number; offerUntil: number; reward: number;
+      state: 'offer' | 'active' | 'done' | 'failed' | 'declined';
+      endSec?: number;
+    } | null;
+  };
   month: number;
   daysToMonthEnd: number;
   campaigns: { id: CampaignId; daysLeft: number }[];
@@ -218,7 +241,13 @@ export interface Snapshot {
     cancelledToday: number;
   };
   prices: Partial<Record<ItemId, number>>;
-  customers: { id: number; x: number; z: number; dir: number; holding: ItemId[]; sitting: boolean; mood: string | null; tourist: boolean }[];
+  customers: {
+    id: number; x: number; z: number; dir: number; holding: ItemId[]; sitting: boolean; mood: string | null; tourist: boolean;
+    /** Khách quen (id trong REGULARS). */
+    regular: string | null;
+    /** Đang ăn: đã ăn được bao nhiêu (0..1). */
+    eat: number;
+  }[];
   stations: {
     instanceId: string;
     unlocked: boolean;

@@ -1,5 +1,5 @@
 import {
-  BALANCE, COSTUMES, COSTUME_LIST, PLOT_CROPS, STATIONS, COSTUME_SLOTS, DEFAULT_OUTFIT, INGREDIENTS, ITEMS, SHOP_META, SHOPS, effectiveCycle, isFarm, effectiveOutputCap, formatK, getStationDef, loanTerms, machineUpgradeCost,
+  BALANCE, COSTUMES, LIFE, COSTUME_LIST, PLOT_CROPS, STATIONS, COSTUME_SLOTS, DEFAULT_OUTFIT, INGREDIENTS, ITEMS, SHOP_META, SHOPS, effectiveCycle, isFarm, effectiveOutputCap, formatK, getStationDef, loanTerms, machineUpgradeCost,
   marketingMultiplier, onlineMarketingMultiplier, priceRange, warehouseSellPrice,
 } from '@qnm/shared';
 import type { Outfit } from '@qnm/shared';
@@ -25,6 +25,19 @@ export interface StaffDetail {
   /** Cho nghỉ phải trả ngay: lương còn nợ + hôm nay. */
   payOnFire: string;
   nextTrain: string | null;
+  /** Sức 0–100 và tâm trạng (khoẻ / mệt / kiệt sức / hăng hái sau ly trà đá). */
+  energy: number;
+  mood: string;
+  cheer: boolean;
+}
+
+/** Tâm trạng nhân viên theo sức. */
+export function staffMood(x: { energy: number; cheer: boolean }): string {
+  if (x.cheer) return '🧋 Hăng hái';
+  if (x.energy < LIFE.EXHAUSTED) return '🥵 Kiệt sức';
+  if (x.energy < LIFE.TIRED) return '😓 Mệt';
+  if (x.energy < 70) return '🙂 Hơi đuối';
+  return '💪 Khoẻ re';
 }
 
 function staffDetail(x: Snapshot['staff'][number] | undefined): StaffDetail | null {
@@ -39,6 +52,9 @@ function staffDetail(x: Snapshot['staff'][number] | undefined): StaffDetail | nu
     owed: formatK(x.wageOwed),
     payOnFire: formatK(x.wageOwed + lv.wage),
     nextTrain: next ? formatK(next.train) : null,
+    energy: x.energy ?? 100,
+    mood: staffMood({ energy: x.energy ?? 100, cheer: !!x.cheer }),
+    cheer: !!x.cheer,
   };
 }
 

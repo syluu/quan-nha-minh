@@ -29,6 +29,9 @@ import {
   setPlotCrop,
   sellWarehouse,
   wearCostume,
+  treatStaff,
+  acceptParty,
+  declineParty,
   setMachineEnabled,
   travel,
   leavePlayer,
@@ -43,7 +46,7 @@ import {
 import type {
   ActionResult, FireMsg, HireMsg, InputMsg, JoinOptions, RenameMsg, RepayLoanMsg, RunCampaignMsg, SellStationMsg, SetPriceMsg,
   SetOnlinePausedMsg, TakeLoanMsg, UpgradeMachineMsg, UpgradePlayerMsg, UpgradeStaffMsg, WorldState,
-  BuyAdMsg, EmoteMsg, SetPlotCropMsg, CostumeMsg, SellWarehouseMsg, RentShopMsg, SetMachineEnabledMsg, ShopId, Snapshot, TravelMsg,
+  BuyAdMsg, EmoteMsg, SetPlotCropMsg, CostumeMsg, SellWarehouseMsg, RentShopMsg, SetMachineEnabledMsg, ShopId, Snapshot, TravelMsg, TreatStaffMsg,
 } from '@qnm/shared';
 import type { WorldStore } from '../persistence';
 
@@ -161,6 +164,9 @@ export class WorldRoom extends Room {
     act<SellWarehouseMsg>(MSG.sellWarehouse, (pid, m) => sellWarehouse(this.world, m.ingredient, m.qty, pid));
     act<CostumeMsg>(MSG.buyCostume, (pid, m) => buyCostume(this.world, pid, m.id));
     act<CostumeMsg>(MSG.wearCostume, (pid, m) => wearCostume(this.world, pid, m.id));
+    act<TreatStaffMsg>(MSG.treatStaff, (pid, m) => treatStaff(this.world, here(pid), m.staffId, pid));
+    act<Record<string, never>>(MSG.acceptParty, (pid) => acceptParty(this.world, pid));
+    act<Record<string, never>>(MSG.declineParty, (pid) => declineParty(this.world, pid));
     this.onMessage(MSG.getReport, (client: Client) => {
       if (this.ownedPlayer(client)) client.send(MSG.report, buildReport(this.world));
     });

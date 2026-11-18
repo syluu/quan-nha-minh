@@ -5,15 +5,18 @@ import { ITEM_STACK_H } from './items';
 import { buildAssembler, buildDisplay, buildProducer, itemsOnTray } from './machineModels';
 import { animalModel, cropPlant } from './farmModels';
 import type { Tray } from './machineModels';
-import { box, disposeLabel, disposeTree, makeLabel, markSharedGeometry, mat } from './materials';
+import { box, disposeLabel, disposeTree, glassMat, makeLabel, markSharedGeometry, mat } from './materials';
 
 type StationSnap = Snapshot['stations'][number];
 
 const plateGeo = new THREE.CylinderGeometry(0.15, 0.13, 0.03, 10);
+const chopGeo = new THREE.BoxGeometry(0.012, 0.012, 0.26);
+const cupGeo = new THREE.CylinderGeometry(0.045, 0.035, 0.11, 8);
+const napkinGeo = new THREE.IcosahedronGeometry(0.045, 0);
 const stoolGeo = new THREE.CylinderGeometry(0.17, 0.15, 0.45, 8);
 const sproutGeo = new THREE.ConeGeometry(0.16, 0.3, 6);
 const wheelGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.12, 10);
-markSharedGeometry(plateGeo, stoolGeo, sproutGeo, wheelGeo);
+markSharedGeometry(plateGeo, chopGeo, cupGeo, napkinGeo, stoolGeo, sproutGeo, wheelGeo);
 
 function itemGrid(items: ItemId[], w: number, d: number, y: number): THREE.Group {
   return itemsOnTray(items, { w, d, z: 0, y }, ITEM_STACK_H);
@@ -221,7 +224,18 @@ export function createStationView(placed: PlacedStation): StationView {
           const crumbs = new THREE.Mesh(plateGeo, mat(0x8a6d3b));
           crumbs.scale.set(0.5, 0.6, 0.4);
           crumbs.position.set(seat.x - placed.x + 0.03, topY + 0.07, (seat.z - placed.z) * 0.35);
-          contents.add(plate, crumbs);
+          // Bát đĩa bừa bộn: đũa gác chéo, ly uống dở, giấy ăn vo tròn.
+          const sx = seat.x - placed.x;
+          const sz = (seat.z - placed.z) * 0.35;
+          const chop = new THREE.Mesh(chopGeo, mat(0xc49a6c));
+          chop.position.set(sx + 0.02, topY + 0.09, sz);
+          chop.rotation.set(0, 0.9 + i * 0.7, 0.15);
+          const cup = new THREE.Mesh(cupGeo, glassMat(0xc98a4a, 0.55));
+          cup.position.set(sx + 0.17, topY + 0.065, sz - 0.1);
+          const napkin = new THREE.Mesh(napkinGeo, mat(0xffffff));
+          napkin.position.set(sx - 0.15, topY + 0.04, sz + 0.08);
+          napkin.rotation.set(0.4, i, 0.3);
+          contents.add(plate, crumbs, chop, cup, napkin);
         });
         return;
       }

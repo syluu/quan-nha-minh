@@ -59,19 +59,28 @@ export function createChatter(opts: ChatterOpts = {}) {
 
   return {
     /** Nhân viên: moving/carrying lấy từ hình ảnh đang thấy. */
-    staff(id: string, dt: number, moving: boolean, carrying: boolean): string | null {
+    staff(id: string, dt: number, moving: boolean, carrying: boolean, energy?: number): string | null {
       const e = entry(`s:${id}`);
       // Mức làm việc ~20 giây gần nhất (trung bình trượt).
       const k = Math.min(1, dt / 20);
       e.work += ((moving || carrying ? 1 : 0) - e.work) * k;
       e.still = moving || carrying ? 0 : e.still + dt;
-      const mood: Mood = e.work > 0.8 ? 'busy' : e.still > 8 ? 'idle' : null;
+      // Có sức từ máy chủ: đuối sức là than mệt (kể cả lúc đang đứng nghỉ lấy hơi).
+      const tired = energy !== undefined ? energy < 45 : e.work > 0.8;
+      const mood: Mood = tired ? 'busy' : e.still > 8 ? 'idle' : null;
       return tick(`s:${id}`, dt, mood, (m) => (m === 'busy' ? STAFF_BUSY : STAFF_IDLE));
     },
     /** Người chơi (chủ quán): theo tình hình quán. */
     owner(id: string, dt: number, ctx: { customers: number; carrying: boolean }): string | null {
       const mood: Mood = ctx.customers >= 8 ? 'crowded' : ctx.carrying ? 'carry' : ctx.customers <= 1 ? 'quiet' : null;
       return tick(`p:${id}`, dt, mood, (m) => (m === 'crowded' ? OWNER_CROWDED : m === 'carry' ? OWNER_CARRY : OWNER_QUIET));
+    },
+    /** Nói ngay một câu (vd. cảm ơn khi được mời trà đá), rồi chờ như bình thường. */
+    say(id: string, text: string) {
+      const e = entry(`s:${id}`);
+      e.text = text;
+      e.left = show;
+      e.wait = gapMin + rand() * (gapMax - gapMin);
     },
     forget(id: string) {
       st.delete(`s:${id}`);

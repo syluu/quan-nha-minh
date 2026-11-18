@@ -50,6 +50,8 @@ export interface Customer {
   table: string | null;
   seat: number;
   eatTimer: number;
+  /** Khách quen (id trong REGULARS). */
+  regular?: string;
 }
 
 export type StaffRole = 'cashier' | 'cook' | 'courier' | 'cleaner' | 'farmhand';
@@ -81,6 +83,41 @@ export interface StaffState {
   /** Nhân viên dọn bàn: bàn đang tới dọn và các điểm đi qua (vòng qua khe giữa các kệ). */
   target?: string | null;
   path?: { x: number; z: number }[];
+  /** Sức 0–100 (thiếu = đầy): làm liên tục thì tụt, rảnh thì hồi; mệt thì đi chậm. */
+  energy?: number;
+  /** Còn bao nhiêu giây hăng hái sau khi được mời trà đá. */
+  cheer?: number;
+}
+
+/** Khách quen của một quán: món ruột, tình cảm, giờ ghé hôm nay. */
+export interface Regular {
+  id: string;
+  shopId: ShopId;
+  fav: ItemId;
+  /** 0–100. */
+  love: number;
+  /** Giây trong ngày sẽ ghé hôm nay; ngày đã ghé. */
+  visitAt: number;
+  visitedDay: number;
+  /** Số lần đã ghé. */
+  visits: number;
+}
+
+/** Đơn đặt tiệc: giao đủ số món trước giờ hẹn qua điểm giao hàng. */
+export interface Party {
+  kind: string;
+  shopId: ShopId;
+  item: ItemId;
+  qty: number;
+  delivered: number;
+  /** Giây trong ngày: hạn nhận đơn, hạn giao. */
+  offerUntil: number;
+  dueSec: number;
+  /** Tiền thưởng khi giao đủ (đã gồm giá món). */
+  reward: number;
+  state: 'offer' | 'active' | 'done' | 'failed' | 'declined';
+  /** Giây trong ngày lúc giao xong / trễ hẹn (để bảng kết quả hiện thêm một lúc rồi ẩn). */
+  endSec?: number;
 }
 
 export type CampaignId = keyof typeof BALANCE.CAMPAIGNS;
@@ -148,6 +185,8 @@ export interface ShopState {
   /** Đoàn khách du lịch: còn bao nhiêu khách sắp xuống xe; xe đỗ tới giây nào trong ngày. */
   tourLeft?: number;
   tourBusUntil?: number;
+  /** Tổng doanh thu cộng dồn của quán (để lên đời: quán cóc → nhà hàng). */
+  earned?: number;
   stations: Record<string, StationState>;
   customers: Customer[];
   prices: Partial<Record<ItemId, number>>;
@@ -253,7 +292,7 @@ export interface LogEntry {
 }
 
 export interface WorldState {
-  schemaVersion: 10;
+  schemaVersion: 11;
   code: string;
   money: number;
   day: number;
@@ -288,9 +327,13 @@ export interface WorldState {
   quests: Quest[];
   /** Huy hiệu đã đạt (giữ cả khi phá sản) và số liệu cộng dồn để xét huy hiệu. */
   badges: string[];
-  lifetime: { served: number; sold: Partial<Record<ItemId, number>>; tips: number; online: number; bestCombo: number; fiveStarDays: number; perfectDays: number; quests: number; tours: number };
+  lifetime: { served: number; sold: Partial<Record<ItemId, number>>; tips: number; online: number; bestCombo: number; fiveStarDays: number; perfectDays: number; quests: number; tours: number; parties?: number };
   /** Ngày đã chuẩn bị nội dung (thời tiết, đoàn khách, nhiệm vụ, mèo). */
   funDay: number;
+  /** Khách quen của các quán. */
+  regulars: Regular[];
+  /** Đơn đặt tiệc hôm nay (null = không có). */
+  party: Party | null;
 }
 
 export interface Quest {
@@ -344,7 +387,7 @@ export function createShop(id: ShopId, owned: boolean): ShopState {
 
 export function createWorld(code: string, seed: number): WorldState {
   return {
-    schemaVersion: 10,
+    schemaVersion: 11,
     code,
     money: BALANCE.START_MONEY,
     day: 1,
@@ -370,6 +413,8 @@ export function createWorld(code: string, seed: number): WorldState {
     badges: [],
     lifetime: { served: 0, sold: {}, tips: 0, online: 0, bestCombo: 0, fiveStarDays: 0, perfectDays: 0, quests: 0, tours: 0 },
     funDay: 0,
+    regulars: [],
+    party: null,
   };
 }
 

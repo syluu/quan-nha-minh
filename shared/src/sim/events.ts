@@ -20,4 +20,9 @@ export type SimEvent =
   | { type: 'orderDone'; shopId: ShopId; net: number; x: number; z: number }
   | { type: 'orderCancelled'; shopId: ShopId; x: number; z: number }
   | { type: 'clean'; shopId: ShopId; instanceId: string; x: number; z: number }
-  | { type: 'stored'; shopId: ShopId; item: ItemId; x: number; z: number };
+  | { type: 'stored'; shopId: ShopId; item: ItemId; x: number; z: number }
+  | { type: 'shopTier'; shopId: ShopId; tier: number }
+  | { type: 'regular'; shopId: ShopId; text: string; x: number; z: number }
+  | { type: 'partyOffer'; shopId: ShopId }
+  | { type: 'partyDone'; shopId: ShopId; reward: number; x: number; z: number }
+  | { type: 'partyFailed'; shopId: ShopId; delivered: number; qty: number };

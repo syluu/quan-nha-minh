@@ -28,6 +28,8 @@ export interface CharacterView {
   setName(name: string): void;
   /** Ngồi trên ghế (khách ăn tại chỗ): co chân ngồi, quay mặt vào bàn. */
   setSitting(on: boolean): void;
+  /** Đang ăn (ngồi bàn): tay phải gắp đưa lên miệng, tay trái đặt lên bàn. */
+  setEating(on: boolean): void;
   /** Trang phục người chơi (mũ, tóc, áo/váy, quần/chân váy, tạp dề) — đổi cả kiểu dáng. */
   setOutfit(outfit: Outfit): void;
   /** Bong bóng trên đầu (cảm xúc khách, biểu cảm người chơi); null = ẩn. */
@@ -297,6 +299,7 @@ export function createCharacter(color: number, opts: { look: CharacterLook; name
   else setRig(customerSpec(color, opts.variant ?? 0));
 
   let sitting = false;
+  let eating = false;
   let carrying = false;
   let outfitKey = '';
 
@@ -335,7 +338,7 @@ export function createCharacter(color: number, opts: { look: CharacterLook; name
     }
     if (!b.text) return;
     badge = makeLabel(b.text, { bg: b.full ? '#c8452c' : '#1f8a3a', size: 34, scale: 0.0075 });
-    badge.position.y = opts.name ? 2.3 : 1.85;
+    badge.position.y = currentName ? 2.3 : 1.85;
     group.add(badge);
   }
 
@@ -351,7 +354,7 @@ export function createCharacter(color: number, opts: { look: CharacterLook; name
     }
     if (!text) return;
     bubble = makeLabel(text, { bg: 'rgba(255,255,255,.92)', color: '#2b2118', size: 38, scale: 0.0075 });
-    bubble.position.y = opts.name ? 2.7 : 2.05;
+    bubble.position.y = currentName ? (opts.look === 'customer' ? 2.3 : 2.7) : 2.05;
     group.add(bubble);
   }
 
@@ -359,7 +362,7 @@ export function createCharacter(color: number, opts: { look: CharacterLook; name
     group,
     setBubble,
     setPose(x, z, dir, moving, t) {
-      if (bubble) bubble.position.y = (opts.name ? 2.7 : 2.05) + Math.sin(t * 4) * 0.04;
+      if (bubble) bubble.position.y = (currentName ? (opts.look === 'customer' ? 2.3 : 2.7) : 2.05) + Math.sin(t * 4) * 0.04;
       group.position.set(x, 0, z);
       inner.rotation.y = sitting ? 0 : dir;
       inner.position.y = sitting ? 0.12 : moving ? Math.abs(Math.sin(t * 10)) * 0.04 : 0;
@@ -370,6 +373,14 @@ export function createCharacter(color: number, opts: { look: CharacterLook; name
       const armRest = carrying ? -1.25 : 0;
       rig.armL.rotation.x = armRest + (carrying ? 0 : -swing * 0.8);
       rig.armR.rotation.x = armRest + (carrying ? 0 : swing * 0.8);
+      if (eating && sitting) {
+        // Gắp — đưa lên miệng — nhai, lặp lại; đầu gật nhẹ theo nhịp nhai.
+        const k = (t * 0.9 + (x * 7.3 + z * 3.1)) % 1;
+        const lift = k < 0.35 ? k / 0.35 : k < 0.6 ? 1 : 1 - (k - 0.6) / 0.4;
+        rig.armR.rotation.x = -0.9 - lift * 1.1;
+        rig.armL.rotation.x = -0.9;
+        inner.position.y = 0.12 + (k > 0.35 && k < 0.6 ? Math.abs(Math.sin(t * 18)) * 0.012 : 0);
+      }
     },
     setOutfit(o) {
       const key = `${o.hat}|${o.hair}|${o.shirt}|${o.pants}|${o.apron}`;
@@ -379,6 +390,9 @@ export function createCharacter(color: number, opts: { look: CharacterLook; name
     },
     setSitting(on) {
       sitting = on;
+    },
+    setEating(on) {
+      eating = on;
     },
     setName,
     setCarry(items, cap = 4) {

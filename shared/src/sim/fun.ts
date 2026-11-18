@@ -8,6 +8,7 @@ import { pushRating } from './rating';
 import { gameHour } from './time';
 import type { PlayerDayStats, Quest, ShopState, WorldState } from './world';
 import { nextRandom } from './world';
+import { startLifeDay } from './life';
 
 // ───────────────────────── Thành tích từng người trong ngày ─────────────────────────
 
@@ -97,6 +98,7 @@ export function startDay(world: WorldState): SimEvent[] {
     }
   }
   world.quests = makeQuests(world);
+  events.push(...startLifeDay(world));
   if (festival) addLog(world, `${festival.icon} Hôm nay là ${festival.name}! Khách đông hơn, tiền boa gấp đôi`);
   if (world.weather === 'rain') addLog(world, '🌧️ Trời mưa: khách đi bộ ít hơn nhưng đơn online tăng');
   return events;

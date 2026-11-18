@@ -3,7 +3,8 @@ import type { ItemId, PlacedStation, ShopId } from '../content';
 import { formatK } from '../money';
 import type { ActionResult } from './actions';
 import { trySettleAfterAction } from './settlement';
-import { deliverToPickup, pickupNeeds, pickupOf } from './online';
+import { deliverAt, deliveryNeeds, pickupOf } from './online';
+import { staffSpeedMult, tickStaffEnergy } from './life';
 import { loadCrate } from './carry';
 import { plotDef } from './farm';
 import type { SimEvent } from './events';
@@ -198,7 +199,7 @@ function walk(s: StaffState, tx: number, tz: number, dt: number): boolean {
     s.z = tz;
     return true;
   }
-  const step = Math.min(d, staffStats(s).speed * dt);
+  const step = Math.min(d, staffStats(s).speed * staffSpeedMult(s) * dt);
   s.x += (dx / d) * step;
   s.z += (dz / d) * step;
   s.dir = Math.atan2(dx, dz);
@@ -296,7 +297,7 @@ function tickCourier(world: WorldState, shopId: ShopId, s: StaffState, dt: numbe
   const shop = world.shops[shopId];
   const pickup = pickupOf(shopId);
   if (!pickup) return [];
-  const needs = pickupNeeds(shop);
+  const needs = deliveryNeeds(world, shopId);
   const events: SimEvent[] = [];
 
   if (!s.task) {
@@ -367,12 +368,12 @@ function tickCourier(world: WorldState, shopId: ShopId, s: StaffState, dt: numbe
       if (s.timer < BALANCE.DROP_INTERVAL - 1e-6) break;
       s.timer = 0;
       if (t.to === pickup.instanceId) {
-        if (!pickupNeeds(shop).includes(t.item)) {
+        if (!deliveryNeeds(world, shopId).includes(t.item)) {
           s.task = null;
           break;
         }
         s.carry.splice(idx, 1);
-        events.push(...deliverToPickup(world, shopId, t.item));
+        events.push(...deliverAt(world, shopId, t.item));
       } else if (roomAt(world, shopId, t.to, t.item) > 0) {
         s.carry.splice(idx, 1);
         const st = shop.stations[t.to];
@@ -432,7 +433,7 @@ function tickCleaner(world: WorldState, shopId: ShopId, s: StaffState, dt: numbe
   }
   const placed = placedOf(shopId, s.target);
   s.timer += dt;
-  const cleanSec = (BALANCE.CLEAN_SEC * BALANCE.PLAYER_SPEED) / staffStats(s).speed;
+  const cleanSec = (BALANCE.CLEAN_SEC * BALANCE.PLAYER_SPEED) / (staffStats(s).speed * staffSpeedMult(s));
   if (s.timer < cleanSec - 1e-6) return [];
   s.timer = 0;
   const st = shop.stations[s.target];
@@ -518,91 +519,106 @@ export function tickStaff(world: WorldState, shopId: ShopId, dt: number): SimEve
   const events: SimEvent[] = [];
   const shop = world.shops[shopId];
   for (const s of shop.staff) {
-    if (s.role === 'courier') {
-      events.push(...tickCourier(world, shopId, s, dt));
-      continue;
-    }
-    if (s.role === 'cleaner') {
-      events.push(...tickCleaner(world, shopId, s, dt));
-      continue;
-    }
-    if (s.role === 'farmhand') {
-      events.push(...tickFarmhand(world, shopId, s, dt));
-      continue;
-    }
-    if (s.role === 'cashier') {
-      const wp = placedOf(shopId, SHOPS[shopId].stations.find((p) => getStationDef(p.def).kind === 'cashier')!.instanceId).workPoint;
-      walk(s, wp.x, wp.z, dt);
-      continue;
-    }
+    const x0 = s.x;
+    const z0 = s.z;
+    events.push(...tickOne(world, shopId, s, dt));
+    // Đang đi, đang cầm việc hay đang dọn bàn là đang làm; thu ngân làm khi có khách tính tiền.
+    const working =
+      s.role === 'cashier'
+        ? shop.customers.some((c) => c.state === 'paying')
+        : Math.hypot(s.x - x0, s.z - z0) > 1e-4 || !!s.task || !!s.target;
+    tickStaffEnergy(s, working, dt);
+  }
+  return events;
+}
 
+function tickOne(world: WorldState, shopId: ShopId, s: StaffState, dt: number): SimEvent[] {
+  const events: SimEvent[] = [];
+  const shop = world.shops[shopId];
+  if (s.role === 'courier') {
+    events.push(...tickCourier(world, shopId, s, dt));
+    return events;
+  }
+  if (s.role === 'cleaner') {
+    events.push(...tickCleaner(world, shopId, s, dt));
+    return events;
+  }
+  if (s.role === 'farmhand') {
+    events.push(...tickFarmhand(world, shopId, s, dt));
+    return events;
+  }
+  if (s.role === 'cashier') {
+    const wp = placedOf(shopId, SHOPS[shopId].stations.find((p) => getStationDef(p.def).kind === 'cashier')!.instanceId).workPoint;
+    walk(s, wp.x, wp.z, dt);
+    return events;
+  }
+
+  if (!s.task) {
+    if (s.carry.length > 0) {
+      const to = targetForCarry(world, shopId, s.carry[0]);
+      if (to) s.task = { from: to, to, item: s.carry[0], phase: 'toTarget' };
+    }
+    // Tay trống, hoặc cầm món thừa chưa có chỗ trả: vẫn nhận việc khác nếu còn chỗ trên tay.
+    if (!s.task && s.carry.length < staffStats(s).carry) s.task = chooseJob(world, shopId, s);
+    s.timer = 0;
     if (!s.task) {
-      if (s.carry.length > 0) {
-        const to = targetForCarry(world, shopId, s.carry[0]);
-        if (to) s.task = { from: to, to, item: s.carry[0], phase: 'toTarget' };
-      }
-      // Tay trống, hoặc cầm món thừa chưa có chỗ trả: vẫn nhận việc khác nếu còn chỗ trên tay.
-      if (!s.task && s.carry.length < staffStats(s).carry) s.task = chooseJob(world, shopId, s);
-      s.timer = 0;
-      if (!s.task) {
-        // Rảnh: đứng chờ ở lối bếp, mỗi người một chỗ.
-        const idx = shop.staff.filter((o) => o.role === 'cook').indexOf(s);
-        walk(s, -3.75 + (idx % 4) * 2.5, BALANCE.STAFF_DOOR.z, dt);
-        continue;
-      }
+      // Rảnh: đứng chờ ở lối bếp, mỗi người một chỗ.
+      const idx = shop.staff.filter((o) => o.role === 'cook').indexOf(s);
+      walk(s, -3.75 + (idx % 4) * 2.5, BALANCE.STAFF_DOOR.z, dt);
+      return events;
     }
+  }
 
-    const t = s.task;
-    const from = placedOf(shopId, t.from);
-    const to = placedOf(shopId, t.to);
-    switch (t.phase) {
-      case 'toSource':
-        if (walk(s, from.workPoint.x, from.workPoint.z, dt)) {
-          t.phase = 'picking';
-          s.timer = 0;
-        }
-        break;
-      case 'picking': {
-        const src = shop.stations[t.from];
-        const have = s.carry.filter((i) => i === t.item).length;
-        const handsFree = staffStats(s).carry - s.carry.length;
-        const want = Math.min(have + handsFree, roomAt(world, shopId, t.to, t.item));
-        if (have >= want || handsFree <= 0 || src.outputCount <= 0) {
-          if (have > 0) t.phase = 'toTarget';
-          else s.task = null;
-          break;
-        }
-        s.timer += dt;
-        if (s.timer >= BALANCE.PICK_INTERVAL - 1e-6) {
-          s.timer = 0;
-          src.outputCount -= 1;
-          s.carry.push(t.item);
-        }
+  const t = s.task;
+  const from = placedOf(shopId, t.from);
+  const to = placedOf(shopId, t.to);
+  switch (t.phase) {
+    case 'toSource':
+      if (walk(s, from.workPoint.x, from.workPoint.z, dt)) {
+        t.phase = 'picking';
+        s.timer = 0;
+      }
+      break;
+    case 'picking': {
+      const src = shop.stations[t.from];
+      const have = s.carry.filter((i) => i === t.item).length;
+      const handsFree = staffStats(s).carry - s.carry.length;
+      const want = Math.min(have + handsFree, roomAt(world, shopId, t.to, t.item));
+      if (have >= want || handsFree <= 0 || src.outputCount <= 0) {
+        if (have > 0) t.phase = 'toTarget';
+        else s.task = null;
         break;
       }
-      case 'toTarget':
-        if (walk(s, to.workPoint.x, to.workPoint.z, dt)) {
-          t.phase = 'dropping';
-          s.timer = 0;
-        }
-        break;
-      case 'dropping': {
-        const idx = s.carry.lastIndexOf(t.item);
-        if (idx < 0 || roomAt(world, shopId, t.to, t.item) <= 0) {
-          s.task = null;
-          break;
-        }
-        s.timer += dt;
-        if (s.timer >= BALANCE.DROP_INTERVAL - 1e-6) {
-          s.timer = 0;
-          s.carry.splice(idx, 1);
-          const st = shop.stations[t.to];
-          const def = getStationDef(to.def);
-          if (def.kind === 'display') st.stock += 1;
-          else st.inputs[t.item] = (st.inputs[t.item] ?? 0) + 1;
-        }
+      s.timer += dt;
+      if (s.timer >= BALANCE.PICK_INTERVAL - 1e-6) {
+        s.timer = 0;
+        src.outputCount -= 1;
+        s.carry.push(t.item);
+      }
+      break;
+    }
+    case 'toTarget':
+      if (walk(s, to.workPoint.x, to.workPoint.z, dt)) {
+        t.phase = 'dropping';
+        s.timer = 0;
+      }
+      break;
+    case 'dropping': {
+      const idx = s.carry.lastIndexOf(t.item);
+      if (idx < 0 || roomAt(world, shopId, t.to, t.item) <= 0) {
+        s.task = null;
         break;
       }
+      s.timer += dt;
+      if (s.timer >= BALANCE.DROP_INTERVAL - 1e-6) {
+        s.timer = 0;
+        s.carry.splice(idx, 1);
+        const st = shop.stations[t.to];
+        const def = getStationDef(to.def);
+        if (def.kind === 'display') st.stock += 1;
+        else st.inputs[t.item] = (st.inputs[t.item] ?? 0) + 1;
+      }
+      break;
     }
   }
   return events;

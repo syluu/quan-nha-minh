@@ -30,3 +30,5 @@ export { COSTUMES, COSTUME_LIST, COSTUME_SLOTS, DEFAULT_OUTFIT } from './costume
 export type { CostumeDef, CostumeSlot, CostumeStyle, Outfit } from './costumes';
 export { FUN, EMOTES, FESTIVALS, BADGES, festivalOfDay } from './fun';
 export type { Festival, BadgeDef } from './fun';
+export { LIFE, REGULARS, GIFTS, PARTIES, SHOP_TIERS, tierOf } from './life';
+export type { RegularDef, PartyDef, ShopTier } from './life';

@@ -12,6 +12,7 @@ import { onlineWeatherMultiplier } from './fun';
 import { gameHour } from './time';
 import type { Order, ShopState, Shipper, WorldState } from './world';
 import { nextRandom } from './world';
+import { addEarned, deliverParty, partyNeeds } from './life';
 
 /** Thời gian tuyệt đối (giây) kể từ đầu ngày 1 — để tính chờ qua đêm. */
 export function absTime(world: WorldState): number {
@@ -113,7 +114,19 @@ export function deliverToPickup(world: WorldState, shopId: ShopId, item: ItemId)
   pushRating(shop, scoreFor(s.waited));
   shop.orders = shop.orders.filter((o) => o !== order);
   const p = pickupOf(shopId)!;
-  return [{ type: 'orderDone', shopId, net, x: p.x, z: p.z }];
+  return [{ type: 'orderDone', shopId, net, x: p.x, z: p.z }, ...addEarned(world, shopId, order.total)];
+}
+
+/** Mọi món điểm giao đang cần: shipper đang chờ trước, rồi tới đơn đặt tiệc. */
+export function deliveryNeeds(world: WorldState, shopId: ShopId): ItemId[] {
+  return [...pickupNeeds(world.shops[shopId]), ...partyNeeds(world, shopId)];
+}
+
+/** Đưa 1 món ở điểm giao: ưu tiên shipper đang chờ, không thì vào đơn tiệc. */
+export function deliverAt(world: WorldState, shopId: ShopId, item: ItemId): SimEvent[] {
+  if (pickupNeeds(world.shops[shopId]).includes(item)) return deliverToPickup(world, shopId, item);
+  const p = pickupOf(shopId);
+  return deliverParty(world, shopId, item, p?.x ?? 0, p?.z ?? 0);
 }
 
 function moveShipper(s: Shipper, tx: number, tz: number, speed: number, dt: number): boolean {

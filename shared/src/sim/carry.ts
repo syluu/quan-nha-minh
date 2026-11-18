@@ -1,7 +1,7 @@
 import { BALANCE, ITEMS, SHOPS, getStationDef, itemCost } from '../content';
 import type { ItemId, PlacedStation, ShopId } from '../content';
 import type { SimEvent } from './events';
-import { deliverToPickup, pickupNeeds } from './online';
+import { deliverAt, deliveryNeeds } from './online';
 import { plotDef } from './farm';
 import { credit } from './fun';
 import type { PlayerState, ShopState, WorldState } from './world';
@@ -90,12 +90,12 @@ export function tickCarry(world: WorldState, shopId: ShopId, dt: number): SimEve
     if (def.kind === 'pickup') {
       p.pickTimer = 0;
       p.pickAt = null;
-      const needs = pickupNeeds(shop);
+      const needs = deliveryNeeds(world, shopId);
       const has = p.carry.some((it) => needs.includes(it));
       if (!has || p.dropCd > 0) continue;
       const item = takeFromCarry(p, (it) => needs.includes(it))!;
       credit(world, p.id, 'placed');
-      events.push(...deliverToPickup(world, shopId, item));
+      events.push(...deliverAt(world, shopId, item));
       p.dropCd = BALANCE.DROP_INTERVAL;
       continue;
     }
