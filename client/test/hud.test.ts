@@ -7,12 +7,12 @@ import { summaryRows } from '../src/ui/daySummary';
 describe('hudText', () => {
   it('formats money, clock, stars and who is online', () => {
     const s: Snapshot = {
-      shopId: 'banh_mi', shops: [], canRent: false, warehouse: {}, farm: { owned: false, level: 0, plots: [] }, day: 1, secOfDay: 33.75, money: 2_987_500, stars: 3.7, stations: [], tiles: [], customers: [], log: [], staff: [], prices: {},
+      shopId: 'banh_mi', shops: [], canRent: false, warehouse: {}, farm: { owned: false, level: 0, plots: [] }, fun: { combo: 0, cat: 'none', catSpot: { x: 0, z: 0 }, tourBus: false, weather: 'sun', festival: null, quests: [], badges: [], today: [] }, day: 1, secOfDay: 33.75, money: 2_987_500, stars: 3.7, stations: [], tiles: [], customers: [], log: [], staff: [], prices: {},
     ...V3,
       players: [
-        { id: 'a', name: 'Bố', color: 0, x: 0, z: 0, dir: 0, carry: ['banh_mi', 'banh_mi', 'tra_da'], online: true, cap: 4, pick: 0, pickAt: null, carryLevel: 0, speedLevel: 0, location: 'banh_mi', outfit: { hat: 'non_la', hair: 'toc_ngan_den', shirt: 'ao_mac_dinh', pants: 'quan_nau', apron: 'khong_tap_de' }, wardrobe: [] },
-        { id: 'b', name: 'Mẹ', color: 0, x: 0, z: 0, dir: 0, carry: [], online: true, cap: 4, pick: 0, pickAt: null, carryLevel: 0, speedLevel: 0, location: 'banh_mi', outfit: { hat: 'non_la', hair: 'toc_ngan_den', shirt: 'ao_mac_dinh', pants: 'quan_nau', apron: 'khong_tap_de' }, wardrobe: [] },
-        { id: 'c', name: 'Con', color: 0, x: 0, z: 0, dir: 0, carry: [], online: false, cap: 4, pick: 0, pickAt: null, carryLevel: 0, speedLevel: 0, location: 'banh_mi', outfit: { hat: 'non_la', hair: 'toc_ngan_den', shirt: 'ao_mac_dinh', pants: 'quan_nau', apron: 'khong_tap_de' }, wardrobe: [] },
+        { id: 'a', name: 'Bố', color: 0, x: 0, z: 0, dir: 0, carry: ['banh_mi', 'banh_mi', 'tra_da'], online: true, cap: 4, pick: 0, pickAt: null, carryLevel: 0, speedLevel: 0, location: 'banh_mi', emote: null, boost: false, outfit: { hat: 'non_la', hair: 'toc_ngan_den', shirt: 'ao_mac_dinh', pants: 'quan_nau', apron: 'khong_tap_de' }, wardrobe: [] },
+        { id: 'b', name: 'Mẹ', color: 0, x: 0, z: 0, dir: 0, carry: [], online: true, cap: 4, pick: 0, pickAt: null, carryLevel: 0, speedLevel: 0, location: 'banh_mi', emote: null, boost: false, outfit: { hat: 'non_la', hair: 'toc_ngan_den', shirt: 'ao_mac_dinh', pants: 'quan_nau', apron: 'khong_tap_de' }, wardrobe: [] },
+        { id: 'c', name: 'Con', color: 0, x: 0, z: 0, dir: 0, carry: [], online: false, cap: 4, pick: 0, pickAt: null, carryLevel: 0, speedLevel: 0, location: 'banh_mi', emote: null, boost: false, outfit: { hat: 'non_la', hair: 'toc_ngan_den', shirt: 'ao_mac_dinh', pants: 'quan_nau', apron: 'khong_tap_de' }, wardrobe: [] },
       ],
     };
     expect(hudText(s, 'a')).toEqual({ shop: '🏠 Xe bánh mì', money: '💰 2.987,5K', clock: 'Ngày 1 · 07:30', stars: '★ 3,7', online: 'Bố, Mẹ', basket: '🧺 3/4' });
@@ -30,7 +30,7 @@ describe('carryBadge', () => {
 describe('summaryRows', () => {
   it('lists the day results in Vietnamese with K money', () => {
     const d: DaySummary = {
-      day: 1, revenue: 1_250_000, ingredientCost: 480_000, unlockSpend: 800_000, served: 86, lost: 4, wages: 300_000, wasted: 6_000, sold: {}, marketing: 0, commission: 0, onlineOrders: 0, onlineCancelled: 0,
+      day: 1, revenue: 1_250_000, ingredientCost: 480_000, unlockSpend: 800_000, served: 86, lost: 4, wages: 300_000, wasted: 6_000, sold: {}, marketing: 0, commission: 0, onlineOrders: 0, onlineCancelled: 0, tips: 0, cleaned: 0, bestCombo: 0,
       operatingProfit: 770_000, stars: 4.2,
     };
     expect(summaryRows(d)).toEqual([

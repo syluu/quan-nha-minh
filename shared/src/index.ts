@@ -26,4 +26,5 @@ export * from './sim/marketing';
 export * from './sim/online';
 export * from './sim/shops';
 export * from './sim/farm';
+export * from './sim/fun';
 export * from './sim/costumes';

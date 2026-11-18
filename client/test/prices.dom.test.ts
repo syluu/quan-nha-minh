@@ -7,7 +7,7 @@ import { pricesTab } from '../src/ui/menu/pricesTab';
 function snap(price?: number): Snapshot {
   const st = (instanceId: string, unlocked: boolean) => ({ instanceId, unlocked, outputCount: 0, stock: 0, inputs: {}, enabled: true, seats: [], blocked: null, level: 0 });
   return {
-    shopId: 'banh_mi', shops: [], canRent: false, warehouse: {}, farm: { owned: false, level: 0, plots: [] }, day: 1, secOfDay: 0, money: 0, stars: 3, tiles: [], customers: [], log: [], players: [], staff: [],
+    shopId: 'banh_mi', shops: [], canRent: false, warehouse: {}, farm: { owned: false, level: 0, plots: [] }, fun: { combo: 0, cat: 'none', catSpot: { x: 0, z: 0 }, tourBus: false, weather: 'sun', festival: null, quests: [], badges: [], today: [] }, day: 1, secOfDay: 0, money: 0, stars: 3, tiles: [], customers: [], log: [], players: [], staff: [],
     stations: [st('ke_banh_mi', true)], prices: price ? { banh_mi: price } : {},
     ...V3,
   };

@@ -28,11 +28,16 @@ export const MSG = {
   buyCostume: 'buyCostume',
   buyAd: 'buyAd',
   buyFarmExpansion: 'buyFarmExpansion',
+  emote: 'emote',
+  highFive: 'highFive',
   setPlotCrop: 'setPlotCrop',
   sellWarehouse: 'sellWarehouse',
   wearCostume: 'wearCostume',
 } as const;
 
+export interface EmoteMsg {
+  kind: string;
+}
 export interface SetPlotCropMsg {
   instanceId: string;
   crop: string;
@@ -164,7 +169,24 @@ export interface Snapshot {
     location: ShopId;
     outfit: Outfit;
     wardrobe: string[];
+    /** Biểu cảm đang hiện (id trong EMOTES, hoặc 'hifive' / 'hifive_ok'). */
+    emote: string | null;
+    /** Đang được tăng tốc sau khi đập tay. */
+    boost: boolean;
   }[];
+  /** Phần vui nhộn của quán đang đứng + của cả thế giới. */
+  fun: {
+    combo: number;
+    cat: 'none' | 'stray' | 'pet';
+    catSpot: { x: number; z: number };
+    tourBus: boolean;
+    weather: 'sun' | 'rain';
+    festival: { id: string; icon: string; name: string } | null;
+    quests: { text: string; progress: number; target: number; reward: number; done: boolean; failed: boolean; kind: string }[];
+    badges: string[];
+    /** Thành tích hôm nay từng người (bảng vinh danh). */
+    today: { name: string; placed: number; served: number; cleaned: number; crates: number }[];
+  };
   staff: {
     id: string; name: string; role: StaffRole; item: ItemId | null; x: number; z: number; dir: number; carry: ItemId[];
     level: number;
@@ -194,7 +216,7 @@ export interface Snapshot {
     cancelledToday: number;
   };
   prices: Partial<Record<ItemId, number>>;
-  customers: { id: number; x: number; z: number; dir: number; holding: ItemId[]; sitting: boolean }[];
+  customers: { id: number; x: number; z: number; dir: number; holding: ItemId[]; sitting: boolean; mood: string | null; tourist: boolean }[];
   stations: {
     instanceId: string;
     unlocked: boolean;
@@ -207,6 +229,8 @@ export interface Snapshot {
     seats: SeatState[];
     /** Lô trang trại: giống đang trồng (null = đất trống). */
     crop?: string | null;
+    /** Máy đang làm (khói / lửa). */
+    running?: boolean;
   }[];
   tiles: { instanceId: string; cost: number; paid: number; occupantSec: number }[];
   log: LogEntry[];

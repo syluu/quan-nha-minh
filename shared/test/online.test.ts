@@ -227,7 +227,7 @@ describe('review fixes (plan 4)', async () => {
 
   it('the month statement lists the app commission (I3)', () => {
     const w = onlineWorld();
-    for (let d = 1; d <= 2; d++) w.history.push({ day: d, revenue: 100_000, ingredientCost: 0, unlockSpend: 0, served: 0, lost: 0, wages: 0, wasted: 0, sold: {}, marketing: 0, commission: 4_000, onlineOrders: 2, onlineCancelled: 0, operatingProfit: 0, stars: 3 });
+    for (let d = 1; d <= 2; d++) w.history.push({ day: d, revenue: 100_000, ingredientCost: 0, unlockSpend: 0, served: 0, lost: 0, wages: 0, wasted: 0, sold: {}, marketing: 0, commission: 4_000, onlineOrders: 2, onlineCancelled: 0, tips: 0, cleaned: 0, bestCombo: 0, operatingProfit: 0, stars: 3 });
     expect(buildSettlement(w).commission).toBe(8_000);
   });
 

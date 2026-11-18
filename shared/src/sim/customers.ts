@@ -1,4 +1,5 @@
-import { BALANCE, ITEMS, SHOP_META, SHOPS, getStationDef } from '../content';
+import { BALANCE, FUN, ITEMS, SHOP_META, SHOPS, festivalOfDay, getStationDef } from '../content';
+import { bumpCombo, credit, walkInMultiplier } from './fun';
 import type { ItemId, PlacedStation, ShopId, ShopLayout } from '../content';
 import { distanceToFootprint } from './carry';
 import type { SimEvent } from './events';
@@ -9,6 +10,8 @@ import type { Customer, ShopState, WorldState } from './world';
 import { nextRandom } from './world';
 
 const ARRIVE = 0.05;
+/** Nhịp xuống xe của đoàn khách (không cần lưu). */
+const tourTimers = new WeakMap<ShopState, number>();
 
 export function trafficMultiplier(s: number): number {
   const pts = BALANCE.STAR_MULT;
@@ -64,7 +67,7 @@ function pickWeighted<T>(world: WorldState, list: T[], weight: (t: T) => number)
  * Chọn món một người mua muốn (1–3 món đang bán, theo độ thích từng món), rồi bỏ món đắt hơn giá họ chấp nhận.
  * Dùng chung cho khách tại quán và đơn online.
  */
-export function chooseWants(world: WorldState, shopId: ShopId): { candidates: ItemId[]; kept: ItemId[] } {
+export function chooseWants(world: WorldState, shopId: ShopId, tourist = false): { candidates: ItemId[]; kept: ItemId[] } {
   const shop = world.shops[shopId];
   const candidates = (Object.keys(ITEMS) as ItemId[]).filter((it) => {
     if (!ITEMS[it].sellable) return false;
@@ -73,23 +76,26 @@ export function chooseWants(world: WorldState, shopId: ShopId): { candidates: It
   });
   if (candidates.length === 0) return { candidates, kept: [] };
   const weights = BALANCE.ITEMS_PER_CUSTOMER_WEIGHTS;
-  const n = Math.min(pickWeighted(world, [1, 2, 3], (k) => weights[k - 1]), candidates.length);
+  // Khách du lịch mua nhiều hơn (2–3 món) và chịu giá cao hơn.
+  const n = Math.min(tourist ? 2 + Math.floor(nextRandom(world) * 2) : pickWeighted(world, [1, 2, 3], (k) => weights[k - 1]), candidates.length);
   const pool = [...candidates];
   const kept: ItemId[] = [];
   for (let i = 0; i < n; i++) {
     const item = pickWeighted(world, pool, (it) => ITEMS[it].demandWeight);
     pool.splice(pool.indexOf(item), 1);
-    const wtp = ITEMS[item].basePrice * (BALANCE.WTP_MIN + nextRandom(world) * (BALANCE.WTP_MAX - BALANCE.WTP_MIN));
+    const wtp = tourist
+      ? ITEMS[item].basePrice * FUN.TOURIST_WTP
+      : ITEMS[item].basePrice * (BALANCE.WTP_MIN + nextRandom(world) * (BALANCE.WTP_MAX - BALANCE.WTP_MIN));
     if (priceOf(shop, item) <= wtp) kept.push(item);
   }
   return { candidates, kept };
 }
 
 /** Sinh một khách ở lối vào và quyết định họ muốn mua gì theo giá. */
-export function spawnCustomer(world: WorldState, shopId: ShopId): Customer | null {
+export function spawnCustomer(world: WorldState, shopId: ShopId, tourist = false): Customer | null {
   const shop = world.shops[shopId];
   const layout = SHOPS[shopId];
-  const { candidates, kept } = chooseWants(world, shopId);
+  const { candidates, kept } = chooseWants(world, shopId, tourist);
   if (candidates.length === 0) return null;
 
   const c: Customer = {
@@ -107,10 +113,12 @@ export function spawnCustomer(world: WorldState, shopId: ShopId): Customer | nul
     table: null,
     seat: 0,
     eatTimer: 0,
+    ...(tourist ? { tourist: true } : {}),
   };
   if (!kept.length) {
     pushRating(shop, BALANCE.SCORE_PRICEY);
     c.scored = true;
+    c.face = '💸';
   }
   shop.customers.push(c);
   return c;
@@ -182,9 +190,20 @@ export function tickCustomers(world: WorldState, shopId: ShopId, dt: number): Si
       shop.nextCustomerIn = 0.5;
     } else {
       spawnCustomer(world, shopId);
-      const mean = layout.baseCustomerIntervalSec / (hm * trafficMultiplier(effectiveStars(shop)) * marketingMultiplier(shop));
+      const mean =
+        layout.baseCustomerIntervalSec / (hm * trafficMultiplier(effectiveStars(shop)) * marketingMultiplier(shop) * walkInMultiplier(world));
       shop.nextCustomerIn = -Math.log(1 - nextRandom(world)) * mean;
     }
+  }
+
+  // Đoàn khách du lịch xuống xe lần lượt.
+  if (shop.tourLeft && shop.customers.length < BALANCE.MAX_CUSTOMERS) {
+    const left = (tourTimers.get(shop) ?? 0) - dt;
+    if (left <= 0) {
+      spawnCustomer(world, shopId, true);
+      shop.tourLeft -= 1;
+      tourTimers.set(shop, FUN.TOUR_GAP_SEC);
+    } else tourTimers.set(shop, left);
   }
 
   const cashier = cashierOf(shopId);
@@ -238,10 +257,27 @@ export function tickCustomers(world: WorldState, shopId: ShopId, dt: number): Si
             for (const it of c.holding) world.dayStats.sold[it] = (world.dayStats.sold[it] ?? 0) + 1;
             const seat = seatCustomer(world, shopId, c);
             const score = scoreFor(c.waited);
-            pushRating(shop, seat === 'takeaway' ? Math.min(score, BALANCE.TAKEAWAY_MAX_SCORE) : score);
+            const rated = seat === 'takeaway' ? Math.min(score, BALANCE.TAKEAWAY_MAX_SCORE) : score;
+            pushRating(shop, rated);
             c.scored = true;
             c.state = seat === 'seated' ? 'toTable' : 'leaving';
-            events.push({ type: 'sale', shopId, amount: c.bill, x: c.x, z: c.z });
+            // Phục vụ nhanh thì khách vui và boa (khách du lịch boa nhiều, ngày lễ gấp đôi).
+            const fast = c.waited <= BALANCE.SCORE_FAST_SEC;
+            const tip = fast
+              ? Math.round((c.bill * (c.tourist ? FUN.TOURIST_TIP_RATE : FUN.TIP_RATE) * (festivalOfDay(world.day) ? FUN.FESTIVAL_TIP : 1)) / 500) * 500
+              : 0;
+            if (tip > 0) {
+              world.money += tip;
+              world.dayStats.revenue += tip;
+              world.dayStats.tips += tip;
+            }
+            c.face = rated >= 5 ? (tip ? '😍' : '😋') : rated >= 4 ? '🙂' : '😐';
+            const cashierPlayer = Object.values(world.players).find(
+              (p) => p.online && p.location === shopId && distanceToFootprint(cashier, p.x, p.z) <= BALANCE.CASHIER_DIST,
+            );
+            if (cashierPlayer) credit(world, cashierPlayer.id, 'served');
+            events.push({ type: 'sale', shopId, amount: c.bill, x: c.x, z: c.z, ...(tip ? { tip } : {}) });
+            events.push(...bumpCombo(world, shop, fast, c.waited > BALANCE.SCORE_OK_SEC, c.x, c.z));
           }
         } else c.waited += dt;
         break;
@@ -274,6 +310,8 @@ export function tickCustomers(world: WorldState, shopId: ShopId, dt: number): Si
       c.scored = true;
       c.state = 'leaving';
       c.holding = [];
+      c.face = '😡';
+      shop.combo = 0;
       world.dayStats.lost += 1;
       events.push({ type: 'customerLost', shopId, x: c.x, z: c.z });
     }

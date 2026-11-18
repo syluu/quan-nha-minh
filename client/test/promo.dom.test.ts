@@ -14,7 +14,7 @@ beforeAll(() => {
 
 function snap(campaigns: Snapshot['campaigns'], secOfDay: number): Snapshot {
   return {
-    shopId: 'banh_mi', shops: [], canRent: false, warehouse: {}, farm: { owned: false, level: 0, plots: [] }, day: 1, secOfDay, money: 0, stars: 3,
+    shopId: 'banh_mi', shops: [], canRent: false, warehouse: {}, farm: { owned: false, level: 0, plots: [] }, fun: { combo: 0, cat: 'none', catSpot: { x: 0, z: 0 }, tourBus: false, weather: 'sun', festival: null, quests: [], badges: [], today: [] }, day: 1, secOfDay, money: 0, stars: 3,
     tiles: [], customers: [], log: [], prices: {}, players: [], stations: [], staff: [],
     ...V3, campaigns, ads: [],
   } as Snapshot;

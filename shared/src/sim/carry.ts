@@ -3,6 +3,7 @@ import type { ItemId, PlacedStation, ShopId } from '../content';
 import type { SimEvent } from './events';
 import { deliverToPickup, pickupNeeds } from './online';
 import { plotDef } from './farm';
+import { credit } from './fun';
 import type { PlayerState, ShopState, WorldState } from './world';
 
 /** Khoảng cách từ điểm (x,z) tới cạnh footprint của trạm (0 nếu ở trong). */
@@ -71,6 +72,7 @@ export function tickCarry(world: WorldState, shopId: ShopId, dt: number): SimEve
       p.pickTimer = 0;
       p.pickAt = null;
       if (p.dropCd > 0) continue;
+      credit(world, p.id, 'placed');
       if (def.kind === 'display') {
         takeFromCarry(p, (it) => it === def.item);
         st.stock += 1;
@@ -92,6 +94,7 @@ export function tickCarry(world: WorldState, shopId: ShopId, dt: number): SimEve
       const has = p.carry.some((it) => needs.includes(it));
       if (!has || p.dropCd > 0) continue;
       const item = takeFromCarry(p, (it) => needs.includes(it))!;
+      credit(world, p.id, 'placed');
       events.push(...deliverToPickup(world, shopId, item));
       p.dropCd = BALANCE.DROP_INTERVAL;
       continue;
@@ -105,6 +108,7 @@ export function tickCarry(world: WorldState, shopId: ShopId, dt: number): SimEve
       const crate = takeFromCarry(p, (it) => !!ITEMS[it].bundle);
       if (!crate) continue;
       loadCrate(world, crate);
+      credit(world, p.id, 'crates');
       events.push({ type: 'stored', shopId, item: crate, x: placed.x, z: placed.z });
       p.dropCd = BALANCE.DROP_INTERVAL;
       continue;
@@ -125,6 +129,8 @@ export function tickCarry(world: WorldState, shopId: ShopId, dt: number): SimEve
       if (p.pickTimer >= BALANCE.CLEAN_SEC - 1e-6) {
         p.pickTimer = 0;
         st.seats[dirty] = 'free';
+        world.dayStats.cleaned += 1;
+        credit(world, p.id, 'cleaned');
         events.push({ type: 'clean', shopId, instanceId: placed.instanceId, x: placed.x, z: placed.z });
       }
       continue;

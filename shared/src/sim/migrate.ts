@@ -130,3 +130,23 @@ export function migrateV8toV9(raw: any): any {
   for (const shop of Object.values<any>(w.shops ?? {})) if (typeof shop.farmLevel !== 'number') shop.farmLevel = 0;
   return w;
 }
+
+/** v9 → v10: phần vui nhộn (combo, mèo, đoàn khách, thời tiết, nhiệm vụ, huy hiệu, thành tích người chơi). */
+export function migrateV9toV10(raw: any): any {
+  const w = structuredClone(raw);
+  w.schemaVersion = 10;
+  w.dayPlayers = w.dayPlayers && typeof w.dayPlayers === 'object' ? w.dayPlayers : {};
+  w.tour ??= null;
+  w.weather = w.weather === 'rain' ? 'rain' : 'sun';
+  if (!Array.isArray(w.quests)) w.quests = [];
+  if (!Array.isArray(w.badges)) w.badges = [];
+  w.lifetime = { served: 0, sold: {}, tips: 0, online: 0, bestCombo: 0, fiveStarDays: 0, perfectDays: 0, quests: 0, tours: 0, ...(w.lifetime ?? {}) };
+  w.funDay ??= 0;
+  w.dayStats = { tips: 0, cleaned: 0, bestCombo: 0, ...w.dayStats };
+  for (const h of w.history ?? []) {
+    h.tips ??= 0;
+    h.cleaned ??= 0;
+    h.bestCombo ??= 0;
+  }
+  return w;
+}

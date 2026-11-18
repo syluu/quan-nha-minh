@@ -28,3 +28,5 @@ export function getPlaced(shopId: ShopId, instanceId: string): PlacedStation {
 }
 export { COSTUMES, COSTUME_LIST, COSTUME_SLOTS, DEFAULT_OUTFIT } from './costumes';
 export type { CostumeDef, CostumeSlot, CostumeStyle, Outfit } from './costumes';
+export { FUN, EMOTES, FESTIVALS, BADGES, festivalOfDay } from './fun';
+export type { Festival, BadgeDef } from './fun';

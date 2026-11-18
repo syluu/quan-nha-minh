@@ -91,9 +91,10 @@ describe('a single customer', () => {
     noMoreSpawns(w);
     const events: SimEvent[] = [];
     repeat(15, (dt) => events.push(...tickCustomers(w, 'banh_mi', dt)));
-    expect(w.money).toBe(5_000_000 + 5000);
+    expect(w.money).toBe(5_000_000 + 5000 + 500); // phục vụ nhanh: khách boa 10%
     expect(w.dayStats.served).toBe(1);
-    expect(w.dayStats.revenue).toBe(5000);
+    expect(w.dayStats.revenue).toBe(5500);
+    expect(w.dayStats.tips).toBe(500);
     expect(w.shops.banh_mi.ratings).toEqual([5]);
     expect(events.filter((e) => e.type === 'sale')).toHaveLength(1);
     expect(w.shops.banh_mi.stations.ke_banh_mi.stock).toBe(0);

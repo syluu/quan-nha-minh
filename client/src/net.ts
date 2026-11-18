@@ -36,6 +36,8 @@ export interface GameConnection {
   buyCostume(id: string): void;
   buyAd(ad: AdId): void;
   buyFarmExpansion(): void;
+  emote(kind: string): void;
+  highFive(): void;
   setPlotCrop(instanceId: string, crop: string): void;
   sellWarehouse(ingredient: IngredientId, qty: number | 'all'): void;
   wearCostume(id: string): void;
@@ -113,6 +115,8 @@ export async function connect(opts: JoinOptions): Promise<GameConnection> {
     buyCostume: (id) => room.send(MSG.buyCostume, { id }),
     buyAd: (ad) => room.send(MSG.buyAd, { ad, shopId: here }),
     buyFarmExpansion: () => room.send(MSG.buyFarmExpansion, {}),
+    emote: (kind) => room.send(MSG.emote, { kind }),
+    highFive: () => room.send(MSG.highFive, {}),
     setPlotCrop: (instanceId, crop) => room.send(MSG.setPlotCrop, { instanceId, crop }),
     sellWarehouse: (ingredient, qty) => room.send(MSG.sellWarehouse, { ingredient, qty }),
     wearCostume: (id) => room.send(MSG.wearCostume, { id }),

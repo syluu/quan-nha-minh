@@ -437,6 +437,7 @@ function tickCleaner(world: WorldState, shopId: ShopId, s: StaffState, dt: numbe
   s.timer = 0;
   const st = shop.stations[s.target];
   st.seats[st.seats.indexOf('dirty')] = 'free';
+  world.dayStats.cleaned += 1;
   return [{ type: 'clean', shopId, instanceId: s.target, x: placed.x, z: placed.z }];
 }
 

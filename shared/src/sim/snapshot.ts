@@ -1,16 +1,26 @@
-import { BALANCE, COSTUMES, getStationDef, COSTUME_SLOTS, DEFAULT_OUTFIT, SHOP_IDS, SHOP_META, SHOPS } from '../content';
+import { BALANCE, COSTUMES, festivalOfDay, getStationDef, COSTUME_SLOTS, DEFAULT_OUTFIT, SHOP_IDS, SHOP_META, SHOPS } from '../content';
 import { canRent, isShopComplete } from './shops';
 import { plotDef } from './farm';
+import { catSpot, questProgress, questText } from './fun';
 import type { ShopId } from '../content';
 import type { Snapshot } from '../net/protocol';
 import { maxLoan } from './bank';
-import { migrateV1toV2, migrateV2toV3, migrateV3toV4, migrateV4toV5, migrateV5toV6, migrateV6toV7, migrateV7toV8, migrateV8toV9 } from './migrate';
+import { migrateV1toV2, migrateV2toV3, migrateV3toV4, migrateV4toV5, migrateV5toV6, migrateV6toV7, migrateV7toV8, migrateV8toV9, migrateV9toV10 } from './migrate';
 import { onlineSnapshot } from './online';
 import { sellableStations } from './settlement';
 import { isTileVisible } from './payTiles';
 import { effectiveStars } from './marketing';
 import { createWorld } from './world';
 import type { WorldState } from './world';
+
+/** Bong bóng cảm xúc của khách: sau khi trả tiền / bỏ về là cảm xúc lúc đó; đang chờ thì theo tình hình. */
+function customerMood(c: WorldState['shops'][ShopId]['customers'][number]): string | null {
+  if (c.face) return c.face;
+  if (c.state === 'eating') return '😋';
+  if (c.waited > BALANCE.PATIENCE_SEC * 0.6) return '😤';
+  if (c.state === 'atShelf' && c.waited > 3) return '🤔';
+  return null;
+}
 
 export function toSnapshot(world: WorldState, shopId: ShopId): Snapshot {
   const shop = world.shops[shopId];
@@ -51,7 +61,26 @@ export function toSnapshot(world: WorldState, shopId: ShopId): Snapshot {
       location: p.location,
       outfit: { ...p.outfit },
       wardrobe: [...p.wardrobe],
+      emote: p.emote ?? null,
+      boost: (p.boost ?? 0) > 0,
     })),
+    fun: {
+      combo: shop.combo ?? 0,
+      cat: shop.cat ?? 'none',
+      catSpot: catSpot(shopId),
+      tourBus: (shop.tourBusUntil ?? -1) > world.secOfDay,
+      weather: world.weather ?? 'sun',
+      festival: (() => {
+        const f = festivalOfDay(world.day);
+        return f ? { id: f.id, icon: f.icon, name: f.name } : null;
+      })(),
+      quests: (world.quests ?? []).map((q) => ({
+        text: questText(q), progress: Math.min(q.target, questProgress(world, q)), target: q.target, reward: q.reward,
+        done: q.done, failed: !!q.failed, kind: q.kind,
+      })),
+      badges: [...(world.badges ?? [])],
+      today: Object.values(world.dayPlayers ?? {}).map((p) => ({ ...p })),
+    },
     staff: shop.staff.map((s) => ({
       id: s.id, name: s.name, role: s.role, item: s.item, x: s.x, z: s.z, dir: s.dir, carry: [...s.carry],
       level: s.level, wageOwed: s.wageOwed,
@@ -70,13 +99,15 @@ export function toSnapshot(world: WorldState, shopId: ShopId): Snapshot {
       : [],
     online: onlineSnapshot(world, shopId),
     prices: { ...shop.prices },
-    customers: shop.customers.map((c) => ({ id: c.id, x: c.x, z: c.z, dir: c.dir, holding: [...c.holding], sitting: c.state === 'eating' })),
+    customers: shop.customers.map((c) => ({ id: c.id, x: c.x, z: c.z, dir: c.dir, holding: [...c.holding], sitting: c.state === 'eating',
+      mood: customerMood(c), tourist: !!c.tourist })),
     stations: layout.stations.map((placed) => {
       const st = shop.stations[placed.instanceId];
       return {
         instanceId: st.instanceId, unlocked: st.unlocked, outputCount: st.outputCount, stock: st.stock,
         inputs: { ...st.inputs }, blocked: st.blocked, level: st.level, enabled: st.enabled, seats: [...st.seats],
         ...(getStationDef(placed.def).kind === 'plot' ? { crop: plotDef(shop, placed)?.id ?? null } : {}),
+        running: st.running,
       };
     }),
     tiles: layout.stations
@@ -92,11 +123,11 @@ export function toSnapshot(world: WorldState, shopId: ShopId): Snapshot {
 /** Chuẩn hoá thế giới vừa tải từ DB: nâng version, dọn trạng thái tạm, bổ sung trạm mới thêm vào nội dung. */
 export function normalizeLoaded(raw: unknown): WorldState {
   const version = raw && typeof raw === 'object' ? (raw as { schemaVersion?: unknown }).schemaVersion : undefined;
-  if (version !== 1 && version !== 2 && version !== 3 && version !== 4 && version !== 5 && version !== 6 && version !== 7 && version !== 8 && version !== 9) throw new Error('UNSUPPORTED_SCHEMA');
+  if (version !== 1 && version !== 2 && version !== 3 && version !== 4 && version !== 5 && version !== 6 && version !== 7 && version !== 8 && version !== 9 && version !== 10) throw new Error('UNSUPPORTED_SCHEMA');
   let w: unknown = raw;
   if (version === 1) w = migrateV1toV2(w);
   if (version === 1 || version === 2) w = migrateV2toV3(w);
-  if (version !== 4 && version !== 5 && version !== 6 && version !== 7 && version !== 8 && version !== 9) w = migrateV3toV4(w);
+  if (version !== 4 && version !== 5 && version !== 6 && version !== 7 && version !== 8 && version !== 9 && version !== 10) w = migrateV3toV4(w);
   const code = (w as { code: string }).code;
   const fresh = createWorld(code, 0);
   if (version < 5) w = migrateV4toV5(w, fresh.shops);
@@ -104,6 +135,7 @@ export function normalizeLoaded(raw: unknown): WorldState {
   if (version < 7) w = migrateV6toV7(w, DEFAULT_OUTFIT);
   if (version < 8) w = migrateV7toV8(w);
   if (version < 9) w = migrateV8toV9(w);
+  if (version < 10) w = migrateV9toV10(w);
   const world = w as WorldState;
   world.deliveredTo ??= [];
   for (const id of Object.keys(fresh.shops) as ShopId[]) {

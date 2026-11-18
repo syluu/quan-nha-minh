@@ -196,6 +196,7 @@ export function bankrupt(world: WorldState): void {
       dropCd: 0, pickTimer: 0, pickAt: null, inMenu: false, input: { mx: 0, mz: 0 },
     });
   }
-  Object.assign(world, fresh, { players });
+  // Huy hiệu và số liệu cộng dồn giữ lại (như trang phục).
+  Object.assign(world, fresh, { players, badges: world.badges, lifetime: world.lifetime });
   addLog(world, 'Quán phá sản — bắt đầu lại từ xe bánh mì');
 }

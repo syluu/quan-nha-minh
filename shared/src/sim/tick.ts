@@ -1,4 +1,5 @@
-import { BALANCE, SHOPS, getPlaced, getStationDef, isFarm } from '../content';
+import { BALANCE, FUN, SHOPS, getPlaced, getStationDef, isFarm } from '../content';
+import { checkBadges, checkQuests, startDay, tickCat, tickPlayersFun, tickTour } from './fun';
 import type { ShopId } from '../content';
 import { tickCarry } from './carry';
 import { tickCustomers } from './customers';
@@ -28,9 +29,14 @@ export function tick(world: WorldState, dt: number): SimEvent[] {
   const shopIds = (Object.keys(world.shops) as ShopId[]).filter((id) => world.shops[id].owned);
 
   for (let i = 0; i < steps; i++) {
+    // Đầu ngày: thời tiết, đoàn khách, mèo hoang, nhiệm vụ (một lần mỗi ngày).
+    events.push(...startDay(world));
+    events.push(...tickPlayersFun(world, sdt));
     for (const p of online) {
       const shop = world.shops[p.location];
-      const next = movePlayer(p, p.input, p.speed, sdt, SHOPS[p.location], (id) => shop.stations[id].unlocked);
+      // Vừa đập tay với người nhà: đi nhanh hơn một lúc.
+      const speed = p.speed * (p.boost ? FUN.HIFIVE_SPEED : 1);
+      const next = movePlayer(p, p.input, speed, sdt, SHOPS[p.location], (id) => shop.stations[id].unlocked);
       p.x = next.x;
       p.z = next.z;
       p.dir = next.dir;
@@ -42,6 +48,8 @@ export function tick(world: WorldState, dt: number): SimEvent[] {
       if (isShop) {
         tickOrders(world, shopId, sdt);
         events.push(...tickShipper(world, shopId, sdt));
+        events.push(...tickTour(world, shopId));
+        events.push(...tickCat(world, shopId));
       }
       for (const e of tickPayTiles(world, shopId, sdt)) {
         if (e.type === 'unlock') {
@@ -53,6 +61,8 @@ export function tick(world: WorldState, dt: number): SimEvent[] {
       tickStations(world, shopId, sdt);
       if (isShop) events.push(...tickCustomers(world, shopId, sdt));
     }
+    events.push(...checkQuests(world));
+    events.push(...checkBadges(world));
     const summary = advanceTime(world, sdt);
     if (summary) events.push({ type: 'dayEnd', summary });
     // (đọc lại qua biến: TS đã thu hẹp world.settlement về null ở đầu hàm)

@@ -42,6 +42,10 @@ export interface Customer {
   payTimer: number;
   holding: ItemId[];
   scored: boolean;
+  /** Khách đoàn du lịch: chịu giá cao hơn, boa nhiều hơn. */
+  tourist?: boolean;
+  /** Cảm xúc sau khi tính tiền / bỏ về (bong bóng trên đầu). */
+  face?: string;
   /** Bàn + chỗ đang ngồi (ăn tại chỗ). */
   table: string | null;
   seat: number;
@@ -137,6 +141,13 @@ export interface ShopState {
   rentedDay: number;
   /** Trang trại: đã mở rộng mấy lần (0–3). */
   farmLevel: number;
+  /** Chuỗi khách được phục vụ nhanh liên tiếp. */
+  combo?: number;
+  /** Mèo: 'stray' = mèo hoang đang ghé xin ăn, 'pet' = mèo của quán (đã cho ăn). */
+  cat?: 'none' | 'stray' | 'pet';
+  /** Đoàn khách du lịch: còn bao nhiêu khách sắp xuống xe; xe đỗ tới giây nào trong ngày. */
+  tourLeft?: number;
+  tourBusUntil?: number;
   stations: Record<string, StationState>;
   customers: Customer[];
   prices: Partial<Record<ItemId, number>>;
@@ -180,6 +191,12 @@ export interface PlayerState {
   speedLevel: number;
   /** Quán người chơi đang đứng. */
   location: ShopId;
+  /** Biểu cảm đang hiện (còn bao nhiêu giây). */
+  emote?: string | null;
+  emoteLeft?: number;
+  /** Vừa bấm đập tay (cửa sổ chờ người kia, giây) và thời gian còn tăng tốc sau khi đập tay. */
+  hiFive?: number;
+  boost?: number;
   /** Trang phục đang mặc (id trong COSTUMES) và các món đã mua (giữ cả khi phá sản). */
   outfit: Outfit;
   wardrobe: string[];
@@ -200,9 +217,30 @@ export interface DayStats {
   commission: number;
   onlineOrders: number;
   onlineCancelled: number;
+  /** Tiền khách boa thêm (đã tính vào doanh thu). */
+  tips: number;
+  /** Số chỗ ngồi đã dọn. */
+  cleaned: number;
+  /** Combo phục vụ nhanh dài nhất trong ngày. */
+  bestCombo: number;
+}
+
+/** Thành tích từng người trong ngày (bảng vinh danh cuối ngày). */
+export interface PlayerDayStats {
+  name: string;
+  /** Món đặt lên kệ / bàn ghép / điểm giao. */
+  placed: number;
+  /** Khách tính tiền khi mình đứng thu ngân. */
+  served: number;
+  cleaned: number;
+  /** Thùng hàng bốc lên xe ở trang trại. */
+  crates: number;
 }
 
 export interface DaySummary extends DayStats {
+  /** Bảng vinh danh: thành tích từng người trong ngày. */
+  players?: PlayerDayStats[];
+  weather?: 'sun' | 'rain';
   day: number;
   operatingProfit: number;
   stars: number;
@@ -215,7 +253,7 @@ export interface LogEntry {
 }
 
 export interface WorldState {
-  schemaVersion: 9;
+  schemaVersion: 10;
   code: string;
   money: number;
   day: number;
@@ -240,10 +278,36 @@ export interface WorldState {
   warehouse: Partial<Record<IngredientId, number>>;
   /** Các quán hôm nay đã lấy hàng từ kho tổng (tính phí chở cuối ngày). */
   deliveredTo: ShopId[];
+  /** Thành tích từng người hôm nay. */
+  dayPlayers: Record<string, PlayerDayStats>;
+  /** Đoàn du lịch hôm nay: quán nào, tới lúc nào (giây trong ngày); null = không có. */
+  tour: { shopId: ShopId; at: number; done: boolean } | null;
+  /** Thời tiết hôm nay. */
+  weather: 'sun' | 'rain';
+  /** Nhiệm vụ hôm nay. */
+  quests: Quest[];
+  /** Huy hiệu đã đạt (giữ cả khi phá sản) và số liệu cộng dồn để xét huy hiệu. */
+  badges: string[];
+  lifetime: { served: number; sold: Partial<Record<ItemId, number>>; tips: number; online: number; bestCombo: number; fiveStarDays: number; perfectDays: number; quests: number; tours: number };
+  /** Ngày đã chuẩn bị nội dung (thời tiết, đoàn khách, nhiệm vụ, mèo). */
+  funDay: number;
+}
+
+export interface Quest {
+  id: string;
+  kind: 'sell' | 'serve' | 'revenue' | 'tips' | 'online' | 'clean' | 'no_lost';
+  item?: ItemId;
+  target: number;
+  reward: number;
+  done: boolean;
+  failed?: boolean;
 }
 
 export function emptyDayStats(): DayStats {
-  return { revenue: 0, ingredientCost: 0, unlockSpend: 0, served: 0, lost: 0, wages: 0, wasted: 0, sold: {}, marketing: 0, commission: 0, onlineOrders: 0, onlineCancelled: 0 };
+  return {
+    revenue: 0, ingredientCost: 0, unlockSpend: 0, served: 0, lost: 0, wages: 0, wasted: 0, sold: {}, marketing: 0, commission: 0,
+    onlineOrders: 0, onlineCancelled: 0, tips: 0, cleaned: 0, bestCombo: 0,
+  };
 }
 
 export function createStationState(instanceId: string, unlocked: boolean, seats: number): StationState {
@@ -280,7 +344,7 @@ export function createShop(id: ShopId, owned: boolean): ShopState {
 
 export function createWorld(code: string, seed: number): WorldState {
   return {
-    schemaVersion: 9,
+    schemaVersion: 10,
     code,
     money: BALANCE.START_MONEY,
     day: 1,
@@ -299,6 +363,13 @@ export function createWorld(code: string, seed: number): WorldState {
     extraWagesOwed: 0,
     warehouse: {},
     deliveredTo: [],
+    dayPlayers: {},
+    tour: null,
+    weather: 'sun',
+    quests: [],
+    badges: [],
+    lifetime: { served: 0, sold: {}, tips: 0, online: 0, bestCombo: 0, fiveStarDays: 0, perfectDays: 0, quests: 0, tours: 0 },
+    funDay: 0,
   };
 }
 

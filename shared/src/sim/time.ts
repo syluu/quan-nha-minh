@@ -1,4 +1,5 @@
 import { BALANCE, isFarm } from '../content';
+import { endDayLifetime } from './fun';
 import type { ShopId } from '../content';
 import { averageStars } from './rating';
 import { buildSettlement } from './settlement';
@@ -53,7 +54,10 @@ export function advanceTime(world: WorldState, dt: number): DaySummary | null {
     day: world.day,
     operatingProfit: s.revenue - s.ingredientCost - s.wages - s.commission,
     stars: averageStars(world),
+    players: Object.values(world.dayPlayers).map((p) => ({ ...p })),
+    weather: world.weather,
   };
+  endDayLifetime(world, summary.stars);
   world.history.push(summary);
   while (world.history.length > BALANCE.HISTORY_DAYS) world.history.shift();
   // Hết tháng (mỗi MONTH_DAYS ngày): mở bảng kết toán; tick sẽ thử trả ngay.
@@ -61,8 +65,11 @@ export function advanceTime(world: WorldState, dt: number): DaySummary | null {
   world.day += 1;
   world.secOfDay = 0;
   world.dayStats = emptyDayStats();
+  world.dayPlayers = {};
   for (const id of Object.keys(world.shops) as ShopId[]) {
     const shop = world.shops[id];
+    shop.combo = 0;
+    shop.tourLeft = 0;
     // Đóng cửa: khách đang ăn để lại chỗ bẩn; chỗ giữ cho khách chưa kịp ngồi thì trả lại.
     for (const st of Object.values(shop.stations)) st.seats = st.seats.map((x) => (x === 'taken' ? 'free' : x));
     for (const c of shop.customers) if (c.state === 'eating' && c.table) shop.stations[c.table].seats[c.seat] = 'dirty';
