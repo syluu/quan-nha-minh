@@ -74,6 +74,7 @@ export function advanceTime(world: WorldState, dt: number): DaySummary | null {
     for (const st of Object.values(shop.stations)) st.seats = st.seats.map((x) => (x === 'taken' ? 'free' : x));
     for (const c of shop.customers) if (c.state === 'eating' && c.table) shop.stations[c.table].seats[c.seat] = 'dirty';
     shop.customers = [];
+    shop.intruder = null;
   }
   return summary;
 }

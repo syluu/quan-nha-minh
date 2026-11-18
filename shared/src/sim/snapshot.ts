@@ -11,6 +11,7 @@ import { sellableStations } from './settlement';
 import { isTileVisible } from './payTiles';
 import { effectiveStars } from './marketing';
 import { canTire, energyOf, shopTier } from './life';
+import { intruderSnapshot } from './intruder';
 import { createWorld } from './world';
 import type { WorldState } from './world';
 
@@ -95,6 +96,7 @@ export function toSnapshot(world: WorldState, shopId: ShopId): Snapshot {
       regulars: (world.regulars ?? []).map((r) => ({ id: r.id, shopId: r.shopId, fav: r.fav, love: r.love, visits: r.visits })),
       party: world.party ? { ...world.party } : null,
     },
+    intruder: intruderSnapshot(world, shopId),
     month: world.month,
     daysToMonthEnd: BALANCE.MONTH_DAYS - ((world.day - 1) % BALANCE.MONTH_DAYS),
     campaigns: shop.campaigns.map((c) => ({ ...c })),
@@ -157,6 +159,7 @@ export function normalizeLoaded(raw: unknown): WorldState {
     // Đơn online dở dang và shipper không giữ qua lần tải lại.
     shop.orders = [];
     shop.shipper = null;
+    shop.intruder = null;
     // Phụ bếp gắn món (bản cũ) → phụ bếp đa năng.
     for (const s of shop.staff) if (s.role === 'cook') s.item = null;
     for (const st of Object.values(shop.stations)) {

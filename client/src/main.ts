@@ -150,6 +150,12 @@ function enterGame(conn: GameConnection) {
     else if (e.type === 'partyDone') {
       floats.spawn(`🎉 Xong đơn tiệc! +${formatK(e.reward)}`, 'gain', e.x, e.z);
       game.confetti(e.x, e.z);
+    } else if (e.type === 'intruder') showToast(ui, e.kind === 'thief' ? '🚨 Có trộm lẻn vào quán! Chạy tới chạm vào để bắt' : '🚨 Có người say xỉn vào phá quán! Chạy tới đuổi ra');
+    else if (e.type === 'intruderCaught') {
+      floats.spawn(e.refund ? `👮 Bắt được! Đòi lại +${formatK(e.refund)}` : '👮 Bắt được!', 'gain', e.x, e.z);
+      game.confetti(e.x, e.z);
+    } else if (e.type === 'intruderEscaped') {
+      floats.spawn(`${e.kind === 'thief' ? '🦹 Trộm chuồn mất' : '🥴 Người say bỏ đi'} −${e.items} món (${formatK(e.value)})`, 'loss', e.x, e.z);
     } else if (e.type === 'partyOffer') showToast(ui, '📞 Có đơn đặt tiệc mới — xem bảng bên trái!');
     else if (e.type === 'partyFailed') showToast(ui, `😢 Trễ hẹn đơn tiệc (${e.delivered}/${e.qty})`);
   });

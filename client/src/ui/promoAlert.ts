@@ -28,6 +28,13 @@ export function promoAlertsView(s: Snapshot): PromoAlert[] {
   if (ids.has('livestream')) out.push({ key: 'live', text: '🔴 Đang livestream bán hàng — đơn online tăng' });
   if (s.fun?.tourBus)
     out.push({ key: 'tour', text: '🚌 Đoàn khách du lịch đỗ xe trước quán — mua nhiều, boa hậu!', look: s.fun.busSpot });
+  const it = s.intruder;
+  if (it && it.state !== 'caught')
+    out.push({
+      key: 'intruder',
+      text: `🚨 <b>${it.kind === 'thief' ? 'Có trộm' : 'Có người say xỉn'}</b> trong quán! Chạy tới chạm vào để bắt${it.stolen.length ? ` — đã lấy ${it.stolen.length}/8 món` : ''}`,
+      look: { x: it.x, z: it.z },
+    });
   if (s.fun?.cat === 'stray') out.push({ key: 'cat', text: '🐱 Có mèo hoang ghé quán (vỉa hè bên trái) — cầm món ăn đứng cạnh để cho mèo ăn' });
   if ((s.fun?.combo ?? 0) >= 3) out.push({ key: 'combo', text: `🔥 Combo phục vụ nhanh ×${s.fun.combo}` });
   return out;

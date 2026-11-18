@@ -43,6 +43,21 @@ export const LIFE = {
   PARTY_DUE_HOURS: [11, 12, 14, 15, 17] as readonly number[],
   PARTY_QTY: [12, 16, 20, 24] as readonly number[],
 
+  /** Trộm / người say xỉn: có từ ngày 2, mỗi ngày tối đa một vụ, ở quán đang có người chơi đứng. */
+  INTRUDER_FROM_DAY: 2,
+  INTRUDER_CHANCE: 0.4,
+  /** Lấy tối đa bấy nhiêu món rồi bỏ đi; mỗi món mất bấy nhiêu giây; mỗi kệ lấy tối đa 3 món rồi sang kệ khác. */
+  INTRUDER_MAX_ITEMS: 8,
+  INTRUDER_GRAB_SEC: 1.5,
+  INTRUDER_PER_SHELF: 3,
+  /** Ở trong quán lâu nhất bấy nhiêu giây (kệ trống hết thì bỏ đi sớm). */
+  INTRUDER_MAX_SEC: 75,
+  /** Người chơi chạm vào (cách ≤ bấy nhiêu mét) là bắt được. */
+  CATCH_DIST: 1.0,
+  /** Tốc độ đi: trộm lẹ, người say đi loạng choạng chậm. */
+  THIEF_SPEED: 2.2,
+  DRUNK_SPEED: 1.3,
+
   /** Quán lên đời: mỗi cấp thêm 5% khách đi bộ. */
   TIER_TRAFFIC: 0.05,
 } as const;

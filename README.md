@@ -123,6 +123,7 @@ Mở `http://localhost:5173` ở 2 cửa sổ (hoặc 2 máy cùng wifi qua `htt
 - **Khách quen** (Menu → ❤️ Khách quen): mỗi quán có dần tới 3 người (Cô Ba vé số, Anh Tư xe ôm, Bé Na…), mỗi ngày ghé một lần, có tên trên đầu, chào và gọi **món ruột**. Bán nhanh thì thân dần: *khách quen* hay dẫn bạn tới, *khách ruột* boa gấp đôi và mang quà (+⭐). Để chờ tới bỏ về hoặc đặt giá quá cao thì khách giận.
 - **Đơn đặt tiệc** (từ ngày 3, quán đã mở điểm giao): có khách gọi đặt 12–24 món cho tiệc cưới, sinh nhật, liên hoan… Bấm **Nhận đơn** ở bảng bên trái, mang món tới **điểm giao** (nhân viên giao đơn cũng phụ) trước giờ hẹn → nhận 150% giá bán. Trễ hẹn thì chỉ được giá thường cho phần đã giao.
 - **Quán lên đời** theo doanh thu cộng dồn: 🪑 Quán cóc → 🏠 Khang trang (3 triệu) → ⭐ Nổi tiếng (15 triệu) → 🏮 Nhà hàng (50 triệu). Mỗi cấp trang trí đẹp hơn (cây, quạt, đồng hồ, tranh, dây đèn, bảng thực đơn, thảm đỏ, lẵng hoa) và thêm 5% khách đi bộ.
+- **Trộm 🦹 / người say xỉn 🥴** (từ ngày 2, thỉnh thoảng): lẻn vào quán đang có người chơi, đi vòng các kệ lấy món (tối đa 8 món, mỗi kệ tối đa 3) rồi bỏ đi. Bảng bên trái báo động kèm nút 👀 Xem. Chạy tới **chạm vào** là bắt được: đòi lại đủ tiền các món đã lấy (món thì hỏng, không trả lại). Không bắt kịp thì mất số món đó. Bắt được 3 lần có huy hiệu 👮 Hiệp sĩ phố ẩm thực.
 - **Khách ngồi ăn**: món bày ra bàn, gắp ăn, tô nóng bốc khói, ăn vơi dần; ăn xong để lại bát đĩa, đũa, ly, giấy ăn cho người dọn.
 
 ## Test

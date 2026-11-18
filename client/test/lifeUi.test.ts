@@ -89,3 +89,16 @@ describe('chatter with staff energy', () => {
     expect(c.staff('b', 0.1, false, false, 100)).toBe('Cảm ơn sếp! 🧋');
   });
 });
+
+describe('intruder alert', () => {
+  it('warns about a thief with a look button, not once he is caught', async () => {
+    const { promoAlertsView } = await import('../src/ui/promoAlert');
+    const base = { campaigns: [], secOfDay: 50, fun: { combo: 0, cat: 'none' } } as unknown as Snapshot;
+    const it = { kind: 'thief', name: '🦹 Tên trộm', x: 1, z: 2, dir: 0, state: 'grabbing', stolen: ['banh_mi', 'banh_mi'], value: 10_000 } as const;
+    const v = promoAlertsView({ ...base, intruder: { ...it, stolen: [...it.stolen] } } as Snapshot);
+    expect(v[0]).toMatchObject({ key: 'intruder', look: { x: 1, z: 2 } });
+    expect(v[0].text).toContain('Có trộm');
+    expect(v[0].text).toContain('2/8');
+    expect(promoAlertsView({ ...base, intruder: { ...it, stolen: [], state: 'caught' } } as Snapshot)).toEqual([]);
+  });
+});

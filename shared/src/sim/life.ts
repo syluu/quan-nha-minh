@@ -8,6 +8,7 @@ import { isOnSale } from './prices';
 import { pushRating } from './rating';
 import type { Party, Regular, ShopState, StaffState, WorldState } from './world';
 import { nextRandom } from './world';
+import { planIntruder } from './intruder';
 
 // ───────────────────────── Sức nhân viên, mời trà đá ─────────────────────────
 
@@ -264,6 +265,7 @@ export function tickParty(world: WorldState): SimEvent[] {
 export function startLifeDay(world: WorldState): SimEvent[] {
   world.regulars ??= [];
   prepareRegulars(world);
+  planIntruder(world);
   world.party = makeParty(world);
   if (!world.party) return [];
   addLog(world, `📞 Có khách gọi đặt ${partyTitle(world.party)} cho ${SHOP_META[world.party.shopId].name} — vào bảng bên trái để nhận!`);

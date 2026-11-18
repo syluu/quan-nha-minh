@@ -73,6 +73,9 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
   /** Lúc thấy khách lần đầu (để khách quen chào một câu khi mới tới). */
   const firstSeen = new Map<number, number>();
   const cheerSeen = new Map<string, boolean>();
+  /** Trộm / người say đang trong quán. */
+  let intruderView: CharacterView | null = null;
+  let intruderKind = '';
   const lastPos = new Map<string, { x: number; z: number }>();
   let latest: Snapshot | null = null;
   let cameraSnapped = false;
@@ -84,6 +87,9 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
     for (const v of stationViews.values()) disposeTree(v.group);
     for (const v of tileViews.values()) disposeTree(v.group);
     for (const v of [...players.values(), ...customers.values(), ...staffViews.values()]) v.dispose();
+    intruderView?.dispose();
+    intruderView = null;
+    intruderKind = '';
     players.clear();
     customers.clear();
     staffViews.clear();
@@ -181,7 +187,11 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
         // Biểu cảm / đập tay / đang tăng tốc.
         // Biểu cảm / đập tay / tăng tốc ưu tiên; không có thì thỉnh thoảng nói một câu kiểu chủ quán.
         const said = chatter.owner(p.id, dt, { customers: s.customers.length, carrying: p.carry.length > 0 });
+        // Đang đuổi trộm / người say tới gần: hô lên.
+        const thief = s.intruder && s.intruder.state !== 'caught' ? s.intruder : null;
+        const chasing = thief && Math.hypot(thief.x - pose.x, thief.z - pose.z) < 3.5;
         v.setBubble(
+          chasing ? (thief.kind === 'thief' ? 'Đứng lại!! 👮' : 'Ê ê, ra ngoài! 👮') :
           p.emote === 'hifive' ? '🙌 Đập tay nào!' : p.emote === 'hifive_ok' ? '🙌 Yeah!' : p.emote && EMOTES[p.emote]
             ? `${EMOTES[p.emote].icon} ${EMOTES[p.emote].text}`
             : p.boost ? '⚡' : chatterOn ? said : null,
@@ -257,6 +267,34 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
         lifeDecor.staff(st.id, v.group, st.energy ?? 100, !!st.cheer, st.dir, t, (st.rest ?? 0) > 0);
       }
       lifeDecor.forgetStaff(seenS);
+
+      // Trộm / người say: đồ lấy được cầm trên tay; người say đi loạng choạng.
+      const it = s.intruder;
+      if (!it || it.kind !== intruderKind) {
+        intruderView?.dispose();
+        intruderView = null;
+        intruderKind = it?.kind ?? '';
+      }
+      if (it) {
+        if (!intruderView) {
+          intruderView = createCharacter(0x262626, { look: it.kind, name: it.kind === 'thief' ? '🦹 Trộm!' : '🥴 Say xỉn' });
+          scene.add(intruderView.group);
+        }
+        const prevPos = lastPos.get('intruder');
+        const moving = !!prevPos && Math.hypot(it.x - prevPos.x, it.z - prevPos.z) > 0.002;
+        lastPos.set('intruder', { x: it.x, z: it.z });
+        const sway = it.kind === 'drunk' && it.state !== 'caught' ? Math.sin(t * 2.2) : 0;
+        intruderView.setPose(it.x + sway * 0.25, it.z, it.dir + sway * 0.4, moving, t);
+        intruderView.group.rotation.z = sway * 0.12;
+        intruderView.setCarry(it.stolen);
+        intruderView.setBubble(
+          it.state === 'caught'
+            ? it.kind === 'thief' ? '😳 Tha cho em…' : '😵 Hic… xin lỗi…'
+            : it.kind === 'thief'
+              ? it.stolen.length >= 6 ? 'Lẹ lẹ chuồn thôi! 💨' : 'Hehe… 🤫'
+              : ['Hic… 🍺', 'Dô dô dô! 🍻', 'Ngon… hic…'][Math.floor(t / 3) % 3],
+        );
+      }
       for (const [id, v] of staffViews) if (!seenS.has(id)) (v.dispose(), staffViews.delete(id), lastPos.delete(`s${id}`), cheerSeen.delete(id));
 
       shipperView.update(latest?.online.shipper ?? null, dt);

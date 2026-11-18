@@ -25,4 +25,7 @@ export type SimEvent =
   | { type: 'regular'; shopId: ShopId; text: string; x: number; z: number }
   | { type: 'partyOffer'; shopId: ShopId }
   | { type: 'partyDone'; shopId: ShopId; reward: number; x: number; z: number }
-  | { type: 'partyFailed'; shopId: ShopId; delivered: number; qty: number };
+  | { type: 'partyFailed'; shopId: ShopId; delivered: number; qty: number }
+  | { type: 'intruder'; shopId: ShopId; kind: 'thief' | 'drunk' }
+  | { type: 'intruderCaught'; shopId: ShopId; kind: 'thief' | 'drunk'; by: string; refund: number; items: number; x: number; z: number }
+  | { type: 'intruderEscaped'; shopId: ShopId; kind: 'thief' | 'drunk'; value: number; items: number; x: number; z: number };

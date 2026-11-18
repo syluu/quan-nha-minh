@@ -12,6 +12,7 @@ import { tickOrders, tickShipper } from './online';
 import { trySettle } from './settlement';
 import { tickStaff } from './staff';
 import { tickParty } from './life';
+import { tickIntruders } from './intruder';
 import { advanceTime } from './time';
 import type { Settlement, WorldState } from './world';
 
@@ -63,6 +64,7 @@ export function tick(world: WorldState, dt: number): SimEvent[] {
       if (isShop) events.push(...tickCustomers(world, shopId, sdt));
     }
     events.push(...tickParty(world));
+    events.push(...tickIntruders(world, sdt));
     events.push(...checkQuests(world));
     events.push(...checkBadges(world));
     const summary = advanceTime(world, sdt);

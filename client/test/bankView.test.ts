@@ -5,7 +5,7 @@ import { bankView, loanPreview, marketingView } from '../src/ui/menu/views';
 
 function snap(): Snapshot {
   return {
-    shopId: 'banh_mi', shops: [], canRent: false, warehouse: {}, farm: { owned: false, level: 0, plots: [] }, fun: { combo: 0, cat: 'none', catSpot: { x: 0, z: 0 }, tourBus: false, busSpot: { x: 0, z: 0 }, weather: 'sun', festival: null, quests: [], badges: [], today: [] }, life: { tier: 0, earned: 0, nextTierAt: null, regulars: [], party: null }, day: 3, secOfDay: 0, money: 0, stars: 3.3, tiles: [], customers: [], log: [], prices: {}, players: [], stations: [], staff: [],
+    shopId: 'banh_mi', shops: [], canRent: false, warehouse: {}, farm: { owned: false, level: 0, plots: [] }, fun: { combo: 0, cat: 'none', catSpot: { x: 0, z: 0 }, tourBus: false, busSpot: { x: 0, z: 0 }, weather: 'sun', festival: null, quests: [], badges: [], today: [] }, life: { tier: 0, earned: 0, nextTierAt: null, regulars: [], party: null }, intruder: null, day: 3, secOfDay: 0, money: 0, stars: 3.3, tiles: [], customers: [], log: [], prices: {}, players: [], stations: [], staff: [],
     ...V3,
     daysToMonthEnd: 5,
     campaigns: [{ id: 'mxh', daysLeft: 2 }],

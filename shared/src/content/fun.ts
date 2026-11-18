@@ -89,4 +89,5 @@ export const BADGES: BadgeDef[] = [
   { id: 'doan_khach', icon: '🚌', name: 'Điểm đến du lịch', desc: 'Đón một đoàn khách du lịch' },
   { id: 'kol', icon: '🌟', name: 'Lên sóng mạng xã hội', desc: 'Thuê KOL tới quay video ở quán' },
   { id: 'nhiem_vu_10', icon: '📋', name: 'Cả nhà chăm chỉ', desc: 'Hoàn thành 10 nhiệm vụ hằng ngày' },
+  { id: 'bat_trom', icon: '👮', name: 'Hiệp sĩ phố ẩm thực', desc: 'Bắt được 3 tên trộm / người say phá quán' },
 ];

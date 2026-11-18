@@ -315,6 +315,8 @@ function earned(world: WorldState, id: string): boolean {
       return SHOP_IDS.some((s) => world.shops[s].campaigns.some((c) => c.id === 'kol'));
     case 'nhiem_vu_10':
       return L.quests >= 10;
+    case 'bat_trom':
+      return (L.caught ?? 0) >= 3;
   }
   return false;
 }

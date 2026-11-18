@@ -208,6 +208,11 @@ export interface Snapshot {
     /** Thu ngân: không biết mệt. */
     tireless: boolean;
   }[];
+  /** Trộm / người say xỉn đang trong quán (null = không có). */
+  intruder: {
+    kind: 'thief' | 'drunk'; name: string; x: number; z: number; dir: number; state: 'toShelf' | 'grabbing' | 'leaving' | 'caught';
+    stolen: ItemId[]; value: number;
+  } | null;
   /** Quán có hồn: cấp quán, khách quen, đơn đặt tiệc. */
   life: {
     tier: number;

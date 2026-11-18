@@ -189,6 +189,8 @@ export interface ShopState {
   tourBusUntil?: number;
   /** Tổng doanh thu cộng dồn của quán (để lên đời: quán cóc → nhà hàng). */
   earned?: number;
+  /** Trộm / người say đang trong quán (không lưu qua lần tải lại). */
+  intruder?: Intruder | null;
   stations: Record<string, StationState>;
   customers: Customer[];
   prices: Partial<Record<ItemId, number>>;
@@ -329,13 +331,36 @@ export interface WorldState {
   quests: Quest[];
   /** Huy hiệu đã đạt (giữ cả khi phá sản) và số liệu cộng dồn để xét huy hiệu. */
   badges: string[];
-  lifetime: { served: number; sold: Partial<Record<ItemId, number>>; tips: number; online: number; bestCombo: number; fiveStarDays: number; perfectDays: number; quests: number; tours: number; parties?: number };
+  lifetime: { served: number; sold: Partial<Record<ItemId, number>>; tips: number; online: number; bestCombo: number; fiveStarDays: number; perfectDays: number; quests: number; tours: number; parties?: number; caught?: number };
   /** Ngày đã chuẩn bị nội dung (thời tiết, đoàn khách, nhiệm vụ, mèo). */
   funDay: number;
   /** Khách quen của các quán. */
   regulars: Regular[];
   /** Đơn đặt tiệc hôm nay (null = không có). */
   party: Party | null;
+  /** Giây trong ngày sẽ có trộm / người say ghé (null = hôm nay yên ổn hoặc đã xảy ra). */
+  intruderAt?: number | null;
+  intruderKind?: IntruderKind;
+}
+
+export type IntruderKind = 'thief' | 'drunk';
+
+/** Trộm / người say xỉn đang trong quán: đi vòng các kệ lấy món, người chơi chạm vào là bắt được. */
+export interface Intruder {
+  kind: IntruderKind;
+  x: number;
+  z: number;
+  dir: number;
+  state: 'toShelf' | 'grabbing' | 'leaving' | 'caught';
+  /** Kệ đang nhắm tới. */
+  target: string | null;
+  /** Món đã lấy và giá bán của chúng (tiền được trả lại khi bắt được). */
+  stolen: ItemId[];
+  value: number;
+  /** Đã lấy bao nhiêu món ở kệ hiện tại; đếm giờ lấy món; thời gian đã ở trong quán. */
+  grabbedHere: number;
+  timer: number;
+  life: number;
 }
 
 export interface Quest {

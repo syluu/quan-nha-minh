@@ -18,7 +18,7 @@ const shadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: tr
 const SKIN = 0xf1c9a0;
 const SHOE = 0x2b2420;
 
-export type CharacterLook = 'player' | 'customer' | 'staff';
+export type CharacterLook = 'player' | 'customer' | 'staff' | 'thief' | 'drunk';
 
 export interface CharacterView {
   group: THREE.Group;
@@ -296,8 +296,16 @@ export function createCharacter(color: number, opts: { look: CharacterLook; name
   if (opts.look === 'player') setRig(outfitSpec(DEFAULT_OUTFIT, color));
   else if (opts.look === 'staff')
     setRig({ hat: null, hair: { style: 'toc_ngan', color: 0x2b2118 }, top: { style: 'ao_phong', color }, bottom: { style: 'quan_dai', color: 0x3a3a48 }, apron: null, staffCap: true });
+  else if (opts.look === 'thief')
+    // Trộm: mũ len đen, áo khoác đen, quần đen.
+    setRig({ hat: { style: 'mu_len', color: 0x1a1a1a }, hair: { style: 'toc_ngan', color: 0x111111 }, top: { style: 'ao_khoac', color: 0x262626 }, bottom: { style: 'quan_dai', color: 0x161616 }, apron: null });
+  else if (opts.look === 'drunk')
+    // Người say: tóc bù xù, áo ba lỗ, quần đùi.
+    setRig({ hat: null, hair: { style: 'toc_bui', color: 0x3a2618 }, top: { style: 'ao_ba_lo', color: 0xf0ede4 }, bottom: { style: 'quan_short', color: 0x7a5a3a }, apron: null });
   else setRig(customerSpec(color, opts.variant ?? 0));
 
+  /** Khách, trộm, người say: không có nhãn số món đang cầm. */
+  const noBadge = opts.look !== 'player' && opts.look !== 'staff';
   let sitting = false;
   let eating = false;
   let carrying = false;
@@ -326,7 +334,7 @@ export function createCharacter(color: number, opts: { look: CharacterLook; name
   let badgeKey = '';
 
   function setBadge(count: number, cap: number) {
-    if (opts.look === 'customer') return;
+    if (noBadge) return;
     const b = carryBadge(count, cap);
     const key = `${b.text}|${b.full}`;
     if (key === badgeKey) return;
@@ -354,7 +362,7 @@ export function createCharacter(color: number, opts: { look: CharacterLook; name
     }
     if (!text) return;
     bubble = makeLabel(text, { bg: 'rgba(255,255,255,.92)', color: '#2b2118', size: 38, scale: 0.0075 });
-    bubble.position.y = currentName ? (opts.look === 'customer' ? 2.3 : 2.7) : 2.05;
+    bubble.position.y = currentName ? (noBadge ? 2.3 : 2.7) : 2.05;
     group.add(bubble);
   }
 
@@ -362,7 +370,7 @@ export function createCharacter(color: number, opts: { look: CharacterLook; name
     group,
     setBubble,
     setPose(x, z, dir, moving, t) {
-      if (bubble) bubble.position.y = (currentName ? (opts.look === 'customer' ? 2.3 : 2.7) : 2.05) + Math.sin(t * 4) * 0.04;
+      if (bubble) bubble.position.y = (currentName ? (noBadge ? 2.3 : 2.7) : 2.05) + Math.sin(t * 4) * 0.04;
       group.position.set(x, 0, z);
       inner.rotation.y = sitting ? 0 : dir;
       inner.position.y = sitting ? 0.12 : moving ? Math.abs(Math.sin(t * 10)) * 0.04 : 0;
