@@ -79,7 +79,7 @@ export function tickCampaignsDaily(world: WorldState): void {
   }
 }
 
-/** Giá bán 1 đơn vị nguyên liệu trong kho ra chợ (60% giá chợ). */
+/** Giá bán 1 đơn vị nguyên liệu trong kho ra chợ (bằng giá chợ). */
 export function warehouseSellPrice(id: IngredientId): number {
   return Math.round(INGREDIENTS[id].marketPrice * BALANCE.WAREHOUSE_SELL_RATIO);
 }

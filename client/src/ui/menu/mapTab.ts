@@ -55,7 +55,7 @@ export function mapTab(conn: GameConnection, latest: () => Snapshot | null, clos
                     <button class="primary" data-sell="${it.id}" data-qty="all">Bán hết (+${it.all})</button></td></tr>`,
                   )
                   .join('')}</tbody></table>
-                 <p class="note">Dùng không hết thì bán ra chợ lấy tiền (được 60% giá chợ). Bán được cả lúc kết toán cuối tháng.</p>`
+                 <p class="note">Dùng không hết thì bán ra chợ lấy tiền, đúng bằng giá chợ (giá mình mua nguyên liệu). Bán được cả lúc kết toán cuối tháng.</p>`
               : '<p class="muted">Trống — thu hoạch ở trang trại rồi bê thùng lên xe chở hàng.</p>'
           }
           <p class="note">Máy ở các quán lấy nguyên liệu trong kho trước, thiếu mới mua chợ. Phí xe chở hàng 50K cho mỗi quán đã dùng hàng trong kho hôm đó.</p>

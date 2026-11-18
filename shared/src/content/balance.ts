@@ -101,8 +101,8 @@ export const BALANCE = {
     carUpgradeCost: K(5000),
   },
 
-  /** Bán nguyên liệu dư trong kho tổng ra chợ: được 60% giá chợ. */
-  WAREHOUSE_SELL_RATIO: 0.6,
+  /** Bán nguyên liệu dư trong kho tổng ra chợ: đúng bằng giá chợ (giá mình mua nguyên liệu ở chợ). */
+  WAREHOUSE_SELL_RATIO: 1,
   /** Bán máy thu về 50% (giá trị + tiền đã nâng cấp). */
   SELL_RATIO: 0.5,
   /** Số ngày giữ trong báo cáo. */

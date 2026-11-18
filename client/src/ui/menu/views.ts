@@ -295,7 +295,7 @@ export function mapView(s: Snapshot) {
         // Trang trại thuê lúc nào cũng được (đủ tiền); quán mới cần mở hết các quán đang có.
         canRent: (x.kind === 'farm' || s.canRent) && s.money >= x.deposit && !s.settlement,
       })),
-    /** Kho tổng: từng nguyên liệu còn hàng, giá bán ra chợ (60% giá chợ). */
+    /** Kho tổng: từng nguyên liệu còn hàng, giá bán ra chợ (bằng giá chợ). */
     stock: (Object.entries(s.warehouse) as [IngredientId, number][])
       .filter(([, n]) => n > 0)
       .map(([id, n]) => ({

@@ -119,14 +119,14 @@ describe('richer marketing (owner request)', () => {
 });
 
 describe('selling warehouse stock at the market (owner request)', () => {
-  it('sells at 60% of the market price, counts as revenue, never below zero', async () => {
+  it('sells at the market price (same as buying it there), counts as revenue, never below zero', async () => {
     const { sellWarehouse } = await import('../src/sim/marketing');
     const w = world();
     w.warehouse = { xuong_bo: 25, rau: 3 };
     expect(sellWarehouse(w, 'xuong_bo', 10, 'a')).toEqual({ ok: true });
     expect(w.warehouse.xuong_bo).toBe(15);
-    expect(w.money).toBe(10_000_000 + 10 * 4_800);
-    expect(w.dayStats.revenue).toBe(48_000);
+    expect(w.money).toBe(10_000_000 + 10 * 8_000);
+    expect(w.dayStats.revenue).toBe(80_000);
     expect(sellWarehouse(w, 'rau', 10, 'a')).toEqual({ ok: true }); // chỉ còn 3 → bán 3
     expect(w.warehouse.rau).toBe(0);
     expect(sellWarehouse(w, 'xuong_bo', 'all', 'a')).toEqual({ ok: true });
@@ -144,6 +144,6 @@ describe('selling warehouse stock at the market (owner request)', () => {
     w.settlement = { month: 1, revenue: 0, ingredientCost: 0, marketing: 0, commission: 0, wages: 0, rent: 500_000, loanDue: 0, totalDue: 500_000 };
     expect(sellWarehouse(w, 'thit_bo', 'all', 'a')).toEqual({ ok: true });
     expect(w.settlement).toBeNull();
-    expect(w.money).toBe(900_000 - 500_000);
+    expect(w.money).toBe(1_500_000 - 500_000);
   });
 });
