@@ -3,6 +3,7 @@ import { STATIONS, getStationDef } from '@qnm/shared';
 import type { ItemId, PlacedStation, Snapshot, StationDef } from '@qnm/shared';
 import { ITEM_STACK_H } from './items';
 import { buildAssembler, buildDisplay, buildProducer, itemsOnTray } from './machineModels';
+import { animalModel, cropPlant } from './farmModels';
 import type { Tray } from './machineModels';
 import { box, disposeLabel, disposeTree, makeLabel, markSharedGeometry, mat } from './materials';
 
@@ -43,11 +44,12 @@ function buildPlotBody(def: Extract<StationDef, { kind: 'plot' }> | null, w: num
     const soil = box(w, 0.18, d, 0x6b4a2b);
     soil.position.y = 0.09;
     group.add(soil);
-    const leaf = def.id === 'ruong_lua_mi' ? 0xd9b44a : def.id === 'ruong_lua' ? 0x9cc65a : 0x3f8f3a;
+    // Ruộng ruộng lúa mì vàng, ruộng lúa xanh, ruộng rau bắp cải: 4 × 3 khóm.
     for (let i = 0; i < 4; i++)
       for (let j = 0; j < 3; j++) {
-        const plant = new THREE.Mesh(sproutGeo, mat(leaf));
-        plant.position.set((i - 1.5) * (w / 4.4), 0.32, (j - 1) * (d / 3.4));
+        const plant = cropPlant(def.id as 'ruong_rau' | 'ruong_lua_mi' | 'ruong_lua');
+        plant.position.set((i - 1.5) * (w / 4.4), 0.18, (j - 1) * (d / 3.4));
+        plant.rotation.y = (i * 3 + j) * 0.7;
         group.add(plant);
       }
   } else {
@@ -60,10 +62,12 @@ function buildPlotBody(def: Extract<StationDef, { kind: 'plot' }> | null, w: num
       rail.position.set(fx, 0.25, fz);
       group.add(rail);
     }
-    const look = def.id === 'chuong_ga' ? { c: 0xf4f1ea, s: 0.25, n: 4 } : def.id === 'chuong_lon' ? { c: 0xe8a0a0, s: 0.45, n: 2 } : { c: 0x6b4a32, s: 0.6, n: 2 };
-    for (let i = 0; i < look.n; i++) {
-      const a = box(look.s * 1.4, look.s, look.s, look.c);
-      a.position.set((i - (look.n - 1) / 2) * (w / (look.n + 0.5)), look.s / 2 + 0.06, (i % 2 ? 0.2 : -0.2));
+    // Con vật: 4 gà / 2 lợn / 2 bò, quay các hướng khác nhau.
+    const n = def.id === 'chuong_ga' ? 4 : 2;
+    for (let i = 0; i < n; i++) {
+      const a = animalModel(def.id as 'chuong_ga' | 'chuong_lon' | 'chuong_bo');
+      a.position.set((i - (n - 1) / 2) * (w / (n + 0.6)), 0.06, i % 2 ? 0.25 : -0.2);
+      a.rotation.y = i % 2 ? Math.PI * 0.85 : -0.3;
       group.add(a);
     }
   }
@@ -109,6 +113,9 @@ export function createStationView(placed: PlacedStation): StationView {
     topY = 0.3;
     plotBody = buildPlotBody(def, w, d);
     group.add(plotBody);
+    // Thùng hàng xếp ở mép lô phía lối đi (chỗ người nhặt đứng).
+    const side = Math.sign(placed.workPoint.z - placed.z) || 1;
+    tray = { w: w * 0.9, d: 0.26, z: side * (d / 2 - 0.15), y: 0.2 };
   } else if (def.kind === 'truck') {
     topY = 0.9;
     const bed = box(w, 0.5, d * 0.65, 0x3d7dd8);

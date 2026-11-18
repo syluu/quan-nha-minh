@@ -322,11 +322,12 @@ export function mapView(s: Snapshot) {
 export function menuOf(shopId: Snapshot['shopId']): string {
   const items: string[] = [];
   for (const p of SHOPS[shopId].stations) {
+    if (p.farmExpansion) continue;
     const def = getStationDef(p.def);
     if (def.kind === 'display') items.push(ITEMS[def.item].name);
     if (def.kind === 'plot') items.push(def.name);
   }
-  return items.join(', ');
+  return [...new Set(items)].join(', ');
 }
 
 /** Tên một mục trong danh sách bán ở bảng kết toán. */

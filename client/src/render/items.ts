@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { ITEMS } from '@qnm/shared';
 import type { ItemId } from '@qnm/shared';
 import { glassMat, markSharedGeometry, mat } from './materials';
+import { crateModel } from './farmModels';
 
 /** Chiều cao mỗi món khi xếp chồng. */
 export const ITEM_STACK_H = 0.15;
@@ -202,14 +203,9 @@ export function createItemMesh(item: ItemId): THREE.Object3D {
     case 'bao_gao':
     case 'khay_trung':
     case 'thung_thit_lon':
-    case 'thung_thit_bo': {
-      const crate = new THREE.Mesh(crateGeo, mat(0xb08850));
-      crate.position.y = 0.06;
-      const top = new THREE.Mesh(crateTopGeo, mat(ITEMS[item].color));
-      top.position.y = 0.13;
-      g.add(crate, top);
+    case 'thung_thit_bo':
+      g.add(crateModel(item));
       break;
-    }
     default:
       g.add(new THREE.Mesh(lumpGeo, mat(ITEMS[item as ItemId]?.color ?? 0x999999)));
   }

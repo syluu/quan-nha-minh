@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sổ tay trang trại</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Be+Vietnam+Pro:wght@400;500;700&display=swap">
+<style>
+  /* Bố cục: một cột đọc; mỗi bước = chữ + ảnh chụp trong game; thư viện món dạng lưới; bảng giống ở cuối. */
+  :root {
+    --bg: #f5f7ef; --paper: #ffffff; --ink: #1f2a1c; --muted: #5d6b57; --line: #d7e0cc;
+    --field: #3f7d32; --field-soft: #e3efd9; --wheat: #a8800f; --wheat-soft: #f7ecc9; --soil: #7a5230;
+    --display: "Baloo 2", "Be Vietnam Pro", system-ui, sans-serif;
+    --body: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", sans-serif;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141a12; --paper: #1c2419; --ink: #e8efe2; --muted: #a3b39a; --line: #2f3b2a;
+      --field: #7cc265; --field-soft: #24331f; --wheat: #e4bd4f; --wheat-soft: #33301c; --soil: #c9976a;
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.6; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 28px max(16px, env(safe-area-inset-left, 0px)) 64px; display: flex; flex-direction: column; gap: 44px; }
+  h1, h2, h3 { font-family: var(--display); line-height: 1.15; text-wrap: balance; margin: 0; }
+  h1 { font-size: clamp(34px, 6vw, 52px); font-weight: 800; color: var(--field); }
+  h2 { font-size: 28px; font-weight: 800; }
+  h3 { font-size: 21px; font-weight: 700; }
+  p { margin: 0; max-width: 68ch; }
+  header { display: flex; flex-direction: column; gap: 10px; }
+  .kicker { font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--soil); }
+  .lede { font-size: 18px; color: var(--muted); }
+  nav.toc { display: flex; flex-wrap: wrap; gap: 6px; }
+  nav.toc a { font-size: 14px; color: var(--field); background: var(--field-soft); border-radius: 999px; padding: 3px 12px; text-decoration: none; }
+  section { display: flex; flex-direction: column; gap: 14px; }
+
+  .flow { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; }
+  .node { flex: 1 1 140px; min-width: 0; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; }
+  .node b { font-size: 15px; } .node span { font-size: 13px; color: var(--muted); }
+  .node.key { background: var(--field-soft); border-color: transparent; }
+  .arrow { align-self: center; font-size: 22px; color: var(--field); }
+
+  .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
+  .gallery figure { margin: 0; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 8px; display: flex; flex-direction: column; gap: 4px; }
+  .gallery img { width: 100%; aspect-ratio: 4 / 3; object-fit: contain; background: radial-gradient(circle at 50% 60%, var(--wheat-soft), transparent 70%); border-radius: 8px; }
+  .gallery figcaption { font-size: 13px; } .gallery figcaption b { display: block; font-size: 14px; }
+  .gallery figcaption span { color: var(--muted); }
+
+  .step { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: 20px; align-items: start; }
+  .step .text { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .no { font-family: var(--display); font-size: 15px; font-weight: 800; color: var(--paper); background: var(--field); width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; }
+  ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+  .shot { margin: 0; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .shot img { width: 100%; border-radius: 10px; border: 1px solid var(--line); display: block; }
+  .shot figcaption { font-size: 13px; color: var(--muted); }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .hint { background: var(--wheat-soft); border-radius: 10px; padding: 10px 14px; font-size: 15px; }
+  .answer { background: var(--field-soft); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
+  .answer b.big { font-family: var(--display); font-size: 22px; color: var(--field); }
+
+  .tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); }
+  table { border-collapse: collapse; width: 100%; min-width: 680px; font-size: 14px; font-variant-numeric: tabular-nums; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  th { font-size: 12px; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); background: var(--field-soft); }
+  tr:last-child td { border-bottom: none; }
+  td.num { text-align: right; white-space: nowrap; }
+  td img { width: 56px; height: 42px; object-fit: contain; vertical-align: middle; }
+  .money { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+  .money div { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; }
+  .money b { font-family: var(--display); font-size: 22px; } .money span { font-size: 13px; color: var(--muted); }
+  kbd { font-family: var(--body); font-size: 13px; background: var(--paper); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 6px; padding: 0 6px; }
+  @media (max-width: 720px) { .step, .pair { grid-template-columns: 1fr; } .arrow { transform: rotate(90deg); flex-basis: 100%; text-align: center; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kicker">Quán Nhà Mình · Trang trại</div>
+    <h1>Sổ tay trang trại</h1>
+    <p class="lede">Tự trồng rau, lúa mì, lúa và nuôi gà, lợn, bò để có nguyên liệu rẻ cho mọi quán. Mọi hình dưới đây chụp thẳng từ game.</p>
+    <nav class="toc">
+      <a href="#dong-hang">Dòng hàng</a><a href="#vat-pham">Các món trong trang trại</a><a href="#cach-choi">Cách chơi</a>
+      <a href="#mo-rong">Mở rộng &amp; chọn giống</a><a href="#nong-dan">Thuê nông dân</a><a href="#giong">Bảng giống</a>
+    </nav>
+  </header>
+
+  <section id="dong-hang">
+    <h2>Dòng hàng đi thế nào</h2>
+    <div class="flow">
+      <div class="node"><b>🌱 Lô trang trại</b><span>Trả tiền giống mỗi mẻ, chờ lớn</span></div>
+      <div class="arrow">→</div>
+      <div class="node"><b>📦 Thùng hàng</b><span>Ra ở mép lô, tối đa 3 thùng</span></div>
+      <div class="arrow">→</div>
+      <div class="node"><b>🚚 Xe chở hàng</b><span>Bê tới là tự bốc lên</span></div>
+      <div class="arrow">→</div>
+      <div class="node key"><b>🏬 Kho tổng</b><span>Dùng chung mọi quán</span></div>
+      <div class="arrow">→</div>
+      <div class="node"><b>🍳 Máy ở quán</b><span>Lấy kho trước, thiếu mới mua chợ</span></div>
+    </div>
+    <p class="hint">Dư thì bán ra chợ ở <b>Bản đồ → Kho tổng</b>, giá đúng bằng giá chợ.</p>
+  </section>
+
+  <section id="vat-pham">
+    <h2>Các món trong trang trại</h2>
+    <h3>Thùng hàng (bê lên xe để vào kho)</h3>
+    <div class="gallery">
+      <figure><img src="img/item-thung_rau.png" alt="Sọt rau"><figcaption><b>Thùng rau</b><span>Sọt gỗ bắp cải · 20 rau</span></figcaption></figure>
+      <figure><img src="img/item-bao_bot_mi.png" alt="Bao bột mì"><figcaption><b>Bao bột mì</b><span>Bao vải sọc đỏ · 20 bột mì</span></figcaption></figure>
+      <figure><img src="img/item-bao_gao.png" alt="Bao gạo"><figcaption><b>Bao gạo</b><span>Bao vải sọc xanh · 20 gạo</span></figcaption></figure>
+      <figure><img src="img/item-khay_trung.png" alt="Khay trứng"><figcaption><b>Khay trứng</b><span>Khay giấy · 15 trứng</span></figcaption></figure>
+      <figure><img src="img/item-thung_thit_lon.png" alt="Thùng thịt lợn"><figcaption><b>Thùng thịt lợn</b><span>Thùng xốp · 10 thịt lợn</span></figcaption></figure>
+      <figure><img src="img/item-thung_thit_bo.png" alt="Thùng thịt bò"><figcaption><b>Thùng thịt bò</b><span>Thùng xốp có xương · 8 thịt bò + 8 xương bò</span></figcaption></figure>
+    </div>
+    <h3>Lô trồng / nuôi</h3>
+    <div class="gallery">
+      <figure><img src="img/item-lo_ruong_rau.png" alt="Ruộng rau"><figcaption><b>🥬 Ruộng rau</b><span>Luống bắp cải</span></figcaption></figure>
+      <figure><img src="img/item-lo_ruong_lua_mi.png" alt="Ruộng lúa mì"><figcaption><b>🌾 Ruộng lúa mì</b><span>Bông lúa mì vàng</span></figcaption></figure>
+      <figure><img src="img/item-lo_ruong_lua.png" alt="Ruộng lúa"><figcaption><b>🍚 Ruộng lúa</b><span>Thân xanh, bông rủ</span></figcaption></figure>
+      <figure><img src="img/item-lo_chuong_ga.png" alt="Chuồng gà"><figcaption><b>🐔 Chuồng gà</b><span>4 gà mái mào đỏ</span></figcaption></figure>
+      <figure><img src="img/item-lo_chuong_lon.png" alt="Chuồng lợn"><figcaption><b>🐖 Chuồng lợn</b><span>2 lợn hồng</span></figcaption></figure>
+      <figure><img src="img/item-lo_chuong_bo.png" alt="Chuồng bò"><figcaption><b>🐄 Chuồng bò</b><span>2 bò sữa đốm</span></figcaption></figure>
+      <figure><img src="img/item-lo_trong.png" alt="Đất trống"><figcaption><b>🟫 Đất trống</b><span>Lô mới mở rộng, chờ chọn giống</span></figcaption></figure>
+      <figure><img src="img/item-xe_cho_hang.png" alt="Xe chở hàng"><figcaption><b>🚚 Xe chở hàng</b><span>Bê thùng tới là vào kho tổng</span></figcaption></figure>
+    </div>
+  </section>
+
+  <section id="cach-choi">
+    <h2>Cách chơi</h2>
+    <div class="step">
+      <div class="text">
+        <div class="no">1</div><h3>Thuê trang trại</h3>
+        <p><b>Menu → 🗺️ Bản đồ → Trang trại → Thuê</b>. Cọc <b>5.000K</b>, thuê <b>700K/tháng</b>, mỗi lô mở thêm cộng 150K/tháng. Thuê được bất cứ lúc nào, không cần mở hết quán.</p>
+      </div>
+      <figure class="shot"><img src="img/1-thue.jpg" alt="Tab Bản đồ có nút thuê trang trại"><figcaption>Trang trại trong danh sách mặt bằng còn trống.</figcaption></figure>
+    </div>
+    <div class="step">
+      <div class="text">
+        <div class="no">2</div><h3>Toàn cảnh</h3>
+        <ul>
+          <li>Hai hàng lô, lối đi ở giữa chạy tới xe chở hàng bên phải.</li>
+          <li>Lô chưa mở hiện ô trả tiền: đứng yên 2 giây là mua.</li>
+          <li>Phần đất bên trái là đất mở rộng (xem mục Mở rộng).</li>
+        </ul>
+      </div>
+      <figure class="shot"><img src="img/2-toan-canh.jpg" alt="Toàn cảnh trang trại"><figcaption>Bên trái là đất mở rộng lần 1 với 2 chuồng bò và 2 ruộng rau.</figcaption></figure>
+    </div>
+    <div class="step">
+      <div class="text">
+        <div class="no">3</div><h3>Nhặt thùng hàng</h3>
+        <p>Mỗi lô tự trả tiền giống, lớn trong 40–120 giây rồi ra một thùng ở mép lô phía lối đi (giữ tối đa 3). Đứng cạnh lô là tự nhặt, mỗi thùng 0,45 giây; số <kbd>3/4</kbd> trên đầu là số thùng đang cầm.</p>
+      </div>
+      <figure class="shot"><img src="img/3-nhat-thung.jpg" alt="Nhặt thùng ở ruộng"><figcaption>Đứng cạnh lô để nhặt thùng.</figcaption></figure>
+    </div>
+    <div class="step">
+      <div class="text">
+        <div class="no">4</div><h3>Bốc lên xe chở hàng</h3>
+        <p>Đi tới xe: thùng tự bốc lên (0,2 giây/thùng), chữ <b>📦 Vào kho</b> bay lên, nguyên liệu vào kho tổng ngay. Món không phải thùng hàng thì không bốc lên xe được, nên không sợ bỏ nhầm.</p>
+      </div>
+      <div class="pair">
+        <figure class="shot"><img src="img/4a-cam-thung.jpg" alt="Cầm 4 thùng"><figcaption>Cầm 4 loại thùng.</figcaption></figure>
+        <figure class="shot"><img src="img/4b-boc-len-xe.jpg" alt="Bốc lên xe"><figcaption>Bốc lên xe: 📦 Vào kho.</figcaption></figure>
+      </div>
+    </div>
+    <div class="step">
+      <div class="text">
+        <div class="no">5</div><h3>Kho tổng</h3>
+        <ul>
+          <li>Máy ở mọi quán lấy nguyên liệu trong kho trước (không mất tiền), thiếu mới mua chợ.</li>
+          <li>Cuối ngày tính phí xe chở 50K cho mỗi quán đã dùng hàng trong kho.</li>
+          <li>Dư thì bấm <b>Bán 10</b> / <b>Bán hết</b>: bán ra chợ đúng bằng giá chợ.</li>
+        </ul>
+      </div>
+      <figure class="shot"><img src="img/7-kho-tong.jpg" alt="Kho tổng và nút bán"><figcaption>Bản đồ → Kho tổng.</figcaption></figure>
+    </div>
+  </section>
+
+  <section id="mo-rong">
+    <h2>Mở rộng đất và chọn giống</h2>
+    <div class="step">
+      <div class="text">
+        <div class="no">6</div><h3>Tab 🌾 Trang trại</h3>
+        <ul>
+          <li><b>Mở rộng thêm 4 lô</b>: đất mới ở bên trái, tối đa 3 lần (6 → 18 lô). Giá 3.000K → 5.000K → 8.000K.</li>
+          <li><b>Mỗi lô trồng / nuôi được bất kỳ loại nào</b>: bấm 🥬 🌾 🍚 🐔 🐖 🐄 dưới lô. Muốn nhiều rau hay nhiều thịt tuỳ ý.</li>
+          <li>Lô mới là <b>đất trống</b>: chọn giống là bắt đầu.</li>
+          <li><b>Đổi giống</b>: lô làm xong mẻ đang trồng, lấy hết thùng rồi mới đổi. Không mất phí; nút giống chờ đổi viền vàng, bấm lại giống cũ là huỷ.</li>
+          <li>Dùng được ở mọi nơi, không cần đứng ở trang trại.</li>
+        </ul>
+      </div>
+      <div class="pair">
+        <figure class="shot"><img src="img/5-tab-trang-trai.jpg" alt="Tab trang trại"><figcaption>Nút mở rộng và danh sách lô.</figcaption></figure>
+        <figure class="shot"><img src="img/5b-tab-trang-trai.jpg" alt="Lô đất mở rộng"><figcaption>Đất mở rộng: chọn giống từng lô.</figcaption></figure>
+      </div>
+    </div>
+    <div class="step">
+      <div class="text">
+        <div class="no">7</div><h3>Nâng cấp và bật tắt lô</h3>
+        <p><b>Menu → ⬆️ Nâng cấp</b>: mỗi lô nâng 3 cấp (nhanh hơn 15% và chứa thêm thùng mỗi cấp). <b>Tắt máy</b> dừng lô sau mẻ đang trồng, không tốn tiền giống khi kho đã đầy loại đó.</p>
+      </div>
+      <figure class="shot"><img src="img/8-nang-cap.jpg" alt="Tab nâng cấp"><figcaption>Lô hiện theo giống đang trồng.</figcaption></figure>
+    </div>
+  </section>
+
+  <section id="nong-dan">
+    <h2>Thuê nông dân phụ việc</h2>
+    <div class="answer">
+      <b class="big">Có — thuê được tối đa 2 người làm trang trại.</b>
+      <p>Đứng ở trang trại, mở <b>Menu → 👥 Nhân sự</b>, bấm <b>Thuê</b>. Lương từ 120K/ngày, cộng dồn và trả cuối tháng.</p>
+    </div>
+    <div class="step">
+      <div class="text">
+        <ul>
+          <li>Nông dân tự tới lô có thùng, nhặt đầy tay rồi bê ra xe chở hàng — bạn không cần ở trang trại.</li>
+          <li>Hai người tự chia nhau, không tranh cùng một lô.</li>
+          <li>Nâng cấp từng người để đi nhanh hơn và mang được nhiều thùng hơn (3 → 6 thùng).</li>
+          <li>Cho nghỉ: trả ngay số ngày đã làm; thùng đang cầm tự vào kho.</li>
+        </ul>
+      </div>
+      <div class="pair">
+        <figure class="shot"><img src="img/6a-nong-dan.jpg" alt="Hai nông dân Lan và Hùng"><figcaption>Lan và Hùng đang bê thùng ra xe.</figcaption></figure>
+        <figure class="shot"><img src="img/6b-nhan-su.jpg" alt="Tab nhân sự ở trang trại"><figcaption>Nhân sự ở trang trại.</figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <section id="giong">
+    <h2>Bảng giống</h2>
+    <p>Tiền giống mỗi mẻ chỉ khoảng 20–30% giá chợ của số nguyên liệu thu được. Lời thật còn trừ tiền thuê, lương nông dân và phí chở.</p>
+    <div class="tbl">
+      <table>
+        <thead><tr><th></th><th>Giống</th><th class="num">Giống / mẻ</th><th class="num">Thời gian</th><th>Ra 1 thùng</th><th class="num">Giá chợ</th><th>Quán dùng</th></tr></thead>
+        <tbody>
+          <tr><td><img src="img/item-thung_rau.png" alt=""></td><td>🥬 Rau</td><td class="num">4K</td><td class="num">40 giây</td><td>20 rau</td><td class="num">20K</td><td>Mọi bàn ghép món</td></tr>
+          <tr><td><img src="img/item-bao_bot_mi.png" alt=""></td><td>🌾 Lúa mì</td><td class="num">10K</td><td class="num">60 giây</td><td>20 bột mì</td><td class="num">40K</td><td>Lò bánh mì</td></tr>
+          <tr><td><img src="img/item-bao_gao.png" alt=""></td><td>🍚 Lúa</td><td class="num">14K</td><td class="num">60 giây</td><td>20 gạo</td><td class="num">60K</td><td>Nồi cơm, máy bánh phở</td></tr>
+          <tr><td><img src="img/item-khay_trung.png" alt=""></td><td>🐔 Gà</td><td class="num">12K</td><td class="num">50 giây</td><td>15 trứng</td><td class="num">45K</td><td>Chảo ốp la, chảo chả trứng</td></tr>
+          <tr><td><img src="img/item-thung_thit_lon.png" alt=""></td><td>🐖 Lợn</td><td class="num">16K</td><td class="num">90 giây</td><td>10 thịt lợn</td><td class="num">60K</td><td>Lò than, lò sườn, chả</td></tr>
+          <tr><td><img src="img/item-thung_thit_bo.png" alt=""></td><td>🐄 Bò</td><td class="num">45K</td><td class="num">120 giây</td><td>8 thịt bò + 8 xương bò</td><td class="num">184K</td><td>Quán phở</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="money">
+      <div><b>5.000K</b><span>Cọc thuê trang trại</span></div>
+      <div><b>700K / tháng</b><span>Tiền thuê + 150K mỗi lô mở thêm</span></div>
+      <div><b>3.000K → 8.000K</b><span>Mỗi lần mở rộng thêm 4 lô</span></div>
+      <div><b>50K / quán / ngày</b><span>Phí chở, chỉ khi quán dùng kho</span></div>
+      <div><b>100% giá chợ</b><span>Bán nguyên liệu dư ra chợ</span></div>
+    </div>
+  </section>
+</div>
+</body>
+</html>
