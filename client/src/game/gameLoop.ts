@@ -31,6 +31,8 @@ export interface GameHandle {
   project(x: number, y: number, z: number): { x: number; y: number };
   /** Pháo giấy tại một điểm trong quán (null = quanh nhân vật của mình). */
   confetti(x?: number, z?: number): void;
+  /** Lướt khung nhìn tới một điểm trong thế giới (đi là tự quay về). */
+  lookAt(x: number, z: number): void;
 }
 
 /** Vòng lặp vẽ: nhận snapshot → nội suy; nhân vật của mình dùng dự đoán; camera đi theo. */
@@ -172,6 +174,7 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
       for (const [id, v] of players) if (!seen.has(id)) (v.dispose(), players.delete(id));
 
       const seenC = new Set<number>();
+      const guideId = Math.min(...s.customers.filter((c) => c.tourist).map((c) => c.id));
       for (const c of s.customers) {
         seenC.add(c.id);
         let v = customers.get(c.id);
@@ -187,7 +190,9 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
         v.setSitting(c.sitting);
         v.setPose(c.x, c.z, c.dir, moving && !c.sitting, t);
         v.setCarry(c.holding);
-        v.setBubble(c.mood ? (c.tourist ? `${c.mood} 📷` : c.mood) : c.tourist ? '📷' : null);
+        // Khách đoàn: 📷; người đầu đoàn (số nhỏ nhất) là hướng dẫn viên cầm cờ 🚩.
+        const guide = c.tourist && c.id === guideId;
+        v.setBubble(guide ? '🚩 Hướng dẫn viên' : c.mood ? (c.tourist ? `${c.mood} 📷` : c.mood) : c.tourist ? '📷' : null);
       }
       for (const [id, v] of customers) if (!seenC.has(id)) (v.dispose(), customers.delete(id), lastPos.delete(`c${id}`));
 
@@ -246,6 +251,10 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
       pointer.setEnabled(on);
       menuOpen = !on;
       menuChanged = true;
+    },
+    lookAt(x, z) {
+      const me = predictor.ready() ? predictor.pose() : latest?.players.find((p) => p.id === conn.playerId);
+      if (me) cam.focusOn(x - me.x, z - me.z);
     },
     confetti(x, z) {
       const me = latest?.players.find((p) => p.id === conn.playerId);

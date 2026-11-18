@@ -180,6 +180,8 @@ export interface Snapshot {
     cat: 'none' | 'stray' | 'pet';
     catSpot: { x: number; z: number };
     tourBus: boolean;
+    /** Chỗ xe du lịch đỗ (sát lề đường trước quán). */
+    busSpot: { x: number; z: number };
     weather: 'sun' | 'rain';
     festival: { id: string; icon: string; name: string } | null;
     quests: { text: string; progress: number; target: number; reward: number; done: boolean; failed: boolean; kind: string }[];

@@ -13,7 +13,9 @@ export const FUN = {
   TOUR_CHANCE: 0.5,
   TOUR_SIZE: 10,
   TOUR_GAP_SEC: 0.7,
-  TOUR_BUS_SEC: 30,
+  /** Xe đỗ ít nhất bấy nhiêu giây; khách đầu tiên xuống sau khi xe dừng hẳn. */
+  TOUR_BUS_SEC: 12,
+  TOUR_FIRST_STEP_SEC: 3,
   TOURIST_WTP: 1.7,
   /** Mèo hoang ghé xin ăn (mỗi quán chưa có mèo), cho ăn = +3 lượt chấm 5 sao. */
   CAT_CHANCE: 0.35,

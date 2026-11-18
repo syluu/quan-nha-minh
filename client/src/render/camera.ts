@@ -44,6 +44,11 @@ export function createFollowCamera(camera: THREE.PerspectiveCamera, dom: HTMLEle
         pz = (pz / len) * MAX_PAN;
       }
     },
+    /** Lướt khung nhìn tới một điểm (dời so với nhân vật); nhân vật đi là tự quay về. */
+    focusOn(dx: number, dz: number) {
+      px = dx;
+      pz = dz;
+    },
     /** Mét trên mỗi pixel ở mặt sàn (xấp xỉ) để kéo khung nhìn đúng tay. */
     metersPerPx(): number {
       const h = dom.clientHeight || window.innerHeight;

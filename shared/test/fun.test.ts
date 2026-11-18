@@ -172,3 +172,33 @@ describe('quests and badges', () => {
     expect(w.dayStats.tips).toBe(0);
   });
 });
+
+describe('tour bus parks at the curb (owner request)', () => {
+  it('tourists step off at the bus door after it stops, walk back to it, and the bus waits for all of them', async () => {
+    const { tourDoor, tourBusSpot } = await import('../src/sim/fun');
+    const w = createWorld('X', 1);
+    w.shops.banh_mi.nextCustomerIn = 1e9;
+    w.tour = { shopId: 'banh_mi', at: 10, done: false };
+    w.secOfDay = 11;
+    tickTour(w, 'banh_mi');
+    const door = tourDoor('banh_mi');
+    expect(tourBusSpot('banh_mi').z).toBeGreaterThan(6); // ngoài đường, không phải vỉa hè trong quán
+    repeat(2.5, (dt) => tickCustomers(w, 'banh_mi', dt));
+    expect(w.shops.banh_mi.customers).toHaveLength(0); // xe chưa dừng hẳn
+    repeat(0.6, (dt) => tickCustomers(w, 'banh_mi', dt));
+    const first = w.shops.banh_mi.customers[0];
+    expect(first.tourist).toBe(true);
+    expect(Math.hypot(first.x - door.x, first.z - door.z)).toBeLessThan(1.5);
+    // Một khách đoàn mua xong đi ra lại xe.
+    Object.assign(first, { state: 'leaving', x: 0, z: 2 });
+    repeat(8, (dt) => tickCustomers(w, 'banh_mi', dt));
+    expect(w.shops.banh_mi.customers.includes(first)).toBe(false);
+    // Xe vẫn đỗ khi còn khách đoàn trong quán, dù đã quá thời gian tối thiểu.
+    for (let i = 0; i < 40; i++) {
+      w.secOfDay += 1;
+      tickTour(w, 'banh_mi');
+    }
+    expect(w.shops.banh_mi.customers.some((c) => c.tourist)).toBe(true);
+    expect(w.shops.banh_mi.tourBusUntil!).toBeGreaterThan(w.secOfDay);
+  });
+});

@@ -6,7 +6,7 @@ import { onlineView, staffView, upgradeView } from '../src/ui/menu/views';
 function snap(registered: boolean): Snapshot {
   const st = (instanceId: string, unlocked: boolean, level = 0) => ({ instanceId, unlocked, outputCount: 0, stock: 0, inputs: {}, enabled: true, seats: [], blocked: null, level });
   return {
-    shopId: 'banh_mi', shops: [], canRent: false, warehouse: {}, farm: { owned: false, level: 0, plots: [] }, fun: { combo: 0, cat: 'none', catSpot: { x: 0, z: 0 }, tourBus: false, weather: 'sun', festival: null, quests: [], badges: [], today: [] }, day: 1, secOfDay: 0, money: 0, stars: 3, tiles: [], customers: [], log: [], prices: {}, players: [], ...V3,
+    shopId: 'banh_mi', shops: [], canRent: false, warehouse: {}, farm: { owned: false, level: 0, plots: [] }, fun: { combo: 0, cat: 'none', catSpot: { x: 0, z: 0 }, tourBus: false, busSpot: { x: 0, z: 0 }, weather: 'sun', festival: null, quests: [], badges: [], today: [] }, day: 1, secOfDay: 0, money: 0, stars: 3, tiles: [], customers: [], log: [], prices: {}, players: [], ...V3,
     stations: [st('lo_banh_mi', true), st('ke_banh_mi', true), st('thu_ngan', true), st('diem_giao', registered)],
     staff: registered ? [{ id: 's9', name: 'Mai', role: 'courier', item: null, x: 0, z: 0, dir: 0, carry: [], level: 1, wageOwed: 0 }] : [],
     online: { registered, paused: false, vehicle: 'bike', pending: 2, shipper: null, ordersToday: 7, cancelledToday: 1 },

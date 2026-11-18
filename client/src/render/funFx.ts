@@ -69,6 +69,10 @@ function busModel(): THREE.Group {
     wheel.position.set(x, 0.35, 0.75);
     g.add(wheel);
   }
+  // Cửa xe phía vỉa hè.
+  const door = box(0.7, 1.2, 0.02, 0x2b5f9e);
+  door.position.set(1.2, 0.95, -0.81);
+  g.add(door);
   const sign = makeLabel('🚌 Xe du lịch', { bg: '#2f6db5', size: 32, scale: 0.0075 });
   sign.position.set(0, 2.4, 0);
   g.add(sign);
@@ -87,6 +91,8 @@ export function createFunFx(scene: THREE.Scene) {
   let catBubble: THREE.Sprite | null = null;
   let catState = '';
   let bus: THREE.Group | null = null;
+  let busState: 'arriving' | 'parked' | 'leaving' = 'parked';
+  let busT = 0;
 
   function spawn(mesh: THREE.Mesh, p: Omit<Particle, 'mesh'>) {
     scene.add(mesh);
@@ -197,15 +203,39 @@ export function createFunFx(scene: THREE.Scene) {
         cat.rotation.y = catState === 'pet' ? dir - Math.PI / 2 : -Math.PI / 2;
         catBubble?.position.set(x, 0.95 + Math.sin(t * 3) * 0.04, z);
       }
-      // Xe buýt du lịch.
-      if (s.fun.tourBus && !bus) {
-        bus = busModel();
-        const b = layout.bounds;
-        bus.position.set(b.minX + 6, 0, b.maxZ + 2.4);
-        scene.add(bus);
-      } else if (!s.fun.tourBus && bus) {
-        disposeTree(bus);
-        bus = null;
+      // Xe buýt du lịch: chạy tới trên đường, phanh nhún rồi đỗ sát lề; đoàn đi hết thì chạy tiếp.
+      const spot = s.fun.busSpot;
+      if (s.fun.tourBus && (!bus || busState === 'leaving')) {
+        if (!bus) {
+          bus = busModel();
+          scene.add(bus);
+        }
+        busState = 'arriving';
+        busT = 0;
+      } else if (!s.fun.tourBus && bus && busState !== 'leaving') {
+        busState = 'leaving';
+        busT = 0;
+      }
+      if (bus) {
+        busT += dt;
+        if (busState === 'arriving') {
+          const k = Math.min(1, busT / 3);
+          const ease = 1 - Math.pow(1 - k, 3);
+          bus.position.set(spot.x - 26 * (1 - ease), 0, spot.z);
+          // Phanh: thân xe chúi nhẹ rồi nhún lại.
+          bus.rotation.z = k < 1 ? 0 : Math.sin(Math.min(1.5, busT - 3) * 9) * 0.03 * Math.max(0, 1 - (busT - 3) / 1.5);
+          if (busT > 4.5) busState = 'parked';
+        } else if (busState === 'parked') {
+          bus.position.set(spot.x, 0, spot.z);
+          bus.rotation.z = 0;
+        } else {
+          const k = Math.min(1, busT / 3.5);
+          bus.position.set(spot.x + 30 * k * k, 0, spot.z);
+          if (k >= 1) {
+            disposeTree(bus);
+            bus = null;
+          }
+        }
       }
     },
   };

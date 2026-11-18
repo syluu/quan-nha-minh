@@ -113,12 +113,27 @@ export function onlineWeatherMultiplier(world: WorldState): number {
 }
 
 /** Đoàn khách du lịch: tới giờ thì xe đỗ, khách xuống dần (tickCustomers sinh khách). */
+/** Xe du lịch đỗ sát lề đường trước quán (làn gần), cửa xe quay vào vỉa hè. */
+export function tourBusSpot(shopId: ShopId): { x: number; z: number } {
+  const b = SHOPS[shopId].bounds;
+  return { x: b.minX + 6, z: b.maxZ + 6.4 };
+}
+
+/** Chỗ khách bước xuống / lên xe (mép vỉa hè cạnh cửa xe). */
+export function tourDoor(shopId: ShopId): { x: number; z: number } {
+  const s = tourBusSpot(shopId);
+  return { x: s.x + 1.2, z: s.z - 1.2 };
+}
+
 export function tickTour(world: WorldState, shopId: ShopId): SimEvent[] {
+  const shop = world.shops[shopId];
+  // Xe còn đỗ chừng nào còn khách đoàn chưa xuống hoặc chưa lên lại xe.
+  if ((shop.tourBusUntil ?? -1) > world.secOfDay && (shop.tourLeft || shop.customers.some((c) => c.tourist)))
+    shop.tourBusUntil = Math.max(shop.tourBusUntil ?? 0, world.secOfDay + 1.5);
   const t = world.tour;
   if (!t || t.done || t.shopId !== shopId || world.secOfDay < t.at) return [];
   if (gameHour(world.secOfDay) >= BALANCE.LAST_SPAWN_HOUR) return [];
   t.done = true;
-  const shop = world.shops[shopId];
   shop.tourLeft = FUN.TOUR_SIZE;
   shop.tourBusUntil = world.secOfDay + FUN.TOUR_BUS_SEC;
   world.lifetime.tours += 1;

@@ -1,7 +1,7 @@
 import { BALANCE, COSTUMES, festivalOfDay, getStationDef, COSTUME_SLOTS, DEFAULT_OUTFIT, SHOP_IDS, SHOP_META, SHOPS } from '../content';
 import { canRent, isShopComplete } from './shops';
 import { plotDef } from './farm';
-import { catSpot, questProgress, questText } from './fun';
+import { catSpot, questProgress, questText, tourBusSpot } from './fun';
 import type { ShopId } from '../content';
 import type { Snapshot } from '../net/protocol';
 import { maxLoan } from './bank';
@@ -69,6 +69,7 @@ export function toSnapshot(world: WorldState, shopId: ShopId): Snapshot {
       cat: shop.cat ?? 'none',
       catSpot: catSpot(shopId),
       tourBus: (shop.tourBusUntil ?? -1) > world.secOfDay,
+      busSpot: tourBusSpot(shopId),
       weather: world.weather ?? 'sun',
       festival: (() => {
         const f = festivalOfDay(world.day);

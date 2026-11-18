@@ -1,5 +1,5 @@
 import { BALANCE, FUN, ITEMS, SHOP_META, SHOPS, festivalOfDay, getStationDef } from '../content';
-import { bumpCombo, credit, walkInMultiplier } from './fun';
+import { bumpCombo, credit, tourDoor, walkInMultiplier } from './fun';
 import type { ItemId, PlacedStation, ShopId, ShopLayout } from '../content';
 import { distanceToFootprint } from './carry';
 import type { SimEvent } from './events';
@@ -98,10 +98,12 @@ export function spawnCustomer(world: WorldState, shopId: ShopId, tourist = false
   const { candidates, kept } = chooseWants(world, shopId, tourist);
   if (candidates.length === 0) return null;
 
+  // Khách đoàn du lịch bước xuống từ cửa xe đỗ ngoài đường.
+  const start = tourist ? tourDoor(shopId) : layout.entrance;
   const c: Customer = {
     id: shop.nextCustomerId++,
-    x: layout.entrance.x,
-    z: layout.entrance.z,
+    x: start.x,
+    z: start.z,
     dir: 0,
     state: kept.length ? 'toShelf' : 'leaving',
     wants: kept,
@@ -198,11 +200,13 @@ export function tickCustomers(world: WorldState, shopId: ShopId, dt: number): Si
 
   // Đoàn khách du lịch xuống xe lần lượt.
   if (shop.tourLeft && shop.customers.length < BALANCE.MAX_CUSTOMERS) {
-    const left = (tourTimers.get(shop) ?? 0) - dt;
+    // Khách đầu tiên chờ xe dừng hẳn rồi mới xuống.
+    const left = (tourTimers.get(shop) ?? FUN.TOUR_FIRST_STEP_SEC) - dt;
     if (left <= 0) {
       spawnCustomer(world, shopId, true);
       shop.tourLeft -= 1;
-      tourTimers.set(shop, FUN.TOUR_GAP_SEC);
+      if (shop.tourLeft) tourTimers.set(shop, FUN.TOUR_GAP_SEC);
+      else tourTimers.delete(shop);
     } else tourTimers.set(shop, left);
   }
 
@@ -300,7 +304,9 @@ export function tickCustomers(world: WorldState, shopId: ShopId, dt: number): Si
         break;
       }
       case 'leaving': {
-        if (walk(c, layout.exit.x, layout.exit.z, dt)) shop.customers.splice(shop.customers.indexOf(c), 1);
+        // Khách đoàn đi bộ ra lại xe du lịch; khách thường ra cửa.
+        const out = c.tourist ? tourDoor(shopId) : layout.exit;
+        if (walk(c, out.x, out.z, dt)) shop.customers.splice(shop.customers.indexOf(c), 1);
         break;
       }
     }

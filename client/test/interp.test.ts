@@ -6,7 +6,7 @@ import { createPredictor } from '../src/game/prediction';
 
 function snap(x: number, cx = 0): Snapshot {
   return {
-    shopId: 'banh_mi', shops: [], canRent: false, warehouse: {}, farm: { owned: false, level: 0, plots: [] }, fun: { combo: 0, cat: 'none', catSpot: { x: 0, z: 0 }, tourBus: false, weather: 'sun', festival: null, quests: [], badges: [], today: [] }, day: 1, secOfDay: 0, money: 0, stars: 3, stations: [], tiles: [], log: [], staff: [], prices: {},
+    shopId: 'banh_mi', shops: [], canRent: false, warehouse: {}, farm: { owned: false, level: 0, plots: [] }, fun: { combo: 0, cat: 'none', catSpot: { x: 0, z: 0 }, tourBus: false, busSpot: { x: 0, z: 0 }, weather: 'sun', festival: null, quests: [], badges: [], today: [] }, day: 1, secOfDay: 0, money: 0, stars: 3, stations: [], tiles: [], log: [], staff: [], prices: {},
     ...V3,
     players: [{ id: 'a', name: 'Bố', color: 0, x, z: 0, dir: 0, carry: [], online: true, cap: 4, pick: 0, pickAt: null, carryLevel: 0, speedLevel: 0, location: 'banh_mi', emote: null, boost: false, outfit: { hat: 'non_la', hair: 'toc_ngan_den', shirt: 'ao_mac_dinh', pants: 'quan_nau', apron: 'khong_tap_de' }, wardrobe: [] }],
     customers: [{ id: 1, x: cx, z: 0, dir: 0, holding: [], sitting: false, mood: null, tourist: false }],

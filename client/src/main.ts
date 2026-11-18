@@ -53,7 +53,7 @@ function enterGame(conn: GameConnection) {
   side.className = 'side-alerts';
   ui.append(side);
   const shipperAlert = createShipperAlert(side);
-  const promoAlert = createPromoAlert(side);
+  const promoAlert = createPromoAlert(side, (x, z) => game.lookAt(x, z));
   const questPanel = createQuestPanel(side);
   const floats = createFloatText(ui, game.project);
   let latest: Snapshot | null = null;
