@@ -2,6 +2,7 @@ import { BALANCE, ITEMS, SHOPS, getStationDef, itemCost } from '../content';
 import type { ItemId, PlacedStation, ShopId } from '../content';
 import type { SimEvent } from './events';
 import { deliverToPickup, pickupNeeds } from './online';
+import { plotDef } from './farm';
 import type { PlayerState, ShopState, WorldState } from './world';
 
 /** Khoảng cách từ điểm (x,z) tới cạnh footprint của trạm (0 nếu ở trong). */
@@ -152,7 +153,9 @@ export function tickCarry(world: WorldState, shopId: ShopId, dt: number): SimEve
         p.pickTimer -= BALANCE.PICK_INTERVAL;
         if (p.pickTimer < 1e-6) p.pickTimer = 0;
         st.outputCount -= 1;
-        p.carry.push(def.output);
+        // Lô trang trại: thùng theo giống đang trồng (lô có thể đã đổi giống).
+        const out = def.kind === 'plot' ? plotDef(shop, placed)?.output ?? def.output : def.output;
+        p.carry.push(out);
       }
     } else {
       p.pickTimer = 0;

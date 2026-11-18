@@ -21,6 +21,10 @@ export interface StationState {
   enabled: boolean;
   /** Chỗ ngồi (chỉ bàn ăn). */
   seats: SeatState[];
+  /** Lô trang trại: giống đang trồng (id lô mẫu, vd 'chuong_bo'); null = đất trống chưa chọn; không có = giống mặc định. */
+  crop?: string | null;
+  /** Đổi giống chờ áp dụng (sau khi xong mẻ và lấy hết thùng). */
+  nextCrop?: string | null;
   tileOccupant: null | { playerId: string; sec: number };
 }
 
@@ -131,6 +135,8 @@ export interface ShopState {
   owned: boolean;
   /** Ngày bắt đầu thuê (tính tiền thuê tháng đầu theo số ngày). */
   rentedDay: number;
+  /** Trang trại: đã mở rộng mấy lần (0–3). */
+  farmLevel: number;
   stations: Record<string, StationState>;
   customers: Customer[];
   prices: Partial<Record<ItemId, number>>;
@@ -209,7 +215,7 @@ export interface LogEntry {
 }
 
 export interface WorldState {
-  schemaVersion: 8;
+  schemaVersion: 9;
   code: string;
   money: number;
   day: number;
@@ -262,9 +268,11 @@ export function createStationState(instanceId: string, unlocked: boolean, seats:
 export function createShop(id: ShopId, owned: boolean): ShopState {
   const layout = SHOPS[id];
   const stations: Record<string, StationState> = {};
-  for (const p of layout.stations) stations[p.instanceId] = createStationState(p.instanceId, p.unlockCost === 0, p.seatPoints?.length ?? 0);
+  // Lô đất mở rộng chưa mua: chưa có (mua mở rộng mới mở).
+  for (const p of layout.stations)
+    stations[p.instanceId] = createStationState(p.instanceId, p.unlockCost === 0 && !p.farmExpansion, p.seatPoints?.length ?? 0);
   return {
-    id, owned, rentedDay: 0, stations, customers: [], prices: {}, ratings: [], nextCustomerIn: 1, nextCustomerId: 1,
+    id, owned, rentedDay: 0, farmLevel: 0, stations, customers: [], prices: {}, ratings: [], nextCustomerIn: 1, nextCustomerId: 1,
     staff: [], nextStaffId: 1, firedToday: 0, campaigns: [], ads: [],
     orders: [], nextOrderId: 1, nextOrderIn: 5, shipper: null, onlinePaused: false,
   };
@@ -272,7 +280,7 @@ export function createShop(id: ShopId, owned: boolean): ShopState {
 
 export function createWorld(code: string, seed: number): WorldState {
   return {
-    schemaVersion: 8,
+    schemaVersion: 9,
     code,
     money: BALANCE.START_MONEY,
     day: 1,

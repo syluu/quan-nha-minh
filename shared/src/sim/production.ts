@@ -1,5 +1,6 @@
 import { INGREDIENTS, SHOPS, getStationDef } from '../content';
 import type { ShopId } from '../content';
+import { applyPendingCrop, plotDef } from './farm';
 import { effectiveCycle, effectiveOutputCap } from './upgrades';
 import type { WorldState } from './world';
 
@@ -9,10 +10,24 @@ const EPS = 1e-6;
 export function tickStations(world: WorldState, shopId: ShopId, dt: number): void {
   const shop = world.shops[shopId];
   for (const placed of SHOPS[shopId].stations) {
-    const def = getStationDef(placed.def);
-    if (def.kind !== 'producer' && def.kind !== 'assembler' && def.kind !== 'plot') continue;
+    const base = getStationDef(placed.def);
+    if (base.kind !== 'producer' && base.kind !== 'assembler' && base.kind !== 'plot') continue;
     const st = shop.stations[placed.instanceId];
     if (!st.unlocked) continue;
+    // Lô trang trại: giống đang trồng (có thể đã đổi); đất trống thì chờ chọn giống.
+    if (base.kind === 'plot') {
+      applyPendingCrop(st);
+      // Đang chờ đổi giống: không trồng thêm mẻ giống cũ, đợi lấy hết thùng trên lô.
+      if (st.nextCrop && !st.running) {
+        st.blocked = 'full';
+        continue;
+      }
+    }
+    const def = base.kind === 'plot' ? plotDef(shop, placed) : base;
+    if (!def) {
+      st.blocked = 'no_input';
+      continue;
+    }
 
     if (!st.running) {
       // Tắt máy: làm xong mẻ đang chạy rồi mới dừng (không bắt đầu mẻ mới).

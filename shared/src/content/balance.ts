@@ -129,6 +129,8 @@ export const BALANCE = {
   TAKEAWAY_MAX_SCORE: 4,
   /** Phí chở hàng từ kho tổng tới mỗi quán, mỗi sáng (khi có trang trại và kho còn hàng). */
   DELIVERY_FEE_PER_SHOP: K(50),
+  /** Mở rộng trang trại: giá từng lần (mỗi lần thêm 4 lô đất trống). */
+  FARM_EXPANSION_COSTS: [K(3000), K(5000), K(8000)],
   FARMHANDS_MAX: 2,
 
   PAY_TILE_DELAY_SEC: 2,

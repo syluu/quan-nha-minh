@@ -122,3 +122,11 @@ export function migrateV7toV8(raw: any): any {
   for (const shop of Object.values<any>(w.shops ?? {})) if (!Array.isArray(shop.ads)) shop.ads = [];
   return w;
 }
+
+/** Kế hoạch mở rộng trang trại (v8 → v9): số lần mở rộng, lô chọn giống. */
+export function migrateV8toV9(raw: any): any {
+  const w = structuredClone(raw);
+  w.schemaVersion = 9;
+  for (const shop of Object.values<any>(w.shops ?? {})) if (typeof shop.farmLevel !== 'number') shop.farmLevel = 0;
+  return w;
+}

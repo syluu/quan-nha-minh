@@ -10,6 +10,8 @@ import type { WorldState } from './world';
 export function stationValue(shopId: ShopId, instanceId: string): number {
   const p = SHOPS[shopId].stations.find((s) => s.instanceId === instanceId);
   if (!p) return 0;
+  // Lô đất mở rộng: một phần tư giá lần mở rộng (để tính giá nâng cấp lô).
+  if (p.farmExpansion) return Math.round((BALANCE.FARM_EXPANSION_COSTS[p.farmExpansion - 1] ?? 0) / 4);
   return p.unlockCost > 0 ? p.unlockCost : BALANCE.STARTER_VALUES[instanceId] ?? 0;
 }
 
@@ -27,6 +29,8 @@ export function shopAssetValue(world: WorldState, shopId: ShopId): number {
     if (!st.unlocked) continue;
     n += st.upgradeSpent + (deposit > 0 && p.unlockCost === 0 ? 0 : stationValue(shopId, p.instanceId));
   }
+  // Tiền đã mở rộng trang trại (đất) tính là tài sản.
+  for (let i = 0; i < (shop.farmLevel ?? 0); i++) n += BALANCE.FARM_EXPANSION_COSTS[i] ?? 0;
   return n;
 }
 

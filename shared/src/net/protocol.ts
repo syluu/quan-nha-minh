@@ -27,10 +27,16 @@ export const MSG = {
   setMachineEnabled: 'setMachineEnabled',
   buyCostume: 'buyCostume',
   buyAd: 'buyAd',
+  buyFarmExpansion: 'buyFarmExpansion',
+  setPlotCrop: 'setPlotCrop',
   sellWarehouse: 'sellWarehouse',
   wearCostume: 'wearCostume',
 } as const;
 
+export interface SetPlotCropMsg {
+  instanceId: string;
+  crop: string;
+}
 export interface BuyAdMsg {
   ad: AdId;
 }
@@ -135,6 +141,12 @@ export interface Snapshot {
   shops: { id: ShopId; name: string; kind: 'shop' | 'farm'; owned: boolean; complete: boolean; deposit: number; rentPerMonth: number }[];
   /** Kho tổng (nguyên liệu từ trang trại). */
   warehouse: Partial<Record<IngredientId, number>>;
+  /** Trang trại: số lần đã mở rộng và từng lô đang trồng gì (xem/chọn được ở mọi nơi). */
+  farm: {
+    owned: boolean;
+    level: number;
+    plots: { instanceId: string; unlocked: boolean; crop: string | null; nextCrop: string | null; outputCount: number; running: boolean; enabled: boolean; expansion: number }[];
+  };
   /** Mọi quán đang có đã mở hết → được thuê mặt bằng mới. */
   canRent: boolean;
   day: number;
@@ -193,6 +205,8 @@ export interface Snapshot {
     level: number;
     enabled: boolean;
     seats: SeatState[];
+    /** Lô trang trại: giống đang trồng (null = đất trống). */
+    crop?: string | null;
   }[];
   tiles: { instanceId: string; cost: number; paid: number; occupantSec: number }[];
   log: LogEntry[];

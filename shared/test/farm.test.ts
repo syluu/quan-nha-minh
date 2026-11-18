@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getPlaced } from '../src/content';
+import { SHOPS, getPlaced } from '../src/content';
 import { tickCarry } from '../src/sim/carry';
 import { tickStations } from '../src/sim/production';
 import { normalizeLoaded } from '../src/sim/snapshot';
@@ -72,7 +72,7 @@ describe('save v5 → v6 (Review Focus 4)', () => {
     delete raw.warehouse;
     delete raw.shops.farm;
     const loaded = normalizeLoaded(raw);
-    expect(loaded.schemaVersion).toBe(8);
+    expect(loaded.schemaVersion).toBe(9);
     expect(loaded.shops.farm.owned).toBe(false);
     expect(loaded.warehouse).toEqual({});
   });
@@ -206,5 +206,97 @@ describe('delivery fee and returning the farm', () => {
     expect(p.location).toBe('banh_mi');
     expect(w.warehouse.gao).toBe(7);
     expect(w.money).toBe(2_500_000);
+  });
+});
+
+describe('expanding the farm and choosing what to grow (owner request)', () => {
+  it('each expansion adds 4 empty slots on the left; 3 expansions max; costs rise', async () => {
+    const { buyFarmExpansion } = await import('../src/sim/farm');
+    const w = farmWorld();
+    w.money = 20_000_000;
+    putPlayer(w, 'a', 0, -1.25, [], 'farm');
+    const slots = (lv: number) => SHOPS.farm.stations.filter((p) => p.farmExpansion === lv).map((p) => w.shops.farm.stations[p.instanceId]);
+    expect(slots(1).every((s) => !s.unlocked)).toBe(true);
+    expect(buyFarmExpansion(w, 'a')).toEqual({ ok: true });
+    expect(w.money).toBe(17_000_000);
+    expect(slots(1).every((s) => s.unlocked && s.crop === null)).toBe(true);
+    expect(slots(2).every((s) => !s.unlocked)).toBe(true);
+    buyFarmExpansion(w, 'a');
+    buyFarmExpansion(w, 'a');
+    expect(w.money).toBe(20_000_000 - 3_000_000 - 5_000_000 - 8_000_000);
+    expect(buyFarmExpansion(w, 'a')).toEqual({ ok: false, error: 'MAXED' });
+    expect(w.shops.farm.farmLevel).toBe(3);
+  });
+
+  it('refuses without money, during settlement, or without a farm', async () => {
+    const { buyFarmExpansion } = await import('../src/sim/farm');
+    const w = createWorld('X', 1);
+    expect(buyFarmExpansion(w, 'a')).toEqual({ ok: false, error: 'NOT_FOUND' });
+    w.shops.farm.owned = true;
+    w.money = 2_999_000;
+    expect(buyFarmExpansion(w, 'a')).toEqual({ ok: false, error: 'NO_MONEY' });
+    w.money = 9_000_000;
+    w.settlement = { month: 1, revenue: 0, ingredientCost: 0, marketing: 0, commission: 0, wages: 0, rent: 0, loanDue: 0, totalDue: 1 };
+    expect(buyFarmExpansion(w, 'a')).toEqual({ ok: false, error: 'PAUSED' });
+    expect(w.money).toBe(9_000_000);
+  });
+
+  it('an empty slot does nothing until a crop is chosen; then it grows that crop', async () => {
+    const { buyFarmExpansion, setPlotCrop } = await import('../src/sim/farm');
+    const w = farmWorld();
+    w.money = 10_000_000;
+    buyFarmExpansion(w, 'a');
+    for (const id of Object.keys(w.shops.farm.stations)) if (!id.startsWith('lo_mo_rong_1')) w.shops.farm.stations[id].enabled = false;
+    tickStations(w, 'farm', 0.1);
+    expect(w.money).toBe(7_000_000); // đất trống: không tốn tiền giống
+    expect(setPlotCrop(w, 'lo_mo_rong_1', 'chuong_bo', 'a')).toEqual({ ok: true });
+    tickStations(w, 'farm', 0.1);
+    expect(w.money).toBe(7_000_000 - 45_000);
+    repeat(120, (dt) => tickStations(w, 'farm', dt));
+    // Nhặt ra thùng thịt bò, không phải thùng rau (giống mặc định của ô).
+    const wp = getPlaced('farm', 'lo_mo_rong_1').workPoint;
+    const p = putPlayer(w, 'b', wp.x, wp.z, [], 'farm');
+    repeat(0.5, (dt) => tickCarry(w, 'farm', dt));
+    expect(p.carry).toEqual(['thung_thit_bo']);
+  });
+
+  it('switching crop waits for the current batch and for the crates to be collected; same crop cancels', async () => {
+    const { setPlotCrop } = await import('../src/sim/farm');
+    const w = farmWorld();
+    const st = w.shops.farm.stations.ruong_rau;
+    tickStations(w, 'farm', 0.1); // đang trồng rau
+    expect(setPlotCrop(w, 'ruong_rau', 'chuong_ga', 'a')).toEqual({ ok: true });
+    expect(st.nextCrop).toBe('chuong_ga');
+    repeat(40, (dt) => tickStations(w, 'farm', dt));
+    expect(st.outputCount).toBe(1); // mẻ rau xong
+    expect(st.crop ?? 'ruong_rau').toBe('ruong_rau'); // còn thùng rau trên lô → chưa đổi
+    st.outputCount = 0;
+    tickStations(w, 'farm', 0.1);
+    expect(st.crop).toBe('chuong_ga');
+    expect(setPlotCrop(w, 'ruong_rau', 'ruong_rau', 'a')).toEqual({ ok: true });
+    expect(st.nextCrop).toBe('ruong_rau');
+    expect(setPlotCrop(w, 'ruong_rau', 'chuong_ga', 'a')).toEqual({ ok: true });
+    expect(st.nextCrop).toBeNull();
+    expect(setPlotCrop(w, 'ruong_rau', 'banh_mi', 'a')).toEqual({ ok: false, error: 'BAD_ITEM' });
+    expect(setPlotCrop(w, 'xe_cho_hang', 'chuong_ga', 'a')).toEqual({ ok: false, error: 'BAD_ITEM' });
+    expect(setPlotCrop(w, 'lo_mo_rong_5', 'chuong_ga', 'a')).toEqual({ ok: false, error: 'NOT_FOUND' }); // chưa mở rộng
+  });
+
+  it('expansion slots pay plot rent and count as assets; save v8 → v9 adds the level', async () => {
+    const { buyFarmExpansion } = await import('../src/sim/farm');
+    const { buildSettlement } = await import('../src/sim/settlement');
+    const { assetValue } = await import('../src/sim/bank');
+    const w = farmWorld();
+    w.shops.farm.rentedDay = 1;
+    w.money = 10_000_000;
+    const before = assetValue(w);
+    buyFarmExpansion(w, 'a');
+    expect(assetValue(w)).toBe(before + 3_000_000);
+    w.day = 7;
+    expect(buildSettlement(w).rent).toBe(700_000 + 4 * 150_000);
+    const raw = JSON.parse(JSON.stringify(createWorld('ABC-DEF', 1)));
+    raw.schemaVersion = 8;
+    delete raw.shops.farm.farmLevel;
+    expect(normalizeLoaded(raw).shops.farm.farmLevel).toBe(0);
   });
 });

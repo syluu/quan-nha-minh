@@ -54,6 +54,8 @@ export interface PlacedStation {
   shipperPoint?: { x: number; z: number };
   /** Chỗ khách ngồi ăn (chỉ bàn ăn). */
   seatPoints?: { x: number; z: number }[];
+  /** Lô đất mở rộng trang trại: có khi mua lần mở rộng thứ mấy (1–3); ban đầu là đất trống. */
+  farmExpansion?: number;
 }
 
 export interface ShopLayout {

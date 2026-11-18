@@ -19,6 +19,7 @@ function isShopId(x: unknown): x is ShopId {
 export function isShopComplete(world: WorldState, shopId: ShopId): boolean {
   const shop = world.shops[shopId];
   return SHOPS[shopId].stations.every((p) => {
+    if (p.farmExpansion) return true; // đất mở rộng không bắt buộc
     const kind = getStationDef(p.def).kind;
     if (kind !== 'producer' && kind !== 'assembler' && kind !== 'display' && kind !== 'plot') return true;
     return shop.stations[p.instanceId].unlocked;

@@ -205,7 +205,7 @@ describe('balance plan 3', () => {
     ]);
   });
   it('every starter station has a value', () => {
-    for (const s of Object.values(SHOPS).flatMap((sh) => sh.stations).filter((x) => x.unlockCost === 0))
+    for (const s of Object.values(SHOPS).flatMap((sh) => sh.stations).filter((x) => x.unlockCost === 0 && !x.farmExpansion))
       expect(BALANCE.STARTER_VALUES[s.instanceId], s.instanceId).toBeTypeOf('number');
   });
 });
@@ -272,11 +272,12 @@ describe('farm content (plan 6)', () => {
     for (const id of ['banh_mi', 'com_tam', 'pho_cafe'] as const) expect(SHOP_META[id].kind).toBe('shop');
   });
 
-  it('starts with the vegetable plot, the truck and a trash bin; six plots in all', () => {
+  it('starts with the vegetable plot, the truck and a trash bin; six plots + 3 expansions of 4 empty slots', () => {
     const farm = SHOPS.farm;
-    const kinds = farm.stations.map((p) => getStationDef(p.def).kind);
-    expect(kinds.filter((k) => k === 'plot')).toHaveLength(6);
-    expect(farm.stations.filter((p) => p.unlockCost === 0).map((p) => p.instanceId).sort()).toEqual(['ruong_rau', 'thung_rac', 'xe_cho_hang']);
+    const base = farm.stations.filter((p) => !p.farmExpansion);
+    expect(base.filter((p) => getStationDef(p.def).kind === 'plot')).toHaveLength(6);
+    expect(base.filter((p) => p.unlockCost === 0).map((p) => p.instanceId).sort()).toEqual(['ruong_rau', 'thung_rac', 'xe_cho_hang']);
+    for (const lv of [1, 2, 3]) expect(farm.stations.filter((p) => p.farmExpansion === lv)).toHaveLength(4);
   });
 
   it('home-grown ingredients: seed cost is 15–35% of the market price (rent, wages and delivery come on top)', () => {

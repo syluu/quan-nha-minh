@@ -23,6 +23,8 @@ import {
   rentShop,
   buyCostume,
   buyAd,
+  buyFarmExpansion,
+  setPlotCrop,
   sellWarehouse,
   wearCostume,
   setMachineEnabled,
@@ -39,7 +41,7 @@ import {
 import type {
   ActionResult, FireMsg, HireMsg, InputMsg, JoinOptions, RenameMsg, RepayLoanMsg, RunCampaignMsg, SellStationMsg, SetPriceMsg,
   SetOnlinePausedMsg, TakeLoanMsg, UpgradeMachineMsg, UpgradePlayerMsg, UpgradeStaffMsg, WorldState,
-  BuyAdMsg, CostumeMsg, SellWarehouseMsg, RentShopMsg, SetMachineEnabledMsg, ShopId, Snapshot, TravelMsg,
+  BuyAdMsg, SetPlotCropMsg, CostumeMsg, SellWarehouseMsg, RentShopMsg, SetMachineEnabledMsg, ShopId, Snapshot, TravelMsg,
 } from '@qnm/shared';
 import type { WorldStore } from '../persistence';
 
@@ -148,6 +150,9 @@ export class WorldRoom extends Room {
     act<Record<string, never>>(MSG.upgradePickup, (pid) => upgradePickup(this.world, here(pid), pid));
     act<RentShopMsg>(MSG.rentShop, (pid, m) => rentShop(this.world, m.shopId, pid));
     act<TravelMsg>(MSG.travel, (pid, m) => travel(this.world, pid, m.to));
+    // Trang trại quản lý được từ mọi nơi (tab 🌾 Trang trại).
+    act<Record<string, never>>(MSG.buyFarmExpansion, (pid) => buyFarmExpansion(this.world, pid));
+    act<SetPlotCropMsg>(MSG.setPlotCrop, (pid, m) => setPlotCrop(this.world, m.instanceId, m.crop, pid));
     act<BuyAdMsg>(MSG.buyAd, (pid, m) => buyAd(this.world, here(pid), m.ad, pid));
     act<SellWarehouseMsg>(MSG.sellWarehouse, (pid, m) => sellWarehouse(this.world, m.ingredient, m.qty, pid));
     act<CostumeMsg>(MSG.buyCostume, (pid, m) => buyCostume(this.world, pid, m.id));

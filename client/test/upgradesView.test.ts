@@ -6,7 +6,7 @@ import { staffView, upgradeView } from '../src/ui/menu/views';
 function snap(): Snapshot {
   const st = (instanceId: string, unlocked: boolean, level = 0) => ({ instanceId, unlocked, outputCount: 0, stock: 0, inputs: {}, enabled: true, seats: [], blocked: null, level });
   return {
-    shopId: 'banh_mi', shops: [], canRent: false, warehouse: {}, day: 3, secOfDay: 0, money: 0, stars: 3, tiles: [], customers: [], log: [], prices: {}, ...V3,
+    shopId: 'banh_mi', shops: [], canRent: false, warehouse: {}, farm: { owned: false, level: 0, plots: [] }, day: 3, secOfDay: 0, money: 0, stars: 3, tiles: [], customers: [], log: [], prices: {}, ...V3,
     players: [{ id: 'me', name: 'Bố', color: 0, x: 0, z: 0, dir: 0, carry: [], online: true, cap: 6, pick: 0, pickAt: null, carryLevel: 1, speedLevel: 5, location: 'banh_mi', outfit: { hat: 'non_la', hair: 'toc_ngan_den', shirt: 'ao_mac_dinh', pants: 'quan_nau', apron: 'khong_tap_de' }, wardrobe: [] }],
     stations: [st('lo_banh_mi', true, 1), st('ke_banh_mi', true), st('thu_ngan', true), st('chao_op_la', false)],
     staff: [{ id: 's1', name: 'Lan', role: 'cashier', item: null, x: 0, z: 0, dir: 0, carry: [], level: 2, wageOwed: 450_000 }],

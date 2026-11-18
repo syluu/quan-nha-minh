@@ -7,7 +7,7 @@ import { V3 } from './fixtures';
 
 function snapFixture(): Snapshot {
   return {
-    shopId: 'banh_mi', shops: [], canRent: false, warehouse: {}, day: 1, secOfDay: 0, money: 0, stars: 3,
+    shopId: 'banh_mi', shops: [], canRent: false, warehouse: {}, farm: { owned: false, level: 0, plots: [] }, day: 1, secOfDay: 0, money: 0, stars: 3,
     tiles: [], customers: [], log: [], prices: {}, players: [], stations: [], staff: [],
     ...V3, online: { ...V3.online, registered: true },
   } as Snapshot;

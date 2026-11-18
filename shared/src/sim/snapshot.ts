@@ -1,9 +1,10 @@
-import { BALANCE, COSTUMES, COSTUME_SLOTS, DEFAULT_OUTFIT, SHOP_IDS, SHOP_META, SHOPS } from '../content';
+import { BALANCE, COSTUMES, getStationDef, COSTUME_SLOTS, DEFAULT_OUTFIT, SHOP_IDS, SHOP_META, SHOPS } from '../content';
 import { canRent, isShopComplete } from './shops';
+import { plotDef } from './farm';
 import type { ShopId } from '../content';
 import type { Snapshot } from '../net/protocol';
 import { maxLoan } from './bank';
-import { migrateV1toV2, migrateV2toV3, migrateV3toV4, migrateV4toV5, migrateV5toV6, migrateV6toV7, migrateV7toV8 } from './migrate';
+import { migrateV1toV2, migrateV2toV3, migrateV3toV4, migrateV4toV5, migrateV5toV6, migrateV6toV7, migrateV7toV8, migrateV8toV9 } from './migrate';
 import { onlineSnapshot } from './online';
 import { sellableStations } from './settlement';
 import { isTileVisible } from './payTiles';
@@ -22,6 +23,19 @@ export function toSnapshot(world: WorldState, shopId: ShopId): Snapshot {
     })),
     canRent: canRent(world),
     warehouse: { ...world.warehouse },
+    farm: {
+      owned: world.shops.farm.owned,
+      level: world.shops.farm.farmLevel ?? 0,
+      plots: SHOPS.farm.stations
+        .filter((p) => getStationDef(p.def).kind === 'plot')
+        .map((p) => {
+          const st = world.shops.farm.stations[p.instanceId];
+          return {
+            instanceId: p.instanceId, unlocked: st.unlocked, crop: plotDef(world.shops.farm, p)?.id ?? null, nextCrop: st.nextCrop ?? null,
+            outputCount: st.outputCount, running: st.running, enabled: st.enabled, expansion: p.farmExpansion ?? 0,
+          };
+        }),
+    },
     day: world.day,
     secOfDay: world.secOfDay,
     money: world.money,
@@ -62,6 +76,7 @@ export function toSnapshot(world: WorldState, shopId: ShopId): Snapshot {
       return {
         instanceId: st.instanceId, unlocked: st.unlocked, outputCount: st.outputCount, stock: st.stock,
         inputs: { ...st.inputs }, blocked: st.blocked, level: st.level, enabled: st.enabled, seats: [...st.seats],
+        ...(getStationDef(placed.def).kind === 'plot' ? { crop: plotDef(shop, placed)?.id ?? null } : {}),
       };
     }),
     tiles: layout.stations
@@ -77,17 +92,18 @@ export function toSnapshot(world: WorldState, shopId: ShopId): Snapshot {
 /** Chuẩn hoá thế giới vừa tải từ DB: nâng version, dọn trạng thái tạm, bổ sung trạm mới thêm vào nội dung. */
 export function normalizeLoaded(raw: unknown): WorldState {
   const version = raw && typeof raw === 'object' ? (raw as { schemaVersion?: unknown }).schemaVersion : undefined;
-  if (version !== 1 && version !== 2 && version !== 3 && version !== 4 && version !== 5 && version !== 6 && version !== 7 && version !== 8) throw new Error('UNSUPPORTED_SCHEMA');
+  if (version !== 1 && version !== 2 && version !== 3 && version !== 4 && version !== 5 && version !== 6 && version !== 7 && version !== 8 && version !== 9) throw new Error('UNSUPPORTED_SCHEMA');
   let w: unknown = raw;
   if (version === 1) w = migrateV1toV2(w);
   if (version === 1 || version === 2) w = migrateV2toV3(w);
-  if (version !== 4 && version !== 5 && version !== 6 && version !== 7 && version !== 8) w = migrateV3toV4(w);
+  if (version !== 4 && version !== 5 && version !== 6 && version !== 7 && version !== 8 && version !== 9) w = migrateV3toV4(w);
   const code = (w as { code: string }).code;
   const fresh = createWorld(code, 0);
-  if (version !== 5 && version !== 6 && version !== 7 && version !== 8) w = migrateV4toV5(w, fresh.shops);
-  if (version !== 6 && version !== 7 && version !== 8) w = migrateV5toV6(w, fresh.shops);
-  if (version !== 7 && version !== 8) w = migrateV6toV7(w, DEFAULT_OUTFIT);
-  if (version !== 8) w = migrateV7toV8(w);
+  if (version < 5) w = migrateV4toV5(w, fresh.shops);
+  if (version < 6) w = migrateV5toV6(w, fresh.shops);
+  if (version < 7) w = migrateV6toV7(w, DEFAULT_OUTFIT);
+  if (version < 8) w = migrateV7toV8(w);
+  if (version < 9) w = migrateV8toV9(w);
   const world = w as WorldState;
   world.deliveredTo ??= [];
   for (const id of Object.keys(fresh.shops) as ShopId[]) {

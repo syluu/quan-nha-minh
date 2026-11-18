@@ -5,6 +5,7 @@ import type { ActionResult } from './actions';
 import { trySettleAfterAction } from './settlement';
 import { deliverToPickup, pickupNeeds, pickupOf } from './online';
 import { loadCrate } from './carry';
+import { plotDef } from './farm';
 import type { SimEvent } from './events';
 import { addLog, playerName } from './log';
 import { isOnSale } from './prices';
@@ -416,8 +417,9 @@ function tickFarmhand(world: WorldState, shopId: ShopId, s: StaffState, dt: numb
         walk(s, truck.workPoint.x, truck.workPoint.z, dt);
         return [];
       }
-      const def = getStationDef(best.def);
-      s.task = { from: best.instanceId, to: truck.instanceId, item: def.kind === 'plot' ? def.output : s.item!, phase: 'toSource' };
+      const crop = plotDef(shop, best);
+      if (!crop) return [];
+      s.task = { from: best.instanceId, to: truck.instanceId, item: crop.output, phase: 'toSource' };
     }
   }
   const t = s.task!;
