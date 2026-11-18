@@ -13,6 +13,8 @@ export function createAdDecor(scene: THREE.Scene) {
   let group: THREE.Group | null = null;
   let key = '';
   let ledTex: THREE.CanvasTexture | null = null;
+  let pin: THREE.Group | null = null;
+  let time = 0;
 
   function build(shopId: ShopId, ads: AdId[]) {
     if (group) disposeTree(group);
@@ -58,6 +60,46 @@ export function createAdDecor(scene: THREE.Scene) {
         group.add(lantern, cap);
       }
     }
+    if (ads.includes('ghim_ban_do')) {
+      // Cây ghim bản đồ đỏ to cắm trên nóc tường sau, nhấp nhô.
+      pin = new THREE.Group();
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.32, 16, 12), mat(0xe0302a, 0x400000));
+      head.position.y = 0.55;
+      const dot = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 9), mat(0xffffff));
+      dot.position.set(0, 0.6, 0.24);
+      const tip = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.55, 14), mat(0xe0302a));
+      tip.rotation.x = Math.PI;
+      tip.position.y = 0.2;
+      pin.add(head, dot, tip);
+      pin.position.set(0, 2.5, b.minZ + 0.2);
+      group.add(pin);
+    } else pin = null;
+    if (ads.includes('the_tich_diem')) {
+      // Bảng "Tích điểm 10 tặng 1" dựng trên quầy thu ngân.
+      const cashier = SHOPS[shopId].stations.find((p) => p.def === 'thu_ngan');
+      if (cashier) {
+        const c = document.createElement('canvas');
+        c.width = 256;
+        c.height = 192;
+        const ctx = c.getContext('2d');
+        if (ctx) {
+          ctx.fillStyle = '#2f6db5';
+          ctx.fillRect(0, 0, 256, 192);
+          ctx.fillStyle = '#ffffff';
+          ctx.textAlign = 'center';
+          ctx.font = '800 40px system-ui, sans-serif';
+          ctx.fillText('💳 TÍCH ĐIỂM', 128, 70);
+          ctx.font = '700 34px system-ui, sans-serif';
+          ctx.fillText('10 lần tặng 1', 128, 135);
+        }
+        const tex = new THREE.CanvasTexture(c);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        const board = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.38), new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide }));
+        board.position.set(cashier.x - 0.25, 1.15, cashier.z + 0.3);
+        board.rotation.x = -0.2;
+        group.add(board);
+      }
+    }
     scene.add(group);
   }
 
@@ -71,6 +113,11 @@ export function createAdDecor(scene: THREE.Scene) {
       }
       // Chữ chạy trên biển LED.
       if (ledTex) ledTex.offset.x = (ledTex.offset.x + dt * 0.12) % 1;
+      time += dt;
+      if (pin) {
+        pin.position.y = 2.5 + Math.sin(time * 2) * 0.12;
+        pin.rotation.y = time * 0.8;
+      }
     },
   };
 }

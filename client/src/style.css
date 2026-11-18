@@ -105,7 +105,10 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .costume .swatch { width: 34px; height: 34px; border-radius: 8px; border: 1px solid rgba(0, 0, 0, 0.25); display: grid; place-items: center; font-size: 20px; }
 .joy { position: fixed; width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%; background: rgba(255, 250, 240, 0.25); border: 2px solid rgba(255, 250, 240, 0.8); pointer-events: none; z-index: 5; }
 .joy-knob { position: absolute; left: 36px; top: 36px; width: 48px; height: 48px; border-radius: 50%; background: rgba(200, 69, 44, 0.85); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3); }
-.shipper-alert { position: absolute; top: 56px; left: 12px; max-width: 280px; background: rgba(255, 250, 240, 0.95); border: 2px solid #1f8a3a; border-left-width: 6px; border-radius: 10px; padding: 8px 12px; font-size: 13px; display: flex; flex-direction: column; gap: 3px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15); }
+.side-alerts { position: absolute; top: 56px; left: 12px; width: 290px; display: flex; flex-direction: column; gap: 8px; }
+.promo-alert { background: rgba(255, 250, 240, 0.95); border: 2px solid #ff4fa3; border-left-width: 6px; border-radius: 10px; padding: 8px 12px; font-size: 13px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15); }
+.promo-alert.pop { animation: shipper-pop 0.6s ease-out; }
+.shipper-alert { background: rgba(255, 250, 240, 0.95); border: 2px solid #1f8a3a; border-left-width: 6px; border-radius: 10px; padding: 8px 12px; font-size: 13px; display: flex; flex-direction: column; gap: 3px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15); }
 .shipper-alert.urgent { border-color: #c8452c; }
 .shipper-alert.urgent .secs { color: #c8452c; }
 .shipper-alert.pop { animation: shipper-pop 0.6s ease-out; }
@@ -127,3 +130,4 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .ad-eff { font-weight: 700; color: #1f6a3a; }
 .mk-sum { background: rgba(255, 250, 240, 0.8); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; }
 .pos { color: #1f8a3a; }
+.shipper-alert[hidden], .promo-alert[hidden] { display: none; }

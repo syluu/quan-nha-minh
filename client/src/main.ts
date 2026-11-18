@@ -12,6 +12,7 @@ import { createFloatText } from './ui/floatText';
 import { createHud } from './ui/hud';
 import { createSettlementModal } from './ui/settlementModal';
 import { createShipperAlert } from './ui/shipperAlert';
+import { createPromoAlert } from './ui/promoAlert';
 import { createMenu } from './ui/menu/menu';
 import { pricesTab } from './ui/menu/pricesTab';
 import { reportTab } from './ui/menu/reportTab';
@@ -35,7 +36,12 @@ function enterGame(conn: GameConnection) {
   const hud = createHud(ui, conn.playerId);
   hud.setCode(conn.code);
   const log = createEventLog(ui);
-  const shipperAlert = createShipperAlert(ui);
+  // Cột thông báo bên trái: shipper, khách mời quảng cáo (KOL, người review…).
+  const side = document.createElement('div');
+  side.className = 'side-alerts';
+  ui.append(side);
+  const shipperAlert = createShipperAlert(side);
+  const promoAlert = createPromoAlert(side);
   const floats = createFloatText(ui, game.project);
   let latest: Snapshot | null = null;
   conn.onSnapshot((s) => (latest = s));
@@ -72,6 +78,7 @@ function enterGame(conn: GameConnection) {
     hud.update(s);
     log.update(s.log);
     shipperAlert.update(s);
+    promoAlert.update(s);
     // Chỉ khi chạy dev: cho phép script kiểm thử đọc trạng thái.
     if (import.meta.env.DEV) Object.assign(window, { __qnm: { snapshot: s, playerId: conn.playerId } });
   });

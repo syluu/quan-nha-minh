@@ -55,6 +55,7 @@ Mở `http://localhost:5173` ở 2 cửa sổ (hoặc 2 máy cùng wifi qua `htt
 - **Menu → Quảng cáo** (theo từng quán):
   - **Ngắn ngày**: phát tờ rơi, băng rôn khuyến mãi, xe loa, mời ăn thử, quảng cáo mạng xã hội, đẩy quán lên đầu app giao đồ ăn, livestream bán hàng, mời người review, lên báo ẩm thực, **thuê KOL/TikToker review** — tăng khách tại quán, đơn online và/hoặc sao trong vài ngày; chạy lại để gia hạn.
   - **Lâu dài** (mua một lần): ghim quán lên bản đồ online, đèn lồng trang trí mặt tiền, thẻ tích điểm khách quen, **biển quảng cáo LED chữ chạy** (hiện trước quán).
+  - **Thấy tận mắt trong quán**: KOL tới quay video bằng gậy tự sướng (sáng tới, trưa về), người review / phóng viên tới ăn thử, người dẫn livestream cạnh đèn vòng có chữ 🔴 LIVE, xe loa chạy ngoài đường, băng rôn khuyến mãi, bàn mời ăn thử ở vỉa hè, người phát tờ rơi, tim/like bay lên khi chạy quảng cáo mạng xã hội, biển 🔥 HOT ở điểm giao hàng, ghim bản đồ đỏ trên nóc, bảng tích điểm trên quầy. KOL / người review tới thì có thông báo bên trái màn hình. Hết chiến dịch là tự biến mất.
 - **Menu → Ngân hàng**: vay 1/2/4 tháng (lãi 5/9/15%), góp cuối tháng, trả sớm không phạt.
 
 ### Bán online (Kế hoạch 4)
