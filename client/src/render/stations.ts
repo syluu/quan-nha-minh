@@ -1,10 +1,10 @@
 import * as THREE from 'three';
-import { getStationDef } from '@qnm/shared';
-import type { ItemId, PlacedStation, Snapshot } from '@qnm/shared';
+import { STATIONS, getStationDef } from '@qnm/shared';
+import type { ItemId, PlacedStation, Snapshot, StationDef } from '@qnm/shared';
 import { ITEM_STACK_H } from './items';
 import { buildAssembler, buildDisplay, buildProducer, itemsOnTray } from './machineModels';
 import type { Tray } from './machineModels';
-import { box, makeLabel, markSharedGeometry, mat } from './materials';
+import { box, disposeLabel, disposeTree, makeLabel, markSharedGeometry, mat } from './materials';
 
 type StationSnap = Snapshot['stations'][number];
 
@@ -18,6 +18,58 @@ function itemGrid(items: ItemId[], w: number, d: number, y: number): THREE.Group
   return itemsOnTray(items, { w, d, z: 0, y }, ITEM_STACK_H);
 }
 
+
+/** Lô trang trại theo giống đang trồng; null = đất trống đã cày, cắm biển chờ chọn giống. */
+function buildPlotBody(def: Extract<StationDef, { kind: 'plot' }> | null, w: number, d: number): THREE.Group {
+  const group = new THREE.Group();
+  if (!def) {
+    const soil = box(w, 0.12, d, 0x7a5532);
+    soil.position.y = 0.06;
+    group.add(soil);
+    for (let i = 0; i < 4; i++) {
+      const furrow = box(w * 0.9, 0.04, 0.12, 0x5e3f24);
+      furrow.position.set(0, 0.14, (i - 1.5) * (d / 4.4));
+      group.add(furrow);
+    }
+    const stake = box(0.05, 0.6, 0.05, 0x8a5a2b);
+    stake.position.set(-w * 0.35, 0.4, d * 0.3);
+    const board = box(0.42, 0.26, 0.03, 0xf2e2b8);
+    board.position.set(-w * 0.35, 0.72, d * 0.3);
+    group.add(stake, board);
+    return group;
+  }
+    if (!def.animal) {
+    // Ruộng: luống đất + cây xanh (lúa mì vàng, lúa xanh nhạt, rau xanh đậm).
+    const soil = box(w, 0.18, d, 0x6b4a2b);
+    soil.position.y = 0.09;
+    group.add(soil);
+    const leaf = def.id === 'ruong_lua_mi' ? 0xd9b44a : def.id === 'ruong_lua' ? 0x9cc65a : 0x3f8f3a;
+    for (let i = 0; i < 4; i++)
+      for (let j = 0; j < 3; j++) {
+        const plant = new THREE.Mesh(sproutGeo, mat(leaf));
+        plant.position.set((i - 1.5) * (w / 4.4), 0.32, (j - 1) * (d / 3.4));
+        group.add(plant);
+      }
+  } else {
+    // Chuồng: nền rơm + rào gỗ + con vật khối.
+    const floor = box(w, 0.06, d, 0xd8c27a);
+    floor.position.y = 0.03;
+    group.add(floor);
+    for (const [fx, fz, fw, fd] of [[0, -d / 2, w, 0.08], [0, d / 2, w, 0.08], [-w / 2, 0, 0.08, d], [w / 2, 0, 0.08, d]]) {
+      const rail = box(fw, 0.5, fd, 0x8a5a2b);
+      rail.position.set(fx, 0.25, fz);
+      group.add(rail);
+    }
+    const look = def.id === 'chuong_ga' ? { c: 0xf4f1ea, s: 0.25, n: 4 } : def.id === 'chuong_lon' ? { c: 0xe8a0a0, s: 0.45, n: 2 } : { c: 0x6b4a32, s: 0.6, n: 2 };
+    for (let i = 0; i < look.n; i++) {
+      const a = box(look.s * 1.4, look.s, look.s, look.c);
+      a.position.set((i - (look.n - 1) / 2) * (w / (look.n + 0.5)), look.s / 2 + 0.06, (i % 2 ? 0.2 : -0.2));
+      group.add(a);
+    }
+  }
+  return group;
+}
+
 export interface StationView {
   group: THREE.Group;
   update(s: StationSnap): void;
@@ -27,6 +79,9 @@ export interface StationView {
 export function createStationView(placed: PlacedStation): StationView {
   const def = getStationDef(placed.def);
   const group = new THREE.Group();
+  let plotBody: THREE.Group | null = null;
+  let cropKey: string | null = def.kind === 'plot' ? def.id : null;
+  let cropDef: Extract<StationDef, { kind: 'plot' }> | null = def.kind === 'plot' ? def : null;
   group.position.set(placed.x, 0, placed.z);
   const { w, d } = def.footprint;
   let topY = 0.9;
@@ -52,35 +107,8 @@ export function createStationView(placed: PlacedStation): StationView {
     group.add(sign);
   } else if (def.kind === 'plot') {
     topY = 0.3;
-    if (!def.animal) {
-      // Ruộng: luống đất + cây xanh (lúa mì vàng, lúa xanh nhạt, rau xanh đậm).
-      const soil = box(w, 0.18, d, 0x6b4a2b);
-      soil.position.y = 0.09;
-      group.add(soil);
-      const leaf = def.id === 'ruong_lua_mi' ? 0xd9b44a : def.id === 'ruong_lua' ? 0x9cc65a : 0x3f8f3a;
-      for (let i = 0; i < 4; i++)
-        for (let j = 0; j < 3; j++) {
-          const plant = new THREE.Mesh(sproutGeo, mat(leaf));
-          plant.position.set((i - 1.5) * (w / 4.4), 0.32, (j - 1) * (d / 3.4));
-          group.add(plant);
-        }
-    } else {
-      // Chuồng: nền rơm + rào gỗ + con vật khối.
-      const floor = box(w, 0.06, d, 0xd8c27a);
-      floor.position.y = 0.03;
-      group.add(floor);
-      for (const [fx, fz, fw, fd] of [[0, -d / 2, w, 0.08], [0, d / 2, w, 0.08], [-w / 2, 0, 0.08, d], [w / 2, 0, 0.08, d]]) {
-        const rail = box(fw, 0.5, fd, 0x8a5a2b);
-        rail.position.set(fx, 0.25, fz);
-        group.add(rail);
-      }
-      const look = def.id === 'chuong_ga' ? { c: 0xf4f1ea, s: 0.25, n: 4 } : def.id === 'chuong_lon' ? { c: 0xe8a0a0, s: 0.45, n: 2 } : { c: 0x6b4a32, s: 0.6, n: 2 };
-      for (let i = 0; i < look.n; i++) {
-        const a = box(look.s * 1.4, look.s, look.s, look.c);
-        a.position.set((i - (look.n - 1) / 2) * (w / (look.n + 0.5)), look.s / 2 + 0.06, (i % 2 ? 0.2 : -0.2));
-        group.add(a);
-      }
-    }
+    plotBody = buildPlotBody(def, w, d);
+    group.add(plotBody);
   } else if (def.kind === 'truck') {
     topY = 0.9;
     const bed = box(w, 0.5, d * 0.65, 0x3d7dd8);
@@ -132,7 +160,7 @@ export function createStationView(placed: PlacedStation): StationView {
     group.add(sign);
   }
 
-  const name = makeLabel(def.name, { color: '#2b2118', bg: 'rgba(255,250,240,.85)', size: 26, scale: 0.006 });
+  let name = makeLabel(def.name, { color: '#2b2118', bg: 'rgba(255,250,240,.85)', size: 26, scale: 0.006 });
   name.position.set(0, topY + 0.9, 0);
   name.visible = def.kind !== 'cashier' && def.kind !== 'pickup' && def.kind !== 'truck';
   group.add(name);
@@ -190,8 +218,30 @@ export function createStationView(placed: PlacedStation): StationView {
         });
         return;
       }
+      if (def.kind === 'plot') {
+        // Lô đổi giống / đất trống mới chọn giống: dựng lại hình lô và tên.
+        const crop = s.crop === undefined ? def.id : s.crop;
+        if (crop !== cropKey) {
+          cropKey = crop;
+          const next = crop ? STATIONS[crop] : null;
+          cropDef = next?.kind === 'plot' ? next : null;
+          if (plotBody) disposeTree(plotBody);
+          plotBody = buildPlotBody(cropDef, w, d);
+          group.add(plotBody);
+          const y = name.position.y;
+          disposeLabel(name);
+          name.removeFromParent();
+          name = makeLabel(cropDef ? cropDef.name : '🌱 Đất trống — chọn giống ở Menu → Trang trại', {
+            color: '#2b2118', bg: 'rgba(255,250,240,.9)', size: 26, scale: 0.006,
+          });
+          name.position.set(0, y, 0);
+          group.add(name);
+          key = '';
+        }
+      }
       let items: ItemId[] = [];
-      if (def.kind === 'producer' || def.kind === 'plot') items = Array(s.outputCount).fill(def.output);
+      if (def.kind === 'producer') items = Array(s.outputCount).fill(def.output);
+      else if (def.kind === 'plot') items = cropDef ? Array(s.outputCount).fill(cropDef.output) : [];
       else if (def.kind === 'display') items = Array(s.stock).fill(def.item);
       else if (def.kind === 'assembler') {
         for (const inp of def.inputs) items.push(...Array<ItemId>(s.inputs[inp.item] ?? 0).fill(inp.item));

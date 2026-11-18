@@ -300,3 +300,15 @@ describe('expanding the farm and choosing what to grow (owner request)', () => {
     expect(normalizeLoaded(raw).shops.farm.farmLevel).toBe(0);
   });
 });
+
+describe('expansion land cannot be opened from a pay tile', () => {
+  it('no pay tile on unbought expansion slots, even standing on them', async () => {
+    const { isTileVisible, tickPayTiles } = await import('../src/sim/payTiles');
+    const w = farmWorld();
+    const slot = getPlaced('farm', 'lo_mo_rong_1');
+    expect(isTileVisible(w.shops.farm, slot)).toBe(false);
+    putPlayer(w, 'a', slot.x, slot.z, [], 'farm');
+    repeat(5, (dt) => tickPayTiles(w, 'farm', dt));
+    expect(w.shops.farm.stations.lo_mo_rong_1.unlocked).toBe(false);
+  });
+});

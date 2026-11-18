@@ -1,5 +1,5 @@
 import {
-  BALANCE, COSTUMES, COSTUME_LIST, COSTUME_SLOTS, DEFAULT_OUTFIT, INGREDIENTS, ITEMS, SHOP_META, SHOPS, effectiveCycle, isFarm, effectiveOutputCap, formatK, getStationDef, loanTerms, machineUpgradeCost,
+  BALANCE, COSTUMES, COSTUME_LIST, PLOT_CROPS, STATIONS, COSTUME_SLOTS, DEFAULT_OUTFIT, INGREDIENTS, ITEMS, SHOP_META, SHOPS, effectiveCycle, isFarm, effectiveOutputCap, formatK, getStationDef, loanTerms, machineUpgradeCost,
   marketingMultiplier, onlineMarketingMultiplier, priceRange, warehouseSellPrice,
 } from '@qnm/shared';
 import type { Outfit } from '@qnm/shared';
@@ -125,8 +125,13 @@ export function upgradeView(s: Snapshot, myId: string) {
   const carryMax = BALANCE.PLAYER_CARRY_COSTS.length;
   const speedMax = BALANCE.PLAYER_SPEED_COSTS.length;
   const machines = SHOPS[s.shopId].stations
-    .map((p) => ({ p, def: getStationDef(p.def), st: s.stations.find((x) => x.instanceId === p.instanceId) }))
-    .filter(({ def, st }) => (def.kind === 'producer' || def.kind === 'assembler' || def.kind === 'plot') && st?.unlocked)
+    .map((p) => {
+      const st = s.stations.find((x) => x.instanceId === p.instanceId);
+      // Lô trang trại: theo giống đang trồng (đất trống thì không nâng cấp được).
+      const def = st?.crop !== undefined ? (st.crop ? STATIONS[st.crop] : null) : getStationDef(p.def);
+      return { p, def: def!, st };
+    })
+    .filter(({ def, st }) => !!def && (def.kind === 'producer' || def.kind === 'assembler' || def.kind === 'plot') && st?.unlocked)
     .map(({ p, def, st }) => {
       const level = st!.level;
       const lv = { level } as Pick<StationState, 'level'>;
@@ -385,5 +390,71 @@ export function tryOnSummary(s: Snapshot, myId: string, trial: Outfit) {
     totalText: formatK(total),
     canBuy: changes.length > 0 && (total === 0 || (s.money >= total && !s.settlement)),
     reason: total > 0 && s.settlement ? 'Đang kết toán cuối tháng' : total > s.money ? 'Không đủ tiền' : '',
+  };
+}
+
+export const CROP_ICON: Record<string, string> = {
+  ruong_rau: '🥬', ruong_lua_mi: '🌾', ruong_lua: '🍚', chuong_ga: '🐔', chuong_lon: '🐖', chuong_bo: '🐄',
+};
+
+/** Tab Trang trại: mở rộng đất, từng lô đang trồng gì, chọn / đổi giống. */
+export function farmView(s: Snapshot) {
+  const f = s.farm ?? { owned: false, level: 0, plots: [] };
+  const max = BALANCE.FARM_EXPANSION_COSTS.length;
+  const nextCost = f.level < max ? BALANCE.FARM_EXPANSION_COSTS[f.level] : null;
+  const crops = PLOT_CROPS.map((id) => {
+    const d = STATIONS[id] as Extract<(typeof STATIONS)[string], { kind: 'plot' }>;
+    const bundle = ITEMS[d.output].bundle ?? [];
+    return {
+      id,
+      icon: CROP_ICON[id],
+      name: d.name,
+      detail: `${formatK(d.seedCost)}/mẻ · ${d.cycleSec} giây → ${bundle.map((b) => `${b.qty} ${INGREDIENTS[b.id].name.toLowerCase()}`).join(' + ')}`,
+    };
+  });
+  const groups = [0, 1, 2, 3]
+    .filter((lv) => lv <= f.level)
+    .map((lv) => ({
+      title: lv === 0 ? 'Đất ban đầu' : `Đất mở rộng lần ${lv}`,
+      plots: f.plots
+        .filter((p) => p.expansion === lv)
+        .map((p) => {
+          const idx = f.plots.indexOf(p) + 1;
+          const cur = p.crop ? STATIONS[p.crop] : null;
+          const next = p.nextCrop ? STATIONS[p.nextCrop] : null;
+          const status = !p.unlocked
+            ? 'Chưa mở — đứng trên ô trả tiền ở trang trại để mở'
+            : !cur
+              ? 'Đất trống — chọn giống để bắt đầu'
+              : next
+                ? `Sẽ đổi sang ${next.name.toLowerCase()} khi xong mẻ và lấy hết thùng${p.outputCount ? ` (còn ${p.outputCount} thùng)` : ''}`
+                : !p.enabled
+                  ? 'Đang tắt'
+                  : p.outputCount
+                    ? `Có ${p.outputCount} thùng chờ lấy${p.running ? ' · đang trồng tiếp' : ''}`
+                    : p.running
+                      ? 'Đang trồng'
+                      : 'Chờ';
+          return {
+            instanceId: p.instanceId,
+            label: `Lô ${idx}`,
+            icon: p.crop ? CROP_ICON[p.crop] : '🟫',
+            crop: cur?.name ?? 'Đất trống',
+            current: p.crop,
+            pending: p.nextCrop,
+            unlocked: p.unlocked,
+            status,
+          };
+        }),
+    }));
+  return {
+    owned: f.owned,
+    level: f.level,
+    max,
+    slots: f.plots.filter((p) => p.unlocked).length,
+    nextCost: nextCost === null ? null : formatK(nextCost),
+    canExpand: nextCost !== null && s.money >= nextCost && !s.settlement,
+    crops,
+    groups,
   };
 }

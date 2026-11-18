@@ -86,6 +86,9 @@ Mở `http://localhost:5173` ở 2 cửa sổ (hoặc 2 máy cùng wifi qua `htt
 - Phí xe chở hàng: 50K cho mỗi quán đã dùng hàng trong kho hôm đó (tính cuối ngày).
 - Dùng không hết: **Bản đồ → Kho tổng → Bán 10 / Bán hết** để bán nguyên liệu ra chợ đúng bằng giá chợ, bán được cả lúc kết toán cuối tháng.
 - **Nhân sự** ở trang trại: tối đa 2 **người làm trang trại**, tự bê thùng hàng ra xe.
+- **Menu → 🌾 Trang trại** (dùng được ở mọi nơi):
+  - **Mở rộng** thêm đất bên trái: mỗi lần **+4 lô**, tối đa 3 lần (6 → 18 lô), giá 3.000K → 5.000K → 8.000K; mỗi lô thêm cộng 150K/tháng tiền thuê.
+  - **Chọn giống cho từng lô**: lô nào cũng trồng / nuôi được rau, lúa mì, lúa, gà, lợn hoặc bò — muốn nhiều rau hay nhiều thịt tuỳ ý. Lô mới là đất trống, chọn là bắt đầu. **Đổi giống**: lô làm xong mẻ đang trồng, lấy hết thùng rồi mới đổi (không mất phí).
 
 ### Trang phục (Kế hoạch 7)
 

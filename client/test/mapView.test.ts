@@ -123,3 +123,36 @@ describe('try-on before buying (owner request)', () => {
     expect(tryOnSummary(s, 'a', s.players[0].outfit).changed).toBe(false);
   });
 });
+
+describe('farm tab (owner request)', () => {
+  it('shows expansion cost, plots grouped by land, and which crop each plot grows', async () => {
+    const { farmView } = await import('../src/ui/menu/views');
+    const plot = (instanceId: string, expansion: number, crop: string | null, extra = {}) => ({
+      instanceId, unlocked: true, crop, nextCrop: null, outputCount: 0, running: false, enabled: true, expansion, ...extra,
+    });
+    const s = snap({
+      money: 4_000_000,
+      farm: {
+        owned: true,
+        level: 1,
+        plots: [
+          plot('ruong_rau', 0, 'ruong_rau', { outputCount: 2 }),
+          plot('ruong_lua_mi', 0, 'ruong_lua_mi', { unlocked: false }),
+          plot('chuong_ga', 0, 'chuong_ga', { nextCrop: 'chuong_bo' }),
+          plot('lo_mo_rong_1', 1, null),
+          plot('lo_mo_rong_5', 2, null, { unlocked: false }),
+        ],
+      },
+    });
+    const v = farmView(s);
+    expect(v).toMatchObject({ owned: true, level: 1, max: 3, nextCost: '5.000K', canExpand: false });
+    expect(v.groups.map((g) => g.title)).toEqual(['Đất ban đầu', 'Đất mở rộng lần 1']);
+    const [base, exp1] = v.groups;
+    expect(base.plots[0]).toMatchObject({ crop: 'Ruộng rau', status: 'Có 2 thùng chờ lấy' });
+    expect(base.plots[1].status).toContain('Chưa mở');
+    expect(base.plots[2].status).toContain('Sẽ đổi sang chuồng bò');
+    expect(exp1.plots[0]).toMatchObject({ crop: 'Đất trống', icon: '🟫' });
+    expect(v.crops.map((c) => c.icon).join('')).toBe('🥬🌾🍚🐔🐖🐄');
+    expect(v.crops.find((c) => c.id === 'chuong_bo')!.detail).toContain('8 thịt bò + 8 xương bò');
+  });
+});

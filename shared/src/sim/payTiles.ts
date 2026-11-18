@@ -6,6 +6,8 @@ import type { PlayerState, ShopState, WorldState } from './world';
 
 /** Ô hiện khi trạm chưa mở và mọi trạm yêu cầu đã mở. */
 export function isTileVisible(shop: ShopState, placed: PlacedStation): boolean {
+  // Lô đất mở rộng không mua bằng ô trả tiền (mua cả mảnh ở tab Trang trại).
+  if (placed.farmExpansion) return false;
   if (shop.stations[placed.instanceId].unlocked) return false;
   return placed.requires.every((r) => shop.stations[r].unlocked);
 }

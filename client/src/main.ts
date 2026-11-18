@@ -22,6 +22,7 @@ import { upgradesTab } from './ui/menu/upgradesTab';
 import { marketingTab } from './ui/menu/marketingTab';
 import { bankTab } from './ui/menu/bankTab';
 import { mapTab } from './ui/menu/mapTab';
+import { farmTab } from './ui/menu/farmTab';
 import { costumeTab } from './ui/menu/costumeTab';
 import { actionErrorText } from './ui/menu/views';
 import { showToast } from './ui/toast';
@@ -53,6 +54,7 @@ function enterGame(conn: GameConnection) {
     conn,
     [
       mapTab(conn, () => latest, () => menu?.close()),
+      farmTab(conn, () => latest),
       reportTab(conn),
       staffTab(conn, () => latest),
       upgradesTab(conn, () => latest, conn.playerId),

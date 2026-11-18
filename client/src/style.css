@@ -131,3 +131,13 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .mk-sum { background: rgba(255, 250, 240, 0.8); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; }
 .pos { color: #1f8a3a; }
 .shipper-alert[hidden], .promo-alert[hidden] { display: none; }
+.farm-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; background: rgba(255, 250, 240, 0.8); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; }
+.plots { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
+.plot-card { border: 2px solid var(--line); border-radius: 10px; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.plot-card.locked { opacity: 0.6; }
+.plot-top { display: flex; gap: 8px; align-items: flex-start; }
+.plot-icon { font-size: 26px; line-height: 1; }
+.crop-pick { display: flex; flex-wrap: wrap; gap: 4px; }
+.crop-pick button { font-size: 18px; padding: 2px 6px; border-radius: 8px; border: 2px solid var(--line); background: #fffaf0; cursor: pointer; }
+.crop-pick button.cur { border-color: #1f8a3a; background: #e6f4e3; }
+.crop-pick button.next { border-color: #e0a020; border-style: dashed; }

@@ -10,6 +10,7 @@ import { createPickRing } from '../render/pickRing';
 import { createShipperView } from '../render/shipper';
 import { createAdDecor } from '../render/adDecor';
 import { createPromoDecor } from '../render/promoDecor';
+import { createFarmLand } from '../render/farmLand';
 import { staffLabel } from '../ui/menu/views';
 import type { CharacterView } from '../render/characters';
 import { createScene, createShopBackdrop } from '../render/scene';
@@ -54,6 +55,7 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
   const shipperView = createShipperView(scene);
   const adDecor = createAdDecor(scene);
   const promoDecor = createPromoDecor(scene);
+  const farmLand = createFarmLand(scene);
   const lastPos = new Map<string, { x: number; z: number }>();
   let latest: Snapshot | null = null;
   let cameraSnapped = false;
@@ -197,6 +199,7 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
       shipperView.update(latest?.online.shipper ?? null, dt);
       if (shopId) adDecor.update(shopId, latest?.ads, dt);
       if (latest) promoDecor.update(latest, dt, t);
+      if (latest) farmLand.update(latest.shopId === 'farm', latest.farm?.level ?? 0);
 
       // Vòng tiến trình nhặt món của chính mình
       const meSnap = latest?.players.find((p) => p.id === conn.playerId);
