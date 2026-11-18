@@ -172,3 +172,61 @@ describe('courier with a leftover item (I2)', () => {
     expect(w.dayStats.onlineCancelled).toBe(0);
   });
 });
+
+describe('general cooks (owner request)', () => {
+  function fullCart(): WorldState {
+    const w = idleWorld();
+    for (const st of Object.values(w.shops.banh_mi.stations)) st.unlocked = true;
+    w.shops.banh_mi.stations.diem_giao.unlocked = false;
+    w.shops.banh_mi.nextCustomerIn = 1e9; // không có khách: chỉ xem nhân viên bày hàng
+    w.money = 50_000_000;
+    return w;
+  }
+
+  it('one cook keeps every shelf stocked, including grilled pork, and feeds the combo tables', () => {
+    const w = fullCart();
+    expect(hireStaff(w, 'banh_mi', 'cook', null, 'owner')).toEqual({ ok: true });
+    for (let i = 0; i < 1800; i++) {
+      tick(w, 0.05);
+      if (i % 100 === 0) checkStaff(w);
+    }
+    const st = w.shops.banh_mi.stations;
+    for (const shelf of ['ke_banh_mi', 'ke_bm_trung', 'ke_thit_nuong', 'ke_bm_thit', 'ke_tra_da']) expect(st[shelf].stock, shelf).toBeGreaterThan(0);
+  });
+
+  it('serves the emptiest shelf first', async () => {
+    const w = fullCart();
+    const st = w.shops.banh_mi.stations;
+    st.ke_banh_mi.stock = 9;
+    st.ke_tra_da.stock = 0;
+    st.lo_banh_mi.outputCount = 3;
+    st.binh_tra.outputCount = 3;
+    for (const id of ['chao_op_la', 'lo_than', 'ban_bm_trung', 'ban_bm_thit']) st[id].enabled = false;
+    hireStaff(w, 'banh_mi', 'cook', null, 'owner');
+    tick(w, 0.05);
+    expect(w.shops.banh_mi.staff[0].task).toMatchObject({ from: 'binh_tra', to: 'ke_tra_da', item: 'tra_da' });
+  });
+
+  it('two cooks split the work instead of doing the same job', () => {
+    const w = fullCart();
+    const st = w.shops.banh_mi.stations;
+    st.lo_banh_mi.outputCount = 5;
+    st.binh_tra.outputCount = 5;
+    hireStaff(w, 'banh_mi', 'cook', null, 'owner');
+    hireStaff(w, 'banh_mi', 'cook', null, 'owner');
+    tick(w, 0.05);
+    const [a, b] = w.shops.banh_mi.staff;
+    expect(a.task).not.toBeNull();
+    expect(b.task).not.toBeNull();
+    expect(`${a.task!.to}|${a.task!.item}`).not.toBe(`${b.task!.to}|${b.task!.item}`);
+  });
+
+  it('cooks tied to one dish in an old save become general cooks on load', async () => {
+    const { normalizeLoaded } = await import('../src/sim/snapshot');
+    const w = fullCart();
+    hireStaff(w, 'banh_mi', 'cook', null, 'owner');
+    const raw = JSON.parse(JSON.stringify(w));
+    raw.shops.banh_mi.staff[0].item = 'banh_mi';
+    expect(normalizeLoaded(raw).shops.banh_mi.staff[0].item).toBeNull();
+  });
+});

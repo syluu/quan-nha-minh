@@ -41,7 +41,7 @@ Mở `http://localhost:5173` ở 2 cửa sổ (hoặc 2 máy cùng wifi qua `htt
 - **Thùng rác** (góc trái lối bếp): đứng yên cạnh thùng để bỏ món trên tay — mất tiền nguyên liệu của món đó.
 - **Menu**: phím **M** hoặc nút ☰ (Esc để đóng). Khi menu mở nhân vật đứng yên.
   - **Báo cáo**: biểu đồ 14 ngày, bảng từng ngày (doanh thu, nguyên liệu, lương, hàng bỏ đi, lãi), món bán được hôm nay.
-  - **Nhân sự**: thuê/cho nghỉ thu ngân và phụ bếp (mỗi món đang bán 1 người). Lương khởi điểm 120K/ngày, trả cuối ngày; không đủ tiền thì người chưa được trả nghỉ việc.
+  - **Nhân sự**: thuê/cho nghỉ thu ngân và **phụ bếp đa năng** — tự làm mọi việc trong bếp: kệ nào vơi thì lấy món ở máy ra bày (kệ trống trước), bàn ghép nào thiếu nguyên liệu thì bê vào; nhiều người tự chia việc. Thuê tối đa bằng số kệ đang mở; không kịp thì thuê thêm hoặc vào bếp làm cùng. Lương khởi điểm 120K/ngày, cộng dồn và trả cuối tháng.
   - **Giá bán**: chỉnh giá từng món 50–200% giá thị trường; khách thường chấp nhận 80–130%.
   - **Cài đặt**: âm lượng nhạc/hiệu ứng, tắt tiếng, đổi tên, ẩn dòng hướng dẫn.
 - **Âm thanh** bật sau lần bấm chuột/gõ phím đầu tiên (trình duyệt bắt buộc vậy).

@@ -49,7 +49,7 @@ describe('shop-aware menus (plan 5)', () => {
     const v = staffView(snap());
     expect(v.shopName).toBe('Quán cơm tấm');
     expect(v.cleaner).toMatchObject({ name: null, canHire: true });
-    expect(v.lines.map((l) => l.item)).toEqual(['com_tam_suon']);
+    expect(v.cooks).toMatchObject({ max: 1, canHire: true });
     const u = upgradeView(snap(), 'a');
     expect(u.machines).toEqual([expect.objectContaining({ instanceId: 'noi_com', enabled: false })]);
     expect(staffLabel({ name: 'Hoa', role: 'cleaner', item: null })).toBe('Hoa · dọn bàn');

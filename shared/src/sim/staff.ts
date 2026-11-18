@@ -1,5 +1,5 @@
 import { BALANCE, ITEMS, SHELF_ROW_Z, SHOPS, getStationDef, isFarm, itemCost } from '../content';
-import type { ItemId, ShopId } from '../content';
+import type { ItemId, PlacedStation, ShopId } from '../content';
 import { formatK } from '../money';
 import type { ActionResult } from './actions';
 import { trySettleAfterAction } from './settlement';
@@ -21,7 +21,7 @@ export function staffWage(s: Pick<StaffState, 'level'>): number {
 }
 
 const ROLE_LABEL = (s: Pick<StaffState, 'role' | 'item'>) =>
-  s.role === 'cashier' ? 'thu ngân' : s.role === 'courier' ? 'giao đơn' : s.role === 'cleaner' ? 'dọn bàn' : s.role === 'farmhand' ? 'làm trang trại' : `phụ bếp ${ITEMS[s.item!].name}`;
+  s.role === 'cashier' ? 'thu ngân' : s.role === 'courier' ? 'giao đơn' : s.role === 'cleaner' ? 'dọn bàn' : s.role === 'farmhand' ? 'làm trang trại' : s.item ? `phụ bếp ${ITEMS[s.item].name}` : 'phụ bếp';
 
 /** Quán có bàn ăn đã mở → có chỗ cho 1 nhân viên dọn bàn. */
 function tablesOpen(world: WorldState, shopId: ShopId): boolean {
@@ -38,6 +38,11 @@ function openLines(world: WorldState, shopId: ShopId): ItemId[] {
   return items;
 }
 
+/** Số phụ bếp tối đa của quán: bằng số kệ đang mở (ít nhất 1). */
+export function maxCooks(world: WorldState, shopId: ShopId): number {
+  return Math.max(1, openLines(world, shopId).length);
+}
+
 export function staffSlots(world: WorldState, shopId: ShopId): {
   cashier: { max: 1; used: number };
   /** Chỉ có khi điểm giao hàng đã mở. */
@@ -46,7 +51,8 @@ export function staffSlots(world: WorldState, shopId: ShopId): {
   cleaner: { max: 1; used: number } | null;
   /** Chỉ ở trang trại. */
   farmhand: { max: number; used: number } | null;
-  cookLines: { item: ItemId; taken: string | null }[];
+  /** Phụ bếp đa năng: tối đa bằng số kệ đang mở (ít nhất 1). */
+  cooks: { max: number; used: number };
 } {
   const staff = world.shops[shopId].staff;
   return {
@@ -54,10 +60,7 @@ export function staffSlots(world: WorldState, shopId: ShopId): {
     courier: pickupOpen(world, shopId) ? { max: 1, used: staff.filter((s) => s.role === 'courier').length } : null,
     cleaner: tablesOpen(world, shopId) ? { max: 1, used: staff.filter((s) => s.role === 'cleaner').length } : null,
     farmhand: isFarm(shopId) ? { max: BALANCE.FARMHANDS_MAX, used: staff.filter((s) => s.role === 'farmhand').length } : null,
-    cookLines: openLines(world, shopId).map((item) => ({
-      item,
-      taken: staff.find((s) => s.role === 'cook' && s.item === item)?.id ?? null,
-    })),
+    cooks: { max: maxCooks(world, shopId), used: staff.filter((s) => s.role === 'cook').length },
   };
 }
 
@@ -80,8 +83,9 @@ export function hireStaff(world: WorldState, shopId: ShopId, role: StaffRole, it
     if (shop.staff.some((s) => s.role === 'cleaner')) return { ok: false, error: 'NO_SLOT' };
     item = null;
   } else if (role === 'cook') {
-    if (!item || !isOnSale(world, shopId, item)) return { ok: false, error: 'BAD_ITEM' };
-    if (shop.staff.some((s) => s.role === 'cook' && s.item === item)) return { ok: false, error: 'LINE_TAKEN' };
+    // Phụ bếp đa năng: không gắn món; tối đa bằng số kệ đang mở.
+    if (shop.staff.filter((s) => s.role === 'cook').length >= maxCooks(world, shopId)) return { ok: false, error: 'NO_SLOT' };
+    item = null;
   } else {
     return { ok: false, error: 'BAD_ROLE' };
   }
@@ -201,9 +205,52 @@ function walk(s: StaffState, tx: number, tz: number, dt: number): boolean {
   return d - step <= ARRIVE;
 }
 
-/** Chọn việc tiếp theo cho phụ bếp tay trống (xem thứ tự ưu tiên trong kế hoạch). */
+/**
+ * Phụ bếp đa năng: chọn việc gấp nhất trong bếp.
+ * - Bày kệ: kệ càng vơi càng gấp (kệ trống gấp nhất), lấy món ở máy đang có sẵn.
+ * - Tiếp liệu bàn ghép: nguyên liệu càng thiếu càng gấp (kém gấp hơn kệ trống).
+ * Việc người khác đang làm (cùng đích, cùng món) thì bỏ qua; gần mình hơn thì ưu tiên hơn một chút.
+ */
+function chooseGeneralJob(world: WorldState, shopId: ShopId, s: StaffState): StaffState['task'] {
+  const shop = world.shops[shopId];
+  const claimed = (to: string, item: ItemId) => shop.staff.some((o) => o !== s && o.task?.to === to && o.task.item === item);
+  const ready = (item: ItemId) => {
+    const src = producerOf(world, shopId, item);
+    return src && shop.stations[src.instanceId].outputCount > 0 ? src : null;
+  };
+  let best: { score: number; task: NonNullable<StaffState['task']> } | null = null;
+  const consider = (score: number, from: PlacedStation, to: PlacedStation, item: ItemId) => {
+    if (claimed(to.instanceId, item)) return;
+    const s2 = score - Math.hypot(from.workPoint.x - s.x, from.workPoint.z - s.z) * 0.15;
+    if (!best || s2 > best.score) best = { score: s2, task: { from: from.instanceId, to: to.instanceId, item, phase: 'toSource' } };
+  };
+  for (const p of SHOPS[shopId].stations) {
+    const def = getStationDef(p.def);
+    const st = shop.stations[p.instanceId];
+    if (!st.unlocked) continue;
+    if (def.kind === 'display') {
+      if (st.stock >= def.cap) continue;
+      const src = ready(def.item);
+      if (src) consider(10 * (1 - st.stock / def.cap) + (st.stock === 0 ? 5 : 0), src, p, def.item);
+    } else if (def.kind === 'assembler' && st.enabled) {
+      // Kệ của món ghép đã đầy và máy còn món chưa lấy thì chưa cần tiếp liệu.
+      const shelf = shelfOf(world, shopId, def.output);
+      if (shelf && roomAt(world, shopId, shelf.instanceId, def.output) <= 0 && st.outputCount > 0) continue;
+      for (const inp of def.inputs) {
+        const have = st.inputs[inp.item] ?? 0;
+        if (have >= def.inputCap) continue;
+        const src = ready(inp.item);
+        if (src) consider(6 * (1 - have / def.inputCap) + (have === 0 ? 3 : 0), src, p, inp.item);
+      }
+    }
+  }
+  return (best as { task: NonNullable<StaffState['task']> } | null)?.task ?? null;
+}
+
+/** Chọn việc tiếp theo cho phụ bếp gắn một món (file lưu cũ chưa chuyển). */
 function chooseJob(world: WorldState, shopId: ShopId, s: StaffState): StaffState['task'] {
-  const item = s.item!;
+  if (!s.item) return chooseGeneralJob(world, shopId, s);
+  const item = s.item;
   const shop = world.shops[shopId];
   const shelf = shelfOf(world, shopId, item);
   const maker = producerOf(world, shopId, item);
@@ -497,8 +544,9 @@ export function tickStaff(world: WorldState, shopId: ShopId, dt: number): SimEve
       if (!s.task && s.carry.length < staffStats(s).carry) s.task = chooseJob(world, shopId, s);
       s.timer = 0;
       if (!s.task) {
-        const home = producerOf(world, shopId, s.item!) ?? shelfOf(world, shopId, s.item!);
-        if (home) walk(s, home.workPoint.x, home.workPoint.z, dt);
+        // Rảnh: đứng chờ ở lối bếp, mỗi người một chỗ.
+        const idx = shop.staff.filter((o) => o.role === 'cook').indexOf(s);
+        walk(s, -3.75 + (idx % 4) * 2.5, BALANCE.STAFF_DOOR.z, dt);
         continue;
       }
     }

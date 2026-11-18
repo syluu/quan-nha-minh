@@ -16,11 +16,10 @@ function snap(): Snapshot {
 }
 
 describe('staffView', () => {
-  it('shows the cashier slot and one line per open shelf', () => {
+  it('shows the cashier slot and general cooks (up to one per open shelf)', () => {
     const v = staffView(snap());
     expect(v.cashier).toMatchObject({ name: 'Lan', staffId: 's1', canHire: false });
-    expect(v.lines.map((l) => l.item)).toEqual(['banh_mi', 'banh_mi_trung']);
-    expect(v.lines[0]).toEqual({ item: 'banh_mi', itemName: 'Bánh mì', staffName: null, staffId: null, detail: null });
+    expect(v.cooks).toEqual({ list: [], max: 2, canHire: true });
     expect(v.wagePerDay).toBe('120K');
   });
 });

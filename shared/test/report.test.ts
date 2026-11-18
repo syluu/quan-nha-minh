@@ -35,7 +35,7 @@ describe('toSnapshot v2', () => {
     p.pickAt = 'lo_banh_mi';
     const s = toSnapshot(w, 'banh_mi');
     expect(s.staff).toHaveLength(1);
-    expect(s.staff[0]).toMatchObject({ name: 'Lan', role: 'cook', item: 'banh_mi', carry: [] });
+    expect(s.staff[0]).toMatchObject({ name: 'Lan', role: 'cook', item: null, carry: [] });
     expect(s.prices).toEqual({ banh_mi: 6000 });
     expect(s.players[0].cap).toBe(4);
     expect(s.players[0].pick).toBeCloseTo(0.5);

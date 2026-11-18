@@ -21,17 +21,17 @@ describe('hireStaff (Review Focus 3)', () => {
     expect(w.log.at(-1)?.text).toBe('Mẹ đã thuê Lan (thu ngân)');
   });
 
-  it('one cook per product line', () => {
+  it('general cooks: not tied to a dish; as many as open shelves (owner request)', () => {
     const w = world();
-    expect(hireStaff(w, 'banh_mi', 'cook', 'banh_mi', 'a')).toEqual({ ok: true });
-    expect(w.log.at(-1)?.text).toBe('Mẹ đã thuê Lan (phụ bếp Bánh mì)');
-    expect(hireStaff(w, 'banh_mi', 'cook', 'banh_mi', 'a')).toEqual({ ok: false, error: 'LINE_TAKEN' });
-  });
-
-  it('refuses lines without an open shelf and unknown roles', () => {
-    const w = world();
-    expect(hireStaff(w, 'banh_mi', 'cook', 'banh_mi_thit', 'a')).toEqual({ ok: false, error: 'BAD_ITEM' });
-    expect(hireStaff(w, 'banh_mi', 'cook', null, 'a')).toEqual({ ok: false, error: 'BAD_ITEM' });
+    expect(hireStaff(w, 'banh_mi', 'cook', null, 'a')).toEqual({ ok: true });
+    expect(w.log.at(-1)?.text).toBe('Mẹ đã thuê Lan (phụ bếp)');
+    expect(w.shops.banh_mi.staff[0].item).toBeNull();
+    // 1 kệ đang mở → tối đa 1 phụ bếp.
+    expect(hireStaff(w, 'banh_mi', 'cook', 'banh_mi', 'a')).toEqual({ ok: false, error: 'NO_SLOT' });
+    w.shops.banh_mi.stations.binh_tra.unlocked = true;
+    w.shops.banh_mi.stations.ke_tra_da.unlocked = true;
+    expect(hireStaff(w, 'banh_mi', 'cook', 'banh_mi_thit', 'a')).toEqual({ ok: true }); // món gửi kèm bị bỏ qua
+    expect(w.shops.banh_mi.staff[1].item).toBeNull();
     expect(hireStaff(w, 'banh_mi', 'boss' as never, null, 'a')).toEqual({ ok: false, error: 'BAD_ROLE' });
   });
 
@@ -47,12 +47,12 @@ describe('hireStaff (Review Focus 3)', () => {
 });
 
 describe('staffSlots', () => {
-  it('lists the cashier slot and one cook line per open shelf', () => {
+  it('lists the cashier slot and how many general cooks fit (one per open shelf)', () => {
     const w = world();
-    hireStaff(w, 'banh_mi', 'cook', 'banh_mi', 'a');
+    hireStaff(w, 'banh_mi', 'cook', null, 'a');
     const slots = staffSlots(w, 'banh_mi');
     expect(slots.cashier).toEqual({ max: 1, used: 0 });
-    expect(slots.cookLines).toEqual([{ item: 'banh_mi', taken: 's1' }]);
+    expect(slots.cooks).toEqual({ max: 1, used: 1 });
   });
 });
 

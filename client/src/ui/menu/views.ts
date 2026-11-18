@@ -49,7 +49,8 @@ export function staffView(s: Snapshot): {
   cleaner: { name: string | null; staffId: string | null; canHire: boolean; detail: StaffDetail | null } | null;
   /** Chỉ ở trang trại: người đang làm + còn thuê thêm được không. */
   farm: { hands: { name: string; staffId: string; detail: StaffDetail | null }[]; canHire: boolean } | null;
-  lines: { item: ItemId; itemName: string; staffName: string | null; staffId: string | null; detail: StaffDetail | null }[];
+  /** Phụ bếp đa năng: tự bày mọi kệ và tiếp liệu bàn ghép; tối đa bằng số kệ đang mở. */
+  cooks: { list: { name: string; staffId: string; detail: StaffDetail | null }[]; max: number; canHire: boolean };
   wagePerDay: string;
   shopName: string;
 } {
@@ -68,10 +69,11 @@ export function staffView(s: Snapshot): {
           return { name: c?.name ?? null, staffId: c?.id ?? null, canHire: !c, detail: staffDetail(c) };
         })()
       : null,
-    lines: openItems(s).map((item) => {
-      const cook = s.staff.find((x) => x.role === 'cook' && x.item === item);
-      return { item, itemName: ITEMS[item].name, staffName: cook?.name ?? null, staffId: cook?.id ?? null, detail: staffDetail(cook) };
-    }),
+    cooks: (() => {
+      const list = s.staff.filter((x) => x.role === 'cook').map((c) => ({ name: c.name, staffId: c.id, detail: staffDetail(c) }));
+      const max = Math.max(1, openItems(s).length);
+      return { list, max, canHire: list.length < max };
+    })(),
     wagePerDay: formatK(BALANCE.STAFF_LEVELS[0].wage),
     shopName: SHOP_META[s.shopId].name,
     farm: isFarm(s.shopId)

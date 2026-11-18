@@ -98,16 +98,14 @@ describe('no permanent freeze (C1)', () => {
   });
 });
 
-describe('selling a line with a hired cook (I2)', () => {
-  it('is not offered while the cook works that line', async () => {
+describe('selling a line while general cooks work', () => {
+  it('is allowed: general cooks are not tied to a line and simply work elsewhere', async () => {
     const { hireStaff } = await import('../src/sim/staff');
     const w = world();
     w.shops.banh_mi.stations.binh_tra.unlocked = true;
     w.shops.banh_mi.stations.ke_tra_da.unlocked = true;
+    hireStaff(w, 'banh_mi', 'cook', null, 'a');
     expect(sellableStations(w, 'banh_mi').map((s) => s.instanceId)).toContain('ke_tra_da');
-    hireStaff(w, 'banh_mi', 'cook', 'tra_da', 'a');
-    expect(sellableStations(w, 'banh_mi').map((s) => s.instanceId)).not.toContain('ke_tra_da');
-    expect(sellStation(w, 'banh_mi', 'ke_tra_da', 'a')).toEqual({ ok: false, error: 'NOT_SELLABLE' });
   });
 });
 

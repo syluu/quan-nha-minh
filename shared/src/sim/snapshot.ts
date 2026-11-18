@@ -113,6 +113,8 @@ export function normalizeLoaded(raw: unknown): WorldState {
     // Đơn online dở dang và shipper không giữ qua lần tải lại.
     shop.orders = [];
     shop.shipper = null;
+    // Phụ bếp gắn món (bản cũ) → phụ bếp đa năng.
+    for (const s of shop.staff) if (s.role === 'cook') s.item = null;
     for (const st of Object.values(shop.stations)) {
       st.tileOccupant = null;
       // Khách không giữ qua lần tải lại → chỗ đang có người ngồi thành trống (chỗ bẩn vẫn bẩn).
