@@ -15,21 +15,33 @@ export function energyOf(s: Pick<StaffState, 'energy'>): number {
   return s.energy ?? LIFE.ENERGY_MAX;
 }
 
-/** Hệ số tốc độ theo sức: hăng hái (vừa uống trà đá) nhanh hơn, mệt thì chậm, kiệt sức thì rất chậm. */
-export function staffSpeedMult(s: Pick<StaffState, 'energy' | 'cheer'>): number {
-  if ((s.cheer ?? 0) > 0) return LIFE.CHEER_SPEED;
-  const e = energyOf(s);
-  if (e < LIFE.EXHAUSTED) return LIFE.EXHAUSTED_SPEED;
-  if (e < LIFE.TIRED) return LIFE.TIRED_SPEED;
-  return 1;
+/** Thu ngân đứng quầy, không biết mệt. */
+export function canTire(s: Pick<StaffState, 'role'>): boolean {
+  return s.role !== 'cashier';
 }
 
-/** Mỗi bước: đang làm thì mất sức (trừ lúc đang hăng hái), rảnh thì hồi. */
+/** Hệ số tốc độ theo sức: hăng hái (vừa uống trà đá) nhanh hơn, mệt thì chậm 20%. */
+export function staffSpeedMult(s: Pick<StaffState, 'energy' | 'cheer'>): number {
+  if ((s.cheer ?? 0) > 0) return LIFE.CHEER_SPEED;
+  return energyOf(s) < LIFE.TIRED ? LIFE.TIRED_SPEED : 1;
+}
+
+/** Đang nghỉ vì hết sức: đếm ngược, hết giờ nghỉ thì hồi đầy sức. Trả về true nếu vẫn đang nghỉ. */
+export function tickStaffRest(s: StaffState, dt: number): boolean {
+  if (!s.rest) return false;
+  s.rest = Math.max(0, s.rest - dt);
+  if (s.rest > 0) return true;
+  s.energy = LIFE.ENERGY_MAX;
+  return false;
+}
+
+/** Mỗi bước: đang làm thì mất sức (trừ lúc đang hăng hái), rảnh thì hồi nhanh; hết sức hẳn thì nghỉ 30 giây. */
 export function tickStaffEnergy(s: StaffState, working: boolean, dt: number): void {
   if (s.cheer) s.cheer = Math.max(0, s.cheer - dt);
   const e = energyOf(s);
   const next = working ? (s.cheer ? e : e - LIFE.ENERGY_DRAIN * dt) : e + LIFE.ENERGY_RECOVER * dt;
   s.energy = Math.min(LIFE.ENERGY_MAX, Math.max(0, next));
+  if (s.energy <= 0) s.rest = LIFE.REST_SEC;
 }
 
 /** Mời nhân viên ly trà đá: hồi đầy sức, hăng hái 30 giây. */
@@ -37,11 +49,13 @@ export function treatStaff(world: WorldState, shopId: ShopId, staffId: unknown, 
   if (world.settlement) return { ok: false, error: 'PAUSED' };
   const s = world.shops[shopId].staff.find((x) => x.id === staffId);
   if (!s) return { ok: false, error: 'NOT_FOUND' };
+  if (!canTire(s)) return { ok: false, error: 'BAD_ROLE' };
   if ((s.cheer ?? 0) > 0) return { ok: false, error: 'MAXED' };
   if (world.money < LIFE.TEA_COST) return { ok: false, error: 'NO_MONEY' };
   world.money -= LIFE.TEA_COST;
   world.dayStats.wages += LIFE.TEA_COST;
   s.energy = LIFE.ENERGY_MAX;
+  s.rest = 0;
   s.cheer = LIFE.CHEER_SEC;
   addLog(world, `🧋 ${playerName(world, byPlayerId)} mời ${s.name} ly trà đá — khoẻ re, làm hăng hẳn!`);
   return { ok: true };

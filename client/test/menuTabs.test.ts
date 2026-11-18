@@ -9,7 +9,7 @@ function snap(): Snapshot {
     shopId: 'banh_mi', shops: [], canRent: false, warehouse: {}, farm: { owned: false, level: 0, plots: [] }, fun: { combo: 0, cat: 'none', catSpot: { x: 0, z: 0 }, tourBus: false, busSpot: { x: 0, z: 0 }, weather: 'sun', festival: null, quests: [], badges: [], today: [] }, life: { tier: 0, earned: 0, nextTierAt: null, regulars: [], party: null }, day: 1, secOfDay: 0, money: 0, stars: 3, tiles: [], customers: [], log: [],
     players: [],
     stations: [st('lo_banh_mi', true), st('ke_banh_mi', true), st('thu_ngan', true), st('ke_tra_da', false), st('ke_bm_trung', true)],
-    staff: [{ id: 's1', name: 'Lan', role: 'cashier', item: null, x: 0, z: 0, dir: 0, carry: [], level: 1, wageOwed: 0, energy: 100, cheer: false }],
+    staff: [{ id: 's1', name: 'Lan', role: 'cashier', item: null, x: 0, z: 0, dir: 0, carry: [], level: 1, wageOwed: 0, energy: 100, cheer: false, rest: 0, tireless: false }],
     prices: { banh_mi: 6000 },
     ...V3,
   };

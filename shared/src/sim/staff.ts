@@ -4,7 +4,7 @@ import { formatK } from '../money';
 import type { ActionResult } from './actions';
 import { trySettleAfterAction } from './settlement';
 import { deliverAt, deliveryNeeds, pickupOf } from './online';
-import { staffSpeedMult, tickStaffEnergy } from './life';
+import { canTire, staffSpeedMult, tickStaffEnergy, tickStaffRest } from './life';
 import { loadCrate } from './carry';
 import { plotDef } from './farm';
 import type { SimEvent } from './events';
@@ -519,14 +519,17 @@ export function tickStaff(world: WorldState, shopId: ShopId, dt: number): SimEve
   const events: SimEvent[] = [];
   const shop = world.shops[shopId];
   for (const s of shop.staff) {
+    if (!canTire(s)) {
+      events.push(...tickOne(world, shopId, s, dt));
+      continue;
+    }
+    // Hết sức: đứng nghỉ, không làm gì tới khi hết giờ nghỉ (hoặc được mời trà đá).
+    if (tickStaffRest(s, dt)) continue;
     const x0 = s.x;
     const z0 = s.z;
     events.push(...tickOne(world, shopId, s, dt));
-    // Đang đi, đang cầm việc hay đang dọn bàn là đang làm; thu ngân làm khi có khách tính tiền.
-    const working =
-      s.role === 'cashier'
-        ? shop.customers.some((c) => c.state === 'paying')
-        : Math.hypot(s.x - x0, s.z - z0) > 1e-4 || !!s.task || !!s.target;
+    // Đang đi, đang cầm việc hay đang dọn bàn là đang làm.
+    const working = Math.hypot(s.x - x0, s.z - z0) > 1e-4 || !!s.task || !!s.target;
     tickStaffEnergy(s, working, dt);
   }
   return events;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { BALANCE, LIFE, SHOP_TIERS, getPlaced } from '../src/content';
-import { cashierRate, spawnCustomer, tickCustomers } from '../src/sim/customers';
+import { spawnCustomer, tickCustomers } from '../src/sim/customers';
 import { startDay } from '../src/sim/fun';
 import {
   acceptParty, addEarned, changeLove, declineParty, dueRegulars, loveLevel, staffSpeedMult, tickParty, tickStaffEnergy, tierTrafficMultiplier, treatStaff,
@@ -24,22 +24,45 @@ function party(w: WorldState, over: Partial<Party> = {}): Party {
 }
 
 describe('staff energy', () => {
-  it('working drains energy and slows staff down; resting brings it back', () => {
+  it('staff tire slowly, are only 20% slower when tired, and recover quickly when idle', () => {
     const w = createWorld('X', 1);
     const s = putStaff(w, 'Lan');
     expect(staffSpeedMult(s)).toBe(1);
-    repeat(120, (dt) => tickStaffEnergy(s, true, dt));
+    // 3 phút làm liền tay vẫn chưa mệt.
+    repeat(180, (dt) => tickStaffEnergy(s, true, dt));
+    expect(staffSpeedMult(s)).toBe(1);
+    repeat(60, (dt) => tickStaffEnergy(s, true, dt));
     expect(s.energy!).toBeLessThan(LIFE.TIRED);
-    expect(staffSpeedMult(s)).toBeLessThan(1);
-    repeat(60, (dt) => tickStaffEnergy(s, false, dt));
+    expect(staffSpeedMult(s)).toBe(LIFE.TIRED_SPEED);
+    expect(LIFE.TIRED_SPEED).toBe(0.8);
+    // Rảnh 20 giây là hồi đầy.
+    repeat(20, (dt) => tickStaffEnergy(s, false, dt));
     expect(s.energy).toBe(LIFE.ENERGY_MAX);
   });
 
-  it('a cook who keeps walking gets tired inside tickStaff', () => {
+  it('running out of energy means a 30-second break standing still, then full energy', () => {
     const w = createWorld('X', 1);
     const s = putStaff(w, 'Lan');
-    // Ra lò liên tục: lò luôn có bánh, kệ luôn còn chỗ.
-    repeat(150, (dt) => {
+    s.energy = 0.5;
+    const busy = () => {
+      w.shops.banh_mi.stations.lo_banh_mi.outputCount = 5;
+      w.shops.banh_mi.stations.ke_banh_mi.stock = 0;
+    };
+    repeat(3, (dt) => (busy(), tickStaff(w, 'banh_mi', dt)));
+    expect(s.rest).toBeGreaterThan(0);
+    const at = { x: s.x, z: s.z };
+    expect(toSnapshot(w, 'banh_mi').staff[0].rest).toBeGreaterThan(0);
+    repeat(LIFE.REST_SEC - 5, (dt) => (busy(), tickStaff(w, 'banh_mi', dt)));
+    expect({ x: s.x, z: s.z }).toEqual(at);
+    repeat(5, (dt) => (busy(), tickStaff(w, 'banh_mi', dt)));
+    expect(s.rest).toBe(0);
+    expect(s.energy!).toBeGreaterThan(95);
+  });
+
+  it('a cook who keeps working all the time tires out inside tickStaff (short pauses recover a little)', () => {
+    const w = createWorld('X', 1);
+    const s = putStaff(w, 'Lan');
+    repeat(400, (dt) => {
       w.shops.banh_mi.stations.lo_banh_mi.outputCount = 5;
       w.shops.banh_mi.stations.ke_banh_mi.stock = 0;
       tickStaff(w, 'banh_mi', dt);
@@ -47,31 +70,31 @@ describe('staff energy', () => {
     expect(s.energy!).toBeLessThan(LIFE.TIRED);
   });
 
-  it('a glass of iced tea costs money, refills energy and gives a burst of speed (not twice at once)', () => {
+  it('a glass of iced tea ends a break at once, refills energy and gives a burst of speed (not twice at once)', () => {
     const w = createWorld('X', 1);
     const s = putStaff(w, 'Lan');
-    s.energy = 5;
+    s.energy = 0;
+    s.rest = 20;
     const money = w.money;
     expect(treatStaff(w, 'banh_mi', s.id, 'a')).toEqual({ ok: true });
     expect(w.money).toBe(money - LIFE.TEA_COST);
     expect(s.energy).toBe(LIFE.ENERGY_MAX);
+    expect(s.rest).toBe(0);
     expect(staffSpeedMult(s)).toBe(LIFE.CHEER_SPEED);
     expect(treatStaff(w, 'banh_mi', s.id, 'a')).toEqual({ ok: false, error: 'MAXED' });
-    // Đang hăng hái thì làm không mất sức; hết hăng hái mới tụt.
+    // Đang hăng hái thì làm không mất sức.
     repeat(LIFE.CHEER_SEC - 1, (dt) => tickStaffEnergy(s, true, dt));
     expect(s.energy).toBe(LIFE.ENERGY_MAX);
     expect(treatStaff(w, 'banh_mi', 'nobody', 'a')).toEqual({ ok: false, error: 'NOT_FOUND' });
   });
 
-  it('a worn-out cashier rings customers up more slowly; the snapshot shows energy', () => {
+  it('the cashier never gets tired and needs no tea', () => {
     const w = createWorld('X', 1);
     const s = putStaff(w, 'Mai', 'cashier');
-    const wp = getPlaced('banh_mi', 'thu_ngan').workPoint;
-    Object.assign(s, { x: wp.x, z: wp.z });
-    expect(cashierRate(w, 'banh_mi')).toBe(1);
-    s.energy = 5;
-    expect(cashierRate(w, 'banh_mi')).toBe(LIFE.EXHAUSTED_SPEED);
-    expect(toSnapshot(w, 'banh_mi').staff[0]).toMatchObject({ energy: 5, cheer: false });
+    repeat(600, (dt) => tickStaff(w, 'banh_mi', dt), 0.25);
+    expect(s.energy).toBeUndefined();
+    expect(treatStaff(w, 'banh_mi', s.id, 'a')).toEqual({ ok: false, error: 'BAD_ROLE' });
+    expect(toSnapshot(w, 'banh_mi').staff[0]).toMatchObject({ energy: 100, tireless: true, rest: 0 });
   });
 });
 

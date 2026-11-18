@@ -23,14 +23,14 @@ export function staffTab(conn: GameConnection, latest: () => Snapshot | null): M
         const info = (d: StaffDetail | null) =>
           d
             ? `<div class="muted">Cấp ${d.level} · đi ${d.speedPct}% · mang ${d.carry} · lương ${d.wage}/ngày · đang nợ ${d.owed}</div>
-               <div class="energy"><span class="bar"><i style="width:${d.energy}%;background:${d.cheer ? '#2f6db5' : d.energy < LIFE.TIRED ? '#c8452c' : d.energy < 70 ? '#e0a020' : '#1f8a3a'}"></i></span> ${d.mood}</div>`
+               <div class="energy">${d.tireless ? '' : `<span class="bar"><i style="width:${d.energy}%;background:${d.cheer ? '#2f6db5' : d.rest || d.energy < LIFE.TIRED ? '#c8452c' : d.energy < 70 ? '#e0a020' : '#1f8a3a'}"></i></span>`} ${d.mood}</div>`
             : '';
         const actions = (name: string | null, id: string | null, d: StaffDetail | null, hire: string) => {
           if (!name || !id) return `<button class="primary" data-hire="${hire}">Thuê</button>`;
           if (confirmId === id)
             return `<span class="confirm">Cho ${name} nghỉ? Trả ngay ${d?.payOnFire ?? '0K'} lương (cả hôm nay).
               <button class="primary" data-fire="${id}">Đồng ý</button><button data-cancel>Thôi</button></span>`;
-          const tea = d && !d.cheer ? `<button data-tea="${id}" title="Hồi đầy sức, làm nhanh hơn 30 giây">🧋 Mời trà đá (${formatK(LIFE.TEA_COST)})</button>` : '';
+          const tea = d && !d.cheer && !d.tireless ? `<button data-tea="${id}" title="Hồi đầy sức, làm nhanh hơn 30 giây">🧋 Mời trà đá (${formatK(LIFE.TEA_COST)})</button>` : '';
           return `${tea}${d?.nextTrain ? `<button data-train="${id}">Nâng cấp (${d.nextTrain})</button>` : '<span class="muted">Cấp tối đa</span>'}
             <button data-ask="${id}">Cho nghỉ</button>`;
         };
@@ -60,7 +60,7 @@ export function staffTab(conn: GameConnection, latest: () => Snapshot | null): M
           </table>
           <p class="note">Lương khởi điểm ${v.wagePerDay}/ngày, cộng dồn mỗi ngày và <b>trả cuối tháng</b> (7 ngày). Cho nghỉ thì trả ngay số ngày đã làm.
           Nâng cấp từng người: đi nhanh hơn, mang nhiều hơn, lương +30K/ngày mỗi cấp. Cho nghỉ là mất cấp.
-          <br>Làm liên tục thì nhân viên <b>mệt dần và đi chậm lại</b>, rảnh thì tự hồi sức. Mời ly trà đá 🧋 để hồi đầy sức và làm hăng hơn 30 giây (đứng cạnh nhân viên rồi bấm phím <b>T</b> cũng được).
+          <br>Làm liền tay lâu (khoảng 4 phút) thì nhân viên <b>mệt, đi chậm 20%</b>; rảnh một chút là hồi sức. <b>Hết sức hẳn</b> thì đứng nghỉ 30 giây. Mời ly trà đá 🧋 để hồi đầy sức ngay (kể cả đang nghỉ) và làm hăng hơn 30 giây (đứng cạnh nhân viên rồi bấm phím <b>T</b> cũng được). Thu ngân không biết mệt.
           <br>Phụ bếp làm mọi việc trong bếp: kệ nào vơi thì lấy món ở máy ra bày (kệ trống trước), bàn ghép nào thiếu nguyên liệu thì bê vào. Không kịp thì thuê thêm (tối đa bằng số kệ đang mở) hoặc vào bếp làm cùng.</p>`;
         body.querySelectorAll<HTMLButtonElement>('[data-hire]').forEach((b) => {
           b.onclick = () => {

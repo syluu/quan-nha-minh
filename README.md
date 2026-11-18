@@ -119,7 +119,7 @@ Mở `http://localhost:5173` ở 2 cửa sổ (hoặc 2 máy cùng wifi qua `htt
 
 ### Quán có hồn
 
-- **Sức nhân viên**: làm liên tục thì mệt dần (thanh sức ở Menu → Nhân sự, mồ hôi trên đầu) và đi chậm lại, kiệt sức thì rất chậm; rảnh thì tự hồi. **Mời trà đá 🧋** (10K): đứng cạnh nhân viên bấm phím **T**, hoặc bấm nút ở Menu → Nhân sự → hồi đầy sức, làm nhanh hơn 30 giây.
+- **Sức nhân viên**: làm liền tay khoảng 4 phút mới mệt (thanh sức ở Menu → Nhân sự, mồ hôi trên đầu) và chỉ đi chậm 20%; rảnh một chút là hồi (≈ 20 giây là đầy). Hết sức hẳn thì đứng nghỉ 30 giây rồi khoẻ lại. **Mời trà đá 🧋** (10K): đứng cạnh nhân viên bấm phím **T**, hoặc bấm nút ở Menu → Nhân sự → hồi đầy sức ngay (kể cả đang nghỉ), làm nhanh hơn 30 giây. Thu ngân không biết mệt.
 - **Khách quen** (Menu → ❤️ Khách quen): mỗi quán có dần tới 3 người (Cô Ba vé số, Anh Tư xe ôm, Bé Na…), mỗi ngày ghé một lần, có tên trên đầu, chào và gọi **món ruột**. Bán nhanh thì thân dần: *khách quen* hay dẫn bạn tới, *khách ruột* boa gấp đôi và mang quà (+⭐). Để chờ tới bỏ về hoặc đặt giá quá cao thì khách giận.
 - **Đơn đặt tiệc** (từ ngày 3, quán đã mở điểm giao): có khách gọi đặt 12–24 món cho tiệc cưới, sinh nhật, liên hoan… Bấm **Nhận đơn** ở bảng bên trái, mang món tới **điểm giao** (nhân viên giao đơn cũng phụ) trước giờ hẹn → nhận 150% giá bán. Trễ hẹn thì chỉ được giá thường cho phần đã giao.
 - **Quán lên đời** theo doanh thu cộng dồn: 🪑 Quán cóc → 🏠 Khang trang (3 triệu) → ⭐ Nổi tiếng (15 triệu) → 🏮 Nhà hàng (50 triệu). Mỗi cấp trang trí đẹp hơn (cây, quạt, đồng hồ, tranh, dây đèn, bảng thực đơn, thảm đỏ, lẵng hoa) và thêm 5% khách đi bộ.

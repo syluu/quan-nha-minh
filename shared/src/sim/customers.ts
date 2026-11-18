@@ -8,7 +8,7 @@ import { pushRating } from './rating';
 import { gameHour } from './time';
 import type { Customer, Regular, ShopState, WorldState } from './world';
 import { nextRandom } from './world';
-import { addEarned, changeLove, dueRegulars, loveLevel, maybeGift, staffSpeedMult, tierTrafficMultiplier } from './life';
+import { addEarned, changeLove, dueRegulars, loveLevel, maybeGift, tierTrafficMultiplier } from './life';
 
 const ARRIVE = 0.05;
 /** Nhịp xuống xe của đoàn khách (không cần lưu). */
@@ -46,16 +46,12 @@ function displayFor(shopId: ShopId, item: ItemId): PlacedStation | undefined {
 }
 
 export function isCashierManned(world: WorldState, shopId: ShopId): boolean {
-  return cashierRate(world, shopId) > 0;
-}
-
-/** Tốc độ tính tiền: 0 = không ai đứng quầy; người chơi = 1; thu ngân thuê thì theo sức (mệt thì chậm). */
-export function cashierRate(world: WorldState, shopId: ShopId): number {
   const cashier = cashierOf(shopId);
   const near = (x: number, z: number) => distanceToFootprint(cashier, x, z) <= BALANCE.CASHIER_DIST;
-  if (Object.values(world.players).some((p) => p.online && p.location === shopId && near(p.x, p.z))) return 1;
-  const s = world.shops[shopId].staff.find((x) => x.role === 'cashier' && near(x.x, x.z));
-  return s ? Math.min(1, staffSpeedMult(s)) : 0;
+  return (
+    Object.values(world.players).some((p) => p.online && p.location === shopId && near(p.x, p.z)) ||
+    world.shops[shopId].staff.some((s) => s.role === 'cashier' && near(s.x, s.z))
+  );
 }
 
 function pickWeighted<T>(world: WorldState, list: T[], weight: (t: T) => number): T {
@@ -236,8 +232,7 @@ export function tickCustomers(world: WorldState, shopId: ShopId, dt: number): Si
   }
 
   const cashier = cashierOf(shopId);
-  const rate = cashierRate(world, shopId);
-  const manned = rate > 0;
+  const manned = isCashierManned(world, shopId);
   let queueIndex = 0;
 
   for (const c of [...shop.customers]) {
@@ -279,7 +274,7 @@ export function tickCustomers(world: WorldState, shopId: ShopId, dt: number): Si
         if (c.state === 'toQueue') c.state = 'inQueue';
         if (i === 0 && manned) {
           c.state = 'paying';
-          c.payTimer += dt * rate;
+          c.payTimer += dt;
           if (c.payTimer >= BALANCE.CASHIER_SERVICE_SEC - 1e-6) {
             world.money += c.bill;
             world.dayStats.revenue += c.bill;

@@ -203,6 +203,10 @@ export interface Snapshot {
     /** Sức 0–100 (mệt thì đi chậm) và đang hăng hái sau ly trà đá. */
     energy: number;
     cheer: boolean;
+    /** Hết sức, đang nghỉ: còn bao nhiêu giây (0 = không nghỉ). */
+    rest: number;
+    /** Thu ngân: không biết mệt. */
+    tireless: boolean;
   }[];
   /** Quán có hồn: cấp quán, khách quen, đơn đặt tiệc. */
   life: {

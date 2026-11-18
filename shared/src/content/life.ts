@@ -2,17 +2,17 @@ import { K } from '../money';
 
 /** Hằng số "quán có hồn": sức nhân viên, khách quen, đơn đặt tiệc, quán lên đời. */
 export const LIFE = {
-  /** Sức nhân viên 0–100: làm liên tục thì tụt, rảnh thì hồi. */
+  /** Sức phụ bếp / giao đơn / dọn bàn / làm trang trại 0–100 (thu ngân không biết mệt). */
   ENERGY_MAX: 100,
-  /** Mỗi giây làm việc mất bấy nhiêu sức (≈ 2,5 phút làm liền tay là đuối). */
-  ENERGY_DRAIN: 0.6,
-  /** Mỗi giây đứng rảnh hồi bấy nhiêu sức. */
-  ENERGY_RECOVER: 2,
-  /** Dưới mức này là mệt (đi chậm), dưới nữa là kiệt sức (rất chậm). */
-  TIRED: 35,
-  EXHAUSTED: 12,
+  /** Mỗi giây làm việc mất bấy nhiêu sức: ≈ 4 phút làm liền tay mới mệt, ≈ 5,5 phút mới hết sức. */
+  ENERGY_DRAIN: 0.3,
+  /** Mỗi giây đứng rảnh hồi bấy nhiêu sức (≈ 20 giây là đầy). */
+  ENERGY_RECOVER: 5,
+  /** Dưới mức này là mệt: chỉ chậm đi 20%. */
+  TIRED: 30,
   TIRED_SPEED: 0.8,
-  EXHAUSTED_SPEED: 0.6,
+  /** Hết sức hẳn: nghỉ bấy nhiêu giây (hoặc tới khi được mời trà đá) rồi hồi đầy sức. */
+  REST_SEC: 30,
   /** Mời trà đá: hồi đầy sức + hăng hái một lúc (đi nhanh hơn). */
   TEA_COST: K(10),
   CHEER_SEC: 30,

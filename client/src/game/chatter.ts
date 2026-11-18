@@ -66,7 +66,7 @@ export function createChatter(opts: ChatterOpts = {}) {
       e.work += ((moving || carrying ? 1 : 0) - e.work) * k;
       e.still = moving || carrying ? 0 : e.still + dt;
       // Có sức từ máy chủ: đuối sức là than mệt (kể cả lúc đang đứng nghỉ lấy hơi).
-      const tired = energy !== undefined ? energy < 45 : e.work > 0.8;
+      const tired = energy !== undefined ? energy < 40 : e.work > 0.8;
       const mood: Mood = tired ? 'busy' : e.still > 8 ? 'idle' : null;
       return tick(`s:${id}`, dt, mood, (m) => (m === 'busy' ? STAFF_BUSY : STAFF_IDLE));
     },

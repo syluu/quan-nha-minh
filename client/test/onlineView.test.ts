@@ -8,7 +8,7 @@ function snap(registered: boolean): Snapshot {
   return {
     shopId: 'banh_mi', shops: [], canRent: false, warehouse: {}, farm: { owned: false, level: 0, plots: [] }, fun: { combo: 0, cat: 'none', catSpot: { x: 0, z: 0 }, tourBus: false, busSpot: { x: 0, z: 0 }, weather: 'sun', festival: null, quests: [], badges: [], today: [] }, life: { tier: 0, earned: 0, nextTierAt: null, regulars: [], party: null }, day: 1, secOfDay: 0, money: 0, stars: 3, tiles: [], customers: [], log: [], prices: {}, players: [], ...V3,
     stations: [st('lo_banh_mi', true), st('ke_banh_mi', true), st('thu_ngan', true), st('diem_giao', registered)],
-    staff: registered ? [{ id: 's9', name: 'Mai', role: 'courier', item: null, x: 0, z: 0, dir: 0, carry: [], level: 1, wageOwed: 0, energy: 100, cheer: false }] : [],
+    staff: registered ? [{ id: 's9', name: 'Mai', role: 'courier', item: null, x: 0, z: 0, dir: 0, carry: [], level: 1, wageOwed: 0, energy: 100, cheer: false, rest: 0, tireless: false }] : [],
     online: { registered, paused: false, vehicle: 'bike', pending: 2, shipper: null, ordersToday: 7, cancelledToday: 1 },
   };
 }

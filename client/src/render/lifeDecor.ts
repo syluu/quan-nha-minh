@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { ITEMS, SHOP_META, SHOP_TIERS, SHOPS, getStationDef, partyDef } from '@qnm/shared';
+import { ITEMS, LIFE, SHOP_META, SHOP_TIERS, SHOPS, getStationDef, partyDef } from '@qnm/shared';
 import type { ItemId, ShopId, Snapshot } from '@qnm/shared';
 import { createItemMesh } from './items';
 import { box, disposeLabel, disposeTree, glassMat, makeLabel, markSharedGeometry, mat } from './materials';
@@ -417,7 +417,7 @@ export function createLifeDecor(scene: THREE.Scene) {
     },
 
     /** Nhân viên mệt: giọt mồ hôi bay ra; vừa uống trà đá: cầm ly trà đá. */
-    staff(id: string, holder: THREE.Group, energy: number, cheer: boolean, dir: number, t: number) {
+    staff(id: string, holder: THREE.Group, energy: number, cheer: boolean, dir: number, t: number, resting = false) {
       let fx = staffFx.get(id);
       if (!fx || fx.sweat.parent !== holder) {
         const sweat = new THREE.Group();
@@ -435,7 +435,7 @@ export function createLifeDecor(scene: THREE.Scene) {
         fx = { sweat, cup };
         staffFx.set(id, fx);
       }
-      fx.sweat.visible = !cheer && energy < 35;
+      fx.sweat.visible = !cheer && (resting || energy < LIFE.TIRED);
       if (fx.sweat.visible)
         fx.sweat.children.forEach((d, i) => {
           const k = (t * 1.3 + i / 3) % 1;

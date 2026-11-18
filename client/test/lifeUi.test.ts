@@ -17,8 +17,8 @@ function snap(over: { party?: Partial<Party> | null; secOfDay?: number; tier?: n
     secOfDay: over.secOfDay ?? 10,
     players: [{ id: 'me', x: 0, z: 0 }],
     staff: [
-      { id: 's1', name: 'Lan', x: 1, z: 0, energy: 20, cheer: false },
-      { id: 's2', name: 'Hùng', x: 0.5, z: 0, energy: 90, cheer: false },
+      { id: 's1', name: 'Lan', x: 1, z: 0, energy: 20, cheer: false, rest: 0 },
+      { id: 's2', name: 'Hùng', x: 0.5, z: 0, energy: 90, cheer: false, rest: 0 },
       { id: 's3', name: 'Mai', x: 3, z: 0, energy: 10, cheer: false },
     ],
     life: {
@@ -59,7 +59,12 @@ describe('party alert', () => {
 
 describe('iced tea prompt', () => {
   it('offers tea to the nearest tired staff member within reach', () => {
-    expect(teaPromptView(snap(), 'me')).toEqual({ staffId: 's1', name: 'Lan', energy: 20 });
+    expect(teaPromptView(snap(), 'me')).toEqual({ staffId: 's1', name: 'Lan', energy: 20, resting: false });
+    // Thu ngân không cần trà đá; người đang nghỉ vì hết sức thì có.
+    const s = snap();
+    Object.assign(s.staff[0], { tireless: true });
+    Object.assign(s.staff[1], { energy: 100, rest: 12 });
+    expect(teaPromptView(s, 'me')).toEqual({ staffId: 's2', name: 'Hùng', energy: 100, resting: true });
     expect(teaPromptView(snap(), 'nobody')).toBeNull();
   });
 });

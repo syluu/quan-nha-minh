@@ -87,6 +87,8 @@ export interface StaffState {
   energy?: number;
   /** Còn bao nhiêu giây hăng hái sau khi được mời trà đá. */
   cheer?: number;
+  /** Hết sức: còn bao nhiêu giây nghỉ (đứng nghỉ, không làm). */
+  rest?: number;
 }
 
 /** Khách quen của một quán: món ruột, tình cảm, giờ ghé hôm nay. */

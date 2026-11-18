@@ -251,9 +251,10 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
         if (st.cheer && !cheerSeen.get(st.id)) chatter.say(st.id, THANKS[Math.floor(Math.random() * THANKS.length)]);
         cheerSeen.set(st.id, st.cheer);
         // Thỉnh thoảng than mệt khi đuối sức, khoe rảnh khi đứng không.
-        const line = chatter.staff(st.id, dt, moving, st.carry.length > 0, st.energy);
-        v.setBubble(chatterOn ? line : null);
-        lifeDecor.staff(st.id, v.group, st.energy ?? 100, !!st.cheer, st.dir, t);
+        const line = chatter.staff(st.id, dt, moving, st.carry.length > 0, st.tireless ? undefined : st.energy);
+        // Hết sức đang nghỉ: luôn hiện (để biết mà mời trà đá).
+        v.setBubble(st.rest ? `😴 Hết sức rồi, nghỉ chút… ${st.rest}s` : chatterOn ? line : null);
+        lifeDecor.staff(st.id, v.group, st.energy ?? 100, !!st.cheer, st.dir, t, (st.rest ?? 0) > 0);
       }
       lifeDecor.forgetStaff(seenS);
       for (const [id, v] of staffViews) if (!seenS.has(id)) (v.dispose(), staffViews.delete(id), lastPos.delete(`s${id}`), cheerSeen.delete(id));

@@ -10,7 +10,7 @@ import { onlineSnapshot } from './online';
 import { sellableStations } from './settlement';
 import { isTileVisible } from './payTiles';
 import { effectiveStars } from './marketing';
-import { energyOf, shopTier } from './life';
+import { canTire, energyOf, shopTier } from './life';
 import { createWorld } from './world';
 import type { WorldState } from './world';
 
@@ -86,6 +86,7 @@ export function toSnapshot(world: WorldState, shopId: ShopId): Snapshot {
     staff: shop.staff.map((s) => ({
       id: s.id, name: s.name, role: s.role, item: s.item, x: s.x, z: s.z, dir: s.dir, carry: [...s.carry],
       level: s.level, wageOwed: s.wageOwed, energy: Math.round(energyOf(s)), cheer: (s.cheer ?? 0) > 0,
+      rest: Math.ceil(s.rest ?? 0), tireless: !canTire(s),
     })),
     life: {
       tier: shopTier(shop),

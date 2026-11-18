@@ -100,17 +100,17 @@ export function createPartyAlert(root: HTMLElement, conn: { acceptParty(): void;
 }
 
 /** Nhân viên đứng gần mình đang đuối sức (chưa uống trà đá) → gợi ý mời trà đá. */
-export function teaPromptView(s: Snapshot, myId: string): { staffId: string; name: string; energy: number } | null {
+export function teaPromptView(s: Snapshot, myId: string): { staffId: string; name: string; energy: number; resting: boolean } | null {
   const me = s.players.find((p) => p.id === myId);
   if (!me) return null;
-  let best: { staffId: string; name: string; energy: number; d: number } | null = null;
+  let best: { staffId: string; name: string; energy: number; resting: boolean; d: number } | null = null;
   for (const st of s.staff) {
-    if (st.cheer || st.energy >= 70) continue;
+    if (st.tireless || st.cheer || (st.energy >= 70 && !st.rest)) continue;
     const d = Math.hypot(st.x - me.x, st.z - me.z);
     if (d > 1.8 || (best && d >= best.d)) continue;
-    best = { staffId: st.id, name: st.name, energy: st.energy, d };
+    best = { staffId: st.id, name: st.name, energy: st.energy, resting: st.rest > 0, d };
   }
-  return best && { staffId: best.staffId, name: best.name, energy: best.energy };
+  return best && { staffId: best.staffId, name: best.name, energy: best.energy, resting: best.resting };
 }
 
 /** Nút "🧋 Mời trà đá" nổi phía trên thanh biểu cảm khi đứng cạnh nhân viên đang mệt (phím T). */
@@ -135,11 +135,11 @@ export function createTeaPrompt(root: HTMLElement, conn: { treatStaff(id: string
     update(s: Snapshot) {
       const v = teaPromptView(s, myId);
       target = v?.staffId ?? null;
-      const k = v ? `${v.staffId}|${v.name}|${v.energy < LIFE.TIRED}` : '';
+      const k = v ? `${v.staffId}|${v.name}|${v.energy < LIFE.TIRED}|${v.resting}` : '';
       if (k === key) return;
       key = k;
       btn.hidden = !v;
-      if (v) btn.innerHTML = `🧋 Mời <b>${v.name}</b> ly trà đá (${formatK(LIFE.TEA_COST)}) <span class="key">T</span>${v.energy < LIFE.TIRED ? ' — đang mệt lắm!' : ''}`;
+      if (v) btn.innerHTML = `🧋 Mời <b>${v.name}</b> ly trà đá (${formatK(LIFE.TEA_COST)}) <span class="key">T</span>${v.resting ? ' — đang nghỉ vì hết sức!' : v.energy < LIFE.TIRED ? ' — đang mệt!' : ''}`;
     },
   };
 }

@@ -29,13 +29,18 @@ export interface StaffDetail {
   energy: number;
   mood: string;
   cheer: boolean;
+  /** Đang nghỉ vì hết sức (giây còn lại, 0 = không). */
+  rest: number;
+  /** Thu ngân: không biết mệt (không có thanh sức, không cần trà đá). */
+  tireless: boolean;
 }
 
 /** Tâm trạng nhân viên theo sức. */
-export function staffMood(x: { energy: number; cheer: boolean }): string {
+export function staffMood(x: { energy: number; cheer: boolean; rest?: number; tireless?: boolean }): string {
+  if (x.tireless) return '💪 Không biết mệt';
   if (x.cheer) return '🧋 Hăng hái';
-  if (x.energy < LIFE.EXHAUSTED) return '🥵 Kiệt sức';
-  if (x.energy < LIFE.TIRED) return '😓 Mệt';
+  if (x.rest) return `😴 Hết sức, đang nghỉ (còn ${x.rest}s)`;
+  if (x.energy < LIFE.TIRED) return '😓 Mệt (chậm 20%)';
   if (x.energy < 70) return '🙂 Hơi đuối';
   return '💪 Khoẻ re';
 }
@@ -53,8 +58,10 @@ function staffDetail(x: Snapshot['staff'][number] | undefined): StaffDetail | nu
     payOnFire: formatK(x.wageOwed + lv.wage),
     nextTrain: next ? formatK(next.train) : null,
     energy: x.energy ?? 100,
-    mood: staffMood({ energy: x.energy ?? 100, cheer: !!x.cheer }),
+    mood: staffMood({ energy: x.energy ?? 100, cheer: !!x.cheer, rest: x.rest ?? 0, tireless: !!x.tireless }),
     cheer: !!x.cheer,
+    rest: x.rest ?? 0,
+    tireless: !!x.tireless,
   };
 }
 
