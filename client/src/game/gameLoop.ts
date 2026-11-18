@@ -22,6 +22,8 @@ import { createTileView } from '../render/payTiles';
 import type { TileView } from '../render/payTiles';
 import { disposeTree } from '../render/materials';
 import { createInterpolator } from './interp';
+import { createChatter } from './chatter';
+import { loadSettings } from '../settings';
 import { createPredictor } from './prediction';
 
 export interface GameHandle {
@@ -118,6 +120,11 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
     }
   }
 
+  const chatter = createChatter();
+  let chatterOn = loadSettings().chatter;
+  window.addEventListener('storage', () => (chatterOn = loadSettings().chatter));
+  setInterval(() => (chatterOn = loadSettings().chatter), 2000);
+
   function drawFrame(now: number) {
     const dt = Math.min(0.1, (now - prev) / 1000);
     prev = now;
@@ -165,10 +172,12 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
         v.setName(p.name);
         if (p.outfit) v.setOutfit(p.outfit);
         // Biểu cảm / đập tay / đang tăng tốc.
+        // Biểu cảm / đập tay / tăng tốc ưu tiên; không có thì thỉnh thoảng nói một câu kiểu chủ quán.
+        const said = chatter.owner(p.id, dt, { customers: s.customers.length, carrying: p.carry.length > 0 });
         v.setBubble(
           p.emote === 'hifive' ? '🙌 Đập tay nào!' : p.emote === 'hifive_ok' ? '🙌 Yeah!' : p.emote && EMOTES[p.emote]
             ? `${EMOTES[p.emote].icon} ${EMOTES[p.emote].text}`
-            : p.boost ? '⚡' : null,
+            : p.boost ? '⚡' : chatterOn ? said : null,
         );
       }
       for (const [id, v] of players) if (!seen.has(id)) (v.dispose(), players.delete(id));
@@ -212,6 +221,9 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
         lastPos.set(key, { x: st.x, z: st.z });
         v.setPose(st.x, st.z, st.dir, moving, t);
         v.setCarry(st.carry, BALANCE.STAFF_LEVELS[st.level - 1]?.carry ?? BALANCE.STAFF_LEVELS[0].carry);
+        // Thỉnh thoảng than mệt khi làm liên tục, khoe rảnh khi đứng không.
+        const line = chatter.staff(st.id, dt, moving, st.carry.length > 0);
+        v.setBubble(chatterOn ? line : null);
       }
       for (const [id, v] of staffViews) if (!seenS.has(id)) (v.dispose(), staffViews.delete(id), lastPos.delete(`s${id}`));
 

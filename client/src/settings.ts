@@ -3,9 +3,11 @@ export interface Settings {
   sfx: number;
   muted: boolean;
   showHint: boolean;
+  /** Lời thoại vui trong bong bóng (nhân viên than mệt, chủ quán giục…). */
+  chatter: boolean;
 }
 
-export const DEFAULT_SETTINGS: Settings = { music: 0.3, sfx: 0.7, muted: false, showHint: true };
+export const DEFAULT_SETTINGS: Settings = { music: 0.3, sfx: 0.7, muted: false, showHint: true, chatter: true };
 const KEY = 'qnm.settings';
 
 const vol = (v: unknown, d: number) => (typeof v === 'number' && Number.isFinite(v) ? Math.min(1, Math.max(0, v)) : d);
@@ -21,6 +23,7 @@ export function loadSettings(): Settings {
       sfx: vol(o.sfx, DEFAULT_SETTINGS.sfx),
       muted: typeof o.muted === 'boolean' ? o.muted : DEFAULT_SETTINGS.muted,
       showHint: typeof o.showHint === 'boolean' ? o.showHint : DEFAULT_SETTINGS.showHint,
+      chatter: typeof o.chatter === 'boolean' ? o.chatter : DEFAULT_SETTINGS.chatter,
     };
   } catch {
     return { ...DEFAULT_SETTINGS };

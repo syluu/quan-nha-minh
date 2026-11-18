@@ -36,16 +36,16 @@ describe('settings', () => {
   });
   it('falls back to defaults when storage is unavailable', () => {
     g.localStorage = { getItem() { throw new Error('blocked'); }, setItem() { throw new Error('blocked'); } };
-    expect(loadSettings()).toEqual({ music: 0.3, sfx: 0.7, muted: false, showHint: true });
-    expect(() => saveSettings({ music: 1, sfx: 1, muted: true, showHint: false })).not.toThrow();
+    expect(loadSettings()).toEqual({ music: 0.3, sfx: 0.7, muted: false, showHint: true, chatter: true });
+    expect(() => saveSettings({ music: 1, sfx: 1, muted: true, showHint: false, chatter: true })).not.toThrow();
   });
   it('round-trips through localStorage and ignores junk values', () => {
     const store = new Map<string, string>();
     g.localStorage = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => store.set(k, v) };
-    saveSettings({ music: 0.5, sfx: 0.2, muted: true, showHint: false });
-    expect(loadSettings()).toEqual({ music: 0.5, sfx: 0.2, muted: true, showHint: false });
+    saveSettings({ music: 0.5, sfx: 0.2, muted: true, showHint: false, chatter: true });
+    expect(loadSettings()).toEqual({ music: 0.5, sfx: 0.2, muted: true, showHint: false, chatter: true });
     store.set('qnm.settings', '{"music": 7, "sfx": "x"}');
-    expect(loadSettings()).toEqual({ music: 1, sfx: 0.7, muted: false, showHint: true });
+    expect(loadSettings()).toEqual({ music: 1, sfx: 0.7, muted: false, showHint: true, chatter: true });
   });
 });
 

@@ -26,6 +26,7 @@ export function settingsTab(conn: GameConnection, myName: () => string): MenuTab
         <div class="setting rename"><input type="text" maxlength="16" value="" aria-label="Tên nhân vật" /><button class="primary">Đổi tên</button></div>
         <h3>Hiển thị</h3>
         <label class="setting check"><input type="checkbox" data-k="showHint" ${s.showHint ? 'checked' : ''}/> Hiện dòng hướng dẫn phím</label>
+        <label class="setting check"><input type="checkbox" data-k="chatter" ${s.chatter ? 'checked' : ''}/> Lời thoại vui của nhân vật (than mệt, khoe rảnh, giục khách…)</label>
         <p class="note">Âm lượng và hiển thị lưu riêng trên máy này.</p>`;
       const nameInput = body.querySelector<HTMLInputElement>('.rename input')!;
       nameInput.value = myName();

@@ -43,7 +43,7 @@ Mở `http://localhost:5173` ở 2 cửa sổ (hoặc 2 máy cùng wifi qua `htt
   - **Báo cáo**: biểu đồ 14 ngày, bảng từng ngày (doanh thu, nguyên liệu, lương, hàng bỏ đi, lãi), món bán được hôm nay.
   - **Nhân sự**: thuê/cho nghỉ thu ngân và **phụ bếp đa năng** — tự làm mọi việc trong bếp: kệ nào vơi thì lấy món ở máy ra bày (kệ trống trước), bàn ghép nào thiếu nguyên liệu thì bê vào; nhiều người tự chia việc. Thuê tối đa bằng số kệ đang mở; không kịp thì thuê thêm hoặc vào bếp làm cùng. Lương khởi điểm 120K/ngày, cộng dồn và trả cuối tháng.
   - **Giá bán**: chỉnh giá từng món 50–200% giá thị trường; khách thường chấp nhận 80–130%.
-  - **Cài đặt**: âm lượng nhạc/hiệu ứng, tắt tiếng, đổi tên, ẩn dòng hướng dẫn.
+  - **Cài đặt**: âm lượng nhạc/hiệu ứng, tắt tiếng, đổi tên, ẩn dòng hướng dẫn, bật/tắt lời thoại vui của nhân vật.
 - **Âm thanh** bật sau lần bấm chuột/gõ phím đầu tiên (trình duyệt bắt buộc vậy).
 
 ### Nâng cấp, quảng cáo, ngân hàng (Kế hoạch 3)
@@ -109,6 +109,7 @@ Mở `http://localhost:5173` ở 2 cửa sổ (hoặc 2 máy cùng wifi qua `htt
 - **Combo**: phục vụ nhanh liên tiếp, cứ mỗi 5 khách được thưởng thêm, có pháo giấy.
 - **Đoàn khách du lịch**: có ngày xe buýt chạy tới đỗ sát lề đường trước quán; hướng dẫn viên 🚩 dẫn 10 khách 📷 xuống xe vào quán, mua nhiều, chịu giá cao, mua xong đi bộ ra lại xe rồi xe chạy đi. Thông báo bên trái có nút **👀 Xem** để lướt khung nhìn ra chỗ xe.
 - **Mèo hoang** ghé quán: cầm món ăn đứng cạnh để cho ăn → mèo ở lại làm **mèo của quán**, +sao.
+- **Lời thoại vui** (thỉnh thoảng, mỗi nhân vật ~25–50 giây mới nói một câu): phụ bếp làm liên tục thì than *"Mệt quá", "Bận vcl", "Sắp kiệt sức rồi..."*, rảnh thì *"Rảnh quá", "Khỏe re~", "♪ Là lá la ♪"*; chủ quán thì *"Đông khách ghê!", "Nhanh tay lên cả nhà!", "Tới đây, tới đây!"*. Tắt được trong Menu → Cài đặt.
 - **Biểu cảm**: thanh 👋 😂 👍 🆘 ❤️ (phím 1–5); **🙌 đập tay** (phím H) với người nhà đứng cạnh → cả hai chạy nhanh 10 giây.
 - **Báo cuối ngày**: tít báo vui theo kết quả + **bảng vinh danh** (Vua bê hàng, Thu ngân thần tốc, Dọn bàn chăm nhất, Nông dân giỏi).
 - **Khói, lửa, hơi nước** ở máy đang làm; **tiếng rao** (nếu trình duyệt có giọng tiếng Việt).
