@@ -137,6 +137,11 @@ export const BALANCE = {
   PAY_TILE_DRAIN_SEC: 1.5,
   PAY_TILE_RADIUS: 0.7,
 
+  /** Lối đi sang quán khác / trang trại: đứng yên trên ô bao lâu thì sang, bán kính ô, khoảng cách giữa các ô. */
+  PORTAL_SEC: 1,
+  PORTAL_RADIUS: 0.6,
+  PORTAL_SPACING: 1.5,
+
   TICK_HZ: 20,
   SNAPSHOT_HZ: 10,
   MAX_TICK_DT: 1.0,

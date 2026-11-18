@@ -8,6 +8,7 @@ export * from './sim/movement';
 export * from './sim/production';
 export * from './sim/carry';
 export * from './sim/payTiles';
+export * from './sim/portals';
 export * from './sim/customers';
 export * from './sim/players';
 export * from './sim/tick';

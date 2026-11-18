@@ -58,4 +58,18 @@ describe('settlement modal', () => {
     expect(box.hidden).toBe(true);
     expect(blocked.at(-1)).toBe(false);
   });
+
+  it('opens at the top next month, not where last month was scrolled to', () => {
+    document.body.innerHTML = '<div id="ui"></div>';
+    const f = fakeConn();
+    createSettlementModal(document.getElementById('ui')!, f.conn, () => {});
+    const box = () => document.querySelector('.settle') as HTMLElement;
+    f.snap(base({ settlement, maxLoan: 2_000_000 }));
+    box().scrollTop = 400;
+    f.snap(base({ settlement, money: 950_000, maxLoan: 2_000_000 })); // đang mở, vẽ lại: giữ chỗ đang xem
+    expect(box().scrollTop).toBe(400);
+    f.snap(base({ settlement: null }));
+    f.snap(base({ settlement: { ...settlement, month: 2 }, maxLoan: 2_000_000 }));
+    expect(box().scrollTop).toBe(0);
+  });
 });

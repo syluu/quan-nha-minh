@@ -50,6 +50,7 @@ export const FARM: ShopLayout = {
   exit: { x: 6.5, z: 5.2 },
   queueDir: { x: 0, z: 1 },
   shipperSpawn: { x: 10.5, z: 4.6 },
+  portal: { x: 0, z: 4.3 },
   baseCustomerIntervalSec: 1e9,
   hourCurve: [],
   stations,

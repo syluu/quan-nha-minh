@@ -9,6 +9,7 @@ import { migrateV1toV2, migrateV2toV3, migrateV3toV4, migrateV4toV5, migrateV5to
 import { onlineSnapshot } from './online';
 import { sellableStations } from './settlement';
 import { isTileVisible } from './payTiles';
+import { portalSnapshot } from './portals';
 import { effectiveStars } from './marketing';
 import { canTire, energyOf, shopTier } from './life';
 import { intruderSnapshot } from './intruder';
@@ -129,6 +130,7 @@ export function toSnapshot(world: WorldState, shopId: ShopId): Snapshot {
         const st = shop.stations[placed.instanceId];
         return { instanceId: placed.instanceId, cost: placed.unlockCost, paid: st.paid, occupantSec: st.tileOccupant?.sec ?? 0 };
       }),
+    portals: portalSnapshot(world, shopId),
     log: world.log.slice(-5),
   };
 }
@@ -175,6 +177,7 @@ export function normalizeLoaded(raw: unknown): WorldState {
     p.pickTimer = 0;
     p.pickAt = null;
     p.inMenu = false;
+    delete p.portal;
     // Dữ liệu trang phục hỏng / món lạ / sai ô / chưa mua → về đồ mặc định của ô đó.
     const wardrobe: unknown[] = Array.isArray(p.wardrobe) ? p.wardrobe : [];
     p.wardrobe = [...new Set(wardrobe.filter((id): id is string => typeof id === 'string' && Object.hasOwn(COSTUMES, id)))];

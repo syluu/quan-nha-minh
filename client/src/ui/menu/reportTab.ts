@@ -31,6 +31,8 @@ function chartSvg(r: Report): string {
 }
 
 function render(body: HTMLElement, r: Report) {
+  // Bảng rộng (cuộn ngang trên màn hẹp): vẽ lại 2 giây/lần không được kéo người xem về cột đầu.
+  const left = body.querySelector('.table-wrap')?.scrollLeft ?? 0;
   const rows = reportRows(r);
   const sold = soldList(r.today);
   body.innerHTML = `
@@ -46,6 +48,8 @@ function render(body: HTMLElement, r: Report) {
     <p class="note">Lãi hoạt động = doanh thu − nguyên liệu − lương. "Hôm nay" tính lương dự kiến cho số nhân viên hiện có.</p>
     <h3>Hôm nay đã bán</h3>
     <p>${sold.length ? sold.map((s) => `${s.name}: <b>${s.count}</b>`).join(' · ') : 'Chưa bán được món nào.'}</p>`;
+  const wrap = body.querySelector('.table-wrap');
+  if (wrap) wrap.scrollLeft = left;
 }
 
 export function reportTab(conn: GameConnection): MenuTab {
@@ -54,7 +58,14 @@ export function reportTab(conn: GameConnection): MenuTab {
     title: '📊 Báo cáo',
     mount(body) {
       body.innerHTML = '<p class="note">Đang tải báo cáo…</p>';
-      const off = conn.onReport((r) => render(body, r));
+      let last = '';
+      const off = conn.onReport((r) => {
+        // Báo cáo không đổi thì không vẽ lại (đỡ giật, giữ chỗ đang xem).
+        const k = JSON.stringify(r);
+        if (k === last) return;
+        last = k;
+        render(body, r);
+      });
       conn.requestReport();
       const timer = setInterval(() => conn.requestReport(), 2000);
       return () => {

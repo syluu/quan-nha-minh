@@ -54,10 +54,16 @@ export function createSettlementModal(root: HTMLElement, conn: GameConnection, s
     setBlocked(false);
   }
 
+  /** Hiện hộp; mới mở (đang ẩn) thì về đầu — không giữ chỗ đã cuộn của lần kết toán trước. */
+  function open() {
+    if (box.hidden) box.scrollTop = 0;
+    box.hidden = false;
+  }
+
   function showInfo(title: string, body: string) {
     blocking = false;
     key = '';
-    box.hidden = false;
+    open();
     box.innerHTML = `<h2>${title}</h2>${body}<button class="primary close">Đóng</button>`;
     box.querySelector<HTMLButtonElement>('.close')!.onclick = close;
   }
@@ -73,7 +79,7 @@ export function createSettlementModal(root: HTMLElement, conn: GameConnection, s
     if (blocking && k === key) return;
     key = k;
     blocking = true;
-    box.hidden = false;
+    open();
     setBlocked(true);
     const short = shortfall(s.money, st);
     box.innerHTML = `

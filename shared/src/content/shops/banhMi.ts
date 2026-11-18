@@ -25,6 +25,7 @@ export const BANH_MI_SHOP: ShopLayout = {
   exit: { x: -7.5, z: 5.3 },
   queueDir: { x: 0, z: 1 },
   shipperSpawn: { x: 10.5, z: 4.6 },
+  portal: { x: -1.5, z: 4.85 },
   baseCustomerIntervalSec: 4,
   hourCurve: [
     [6, 9, 1.8],

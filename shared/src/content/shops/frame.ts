@@ -57,4 +57,5 @@ export const DINING_FRAME = {
   exit: { x: 7.8, z: 2.4 + SHELF_ROW_Z },
   queueDir: { x: 0, z: 1 },
   shipperSpawn: { x: 10.5, z: 6.5 + SHELF_ROW_Z },
+  portal: { x: -3, z: 7.3 + SHELF_ROW_Z },
 };

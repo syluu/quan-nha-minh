@@ -20,6 +20,7 @@ import { createScene, createShopBackdrop } from '../render/scene';
 import { createStationView } from '../render/stations';
 import type { StationView } from '../render/stations';
 import { createTileView } from '../render/payTiles';
+import { createPortalLayer } from '../render/portals';
 import type { TileView } from '../render/payTiles';
 import { disposeTree } from '../render/materials';
 import { createInterpolator } from './interp';
@@ -70,6 +71,7 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
   const funFx = createFunFx(scene);
   const farmLand = createFarmLand(scene);
   const lifeDecor = createLifeDecor(scene);
+  const portals = createPortalLayer(scene);
   /** Lúc thấy khách lần đầu (để khách quen chào một câu khi mới tới). */
   const firstSeen = new Map<number, number>();
   const cheerSeen = new Map<string, boolean>();
@@ -86,6 +88,7 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
     if (backdrop) disposeTree(backdrop);
     for (const v of stationViews.values()) disposeTree(v.group);
     for (const v of tileViews.values()) disposeTree(v.group);
+    portals.clear();
     for (const v of [...players.values(), ...customers.values(), ...staffViews.values()]) v.dispose();
     intruderView?.dispose();
     intruderView = null;
@@ -302,6 +305,8 @@ export function startGame(conn: GameConnection, container: HTMLElement): GameHan
       if (latest) promoDecor.update(latest, dt, t);
       if (latest) funFx.update(latest, dt, t);
       if (latest) lifeDecor.update(latest, dt, t);
+      // Ô lối đi chỉ vẽ theo snapshot của đúng quán đang dựng (vừa đổi quán: chờ snapshot mới).
+      portals.update(latest?.shopId === shopId ? latest?.portals : [], t);
       if (latest) farmLand.update(latest.shopId === 'farm', latest.farm?.level ?? 0);
 
       // Vòng tiến trình nhặt món của chính mình

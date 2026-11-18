@@ -67,6 +67,11 @@ export interface ShopLayout {
   queueDir: { x: number; z: number };
   /** Nơi shipper xuất hiện (ngoài đường). */
   shipperSpawn: { x: number; z: number };
+  /**
+   * Lối đi sang quán khác / trang trại: ô đầu tiên ở đây, các ô sau xếp sang phải (mỗi nơi đang có một ô).
+   * Đặt xa lối vào (người vừa sang không đứng trúng ô) và xa chỗ mèo hoang.
+   */
+  portal: { x: number; z: number };
   stations: PlacedStation[];
   baseCustomerIntervalSec: number;
   /** [từ giờ, đến giờ, hệ số] */

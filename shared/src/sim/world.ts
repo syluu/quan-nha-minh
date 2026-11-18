@@ -243,6 +243,8 @@ export interface PlayerState {
   /** Trang phục đang mặc (id trong COSTUMES) và các món đã mua (giữ cả khi phá sản). */
   outfit: Outfit;
   wardrobe: string[];
+  /** Đang đứng trên ô lối đi sang `to` được bao lâu (tạm thời, không cần lưu). */
+  portal?: { to: ShopId; sec: number } | null;
 }
 
 export interface DayStats {

@@ -6,6 +6,7 @@ import { tickCustomers } from './customers';
 import type { SimEvent } from './events';
 import { movePlayer } from './movement';
 import { tickPayTiles } from './payTiles';
+import { tickPortals } from './portals';
 import { tickStations } from './production';
 import { addLog } from './log';
 import { tickOrders, tickShipper } from './online';
@@ -53,6 +54,8 @@ export function tick(world: WorldState, dt: number): SimEvent[] {
         events.push(...tickTour(world, shopId));
         events.push(...tickCat(world, shopId));
       }
+      // Đứng 1 giây trên ô lối đi → sang quán / trang trại đó.
+      tickPortals(world, shopId, sdt);
       for (const e of tickPayTiles(world, shopId, sdt)) {
         if (e.type === 'unlock') {
           const name = world.players[e.byPlayerId]?.name ?? 'Ai đó';

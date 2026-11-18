@@ -273,5 +273,7 @@ export interface Snapshot {
     running?: boolean;
   }[];
   tiles: { instanceId: string; cost: number; paid: number; occupantSec: number }[];
+  /** Ô lối đi trong quán đang xem: mỗi nơi đang có (trừ quán này) một ô; sec = người đứng lâu nhất trên ô. */
+  portals: { to: ShopId; name: string; kind: 'shop' | 'farm'; x: number; z: number; sec: number }[];
   log: LogEntry[];
 }

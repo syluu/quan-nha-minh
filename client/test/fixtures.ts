@@ -9,4 +9,5 @@ export const V3 = {
   settlement: null,
   sellable: [],
   online: { registered: false, paused: false, vehicle: 'bike' as const, pending: 0, shipper: null, ordersToday: 0, cancelledToday: 0 },
+  portals: [],
 };
