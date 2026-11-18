@@ -38,6 +38,9 @@ export function createMenu(root: HTMLElement, _conn: GameConnection, tabs: MenuT
     if (cleanup) cleanup();
     nav.querySelectorAll('button').forEach((b) => b.classList.toggle('active', b.dataset.tab === id));
     body.replaceChildren();
+    // Mở tab nào cũng về đầu trang — không giữ vị trí cuộn của tab trước (vd. đang cuộn tận đáy tab Trang phục
+    // thì sang Quảng cáo chỉ thấy phần "Bán online" ở cuối, tưởng mất hết các loại quảng cáo).
+    body.scrollTop = 0;
     cleanup = tabs.find((t) => t.id === id)?.mount(body);
   }
 

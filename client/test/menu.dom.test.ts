@@ -37,3 +37,22 @@ describe('menu keyboard', () => {
     expect(menu.isOpen()).toBe(false);
   });
 });
+
+describe('menu scroll', () => {
+  it('opening a tab (or reopening the menu) starts at the top, not where the previous tab was scrolled', () => {
+    document.body.innerHTML = '<div id="ui"></div>';
+    const menu = createMenu(document.getElementById('ui')!, {} as never, [
+      { id: 'costume', title: 'Trang phục', mount: (b) => void (b.innerHTML = '<p>dài</p>') },
+      { id: 'marketing', title: 'Quảng cáo', mount: (b) => void (b.innerHTML = '<p>quảng cáo</p>') },
+    ], () => {});
+    const body = document.querySelector<HTMLElement>('.menu-body')!;
+    menu.open('costume');
+    body.scrollTop = 900;
+    menu.open('marketing');
+    expect(body.scrollTop).toBe(0);
+    body.scrollTop = 500;
+    menu.close();
+    menu.open();
+    expect(body.scrollTop).toBe(0);
+  });
+});
