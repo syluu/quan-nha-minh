@@ -30,10 +30,10 @@ export function marketingTab(conn: GameConnection, latest: () => Snapshot | null
           <h3>Quảng cáo ngắn ngày</h3>
           <div class="cards">${v.cards
             .map(
-              (c) => `<div class="card ad-card${c.running ? ' on' : ''}">
-                <div class="ad-head"><span class="ad-icon">${c.icon}</span><b>${c.name}</b></div>
+              (c) => `<div class="card mk-card${c.running ? ' on' : ''}">
+                <div class="mk-head"><span class="mk-icon">${c.icon}</span><b>${c.name}</b></div>
                 <div class="muted">${c.desc}</div>
-                <div class="ad-eff">${c.effect}</div>
+                <div class="mk-eff">${c.effect}</div>
                 <div class="muted">${c.days} · ${c.cost}${c.running ? ` · <b class="pos">đang chạy, còn ${c.running} ngày</b>` : ''}</div>
                 <button class="primary" data-run="${c.id}" ${c.affordable ? '' : 'disabled'}>${c.running ? 'Gia hạn' : 'Chạy'} (${c.cost})</button></div>`,
             )
@@ -41,11 +41,11 @@ export function marketingTab(conn: GameConnection, latest: () => Snapshot | null
           <h3>Đầu tư lâu dài <span class="muted">(mua một lần, tác dụng mãi cho quán này)</span></h3>
           <div class="cards">${v.perm
             .map(
-              (a) => `<div class="card ad-card${a.owned ? ' on' : ''}">
-                <div class="ad-head"><span class="ad-icon">${a.icon}</span><b>${a.name}</b></div>
+              (a) => `<div class="card mk-card${a.owned ? ' on' : ''}">
+                <div class="mk-head"><span class="mk-icon">${a.icon}</span><b>${a.name}</b></div>
                 <div class="muted">${a.desc}</div>
-                <div class="ad-eff">${a.effect}</div>
-                ${a.owned ? '<b class="pos">✓ Đã có</b>' : `<button class="primary" data-ad="${a.id}" ${a.affordable ? '' : 'disabled'}>Lắp đặt (${a.cost})</button>`}</div>`,
+                <div class="mk-eff">${a.effect}</div>
+                ${a.owned ? '<b class="pos">✓ Đã có</b>' : `<button class="primary" data-perm="${a.id}" ${a.affordable ? '' : 'disabled'}>Lắp đặt (${a.cost})</button>`}</div>`,
             )
             .join('')}</div>
           <h3>🛵 Bán online qua app giao đồ ăn</h3>
@@ -59,7 +59,7 @@ export function marketingTab(conn: GameConnection, latest: () => Snapshot | null
           }`;
         body.querySelectorAll<HTMLButtonElement>('[data-pause]').forEach((b) => (b.onclick = () => conn.setOnlinePaused(b.dataset.pause === 'true')));
         body.querySelectorAll<HTMLButtonElement>('[data-run]').forEach((b) => (b.onclick = () => conn.runCampaign(b.dataset.run as never)));
-        body.querySelectorAll<HTMLButtonElement>('[data-ad]').forEach((b) => (b.onclick = () => conn.buyAd(b.dataset.ad as never)));
+        body.querySelectorAll<HTMLButtonElement>('[data-perm]').forEach((b) => (b.onclick = () => conn.buyAd(b.dataset.perm as never)));
       };
       render();
       const t = setInterval(render, 300);

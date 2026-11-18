@@ -7,6 +7,7 @@ import { deliverAt, deliveryNeeds, pickupOf } from './online';
 import { canTire, staffSpeedMult, tickStaffEnergy, tickStaffRest } from './life';
 import { loadCrate } from './carry';
 import { plotDef } from './farm';
+import { routeAround } from './route';
 import type { SimEvent } from './events';
 import { addLog, playerName } from './log';
 import { isOnSale } from './prices';
@@ -391,9 +392,10 @@ const SHELF_GAPS = [-5, -2.5, 0, 2.5, 5];
 const KITCHEN_SIDE_Z = SHELF_ROW_Z - 0.85;
 const DINING_SIDE_Z = SHELF_ROW_Z + 1.7;
 
-function routeTo(from: { x: number; z: number }, to: { x: number; z: number }): { x: number; z: number }[] {
+function routeTo(shopId: ShopId, from: { x: number; z: number }, to: { x: number; z: number }): { x: number; z: number }[] {
   const front = (p: { z: number }) => p.z > SHELF_ROW_Z + 0.6;
-  if (front(from) === front(to)) return [to];
+  // Cùng phía kệ: đi theo lối giữa các hàng bàn (không xuyên bàn).
+  if (front(from) === front(to)) return routeAround(shopId, from, to);
   // Đang đứng trong khe giữa hai kệ: đi tiếp theo đúng khe đó.
   const inGap = from.z > KITCHEN_SIDE_Z - 0.01 && from.z < DINING_SIDE_Z + 0.01;
   const gx = inGap
@@ -401,7 +403,7 @@ function routeTo(from: { x: number; z: number }, to: { x: number; z: number }): 
     : SHELF_GAPS.reduce((best, g) => (Math.abs(from.x - g) + Math.abs(g - to.x) < Math.abs(from.x - best) + Math.abs(best - to.x) ? g : best));
   const a = { x: gx, z: front(from) ? DINING_SIDE_Z : KITCHEN_SIDE_Z };
   const b = { x: gx, z: front(to) ? DINING_SIDE_Z : KITCHEN_SIDE_Z };
-  return [a, b, to];
+  return [a, b, ...(front(to) ? routeAround(shopId, b, to) : [to])];
 }
 
 /** Dọn bàn: tới bàn bẩn nhất, dọn từng chỗ; hết việc thì đứng chờ ở bàn vừa dọn. */
@@ -423,7 +425,7 @@ function tickCleaner(world: WorldState, shopId: ShopId, s: StaffState, dt: numbe
     }
     if (!best) return [];
     s.target = best.instanceId;
-    s.path = routeTo(s, best.workPoint);
+    s.path = routeTo(shopId, s, best.workPoint);
     s.timer = 0;
   }
   const path = (s.path ??= []);

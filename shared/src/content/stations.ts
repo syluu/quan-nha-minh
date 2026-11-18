@@ -72,6 +72,10 @@ export interface ShopLayout {
    * Đặt xa lối vào (người vừa sang không đứng trúng ô) và xa chỗ mèo hoang.
    */
   portal: { x: number; z: number };
+  /** Lưới lối đi (quán có bàn): khách / người dọn đi theo khi đường thẳng vướng bàn. */
+  lanes?: { z: number[]; x: number[] };
+  /** Đi được ra quá mép sàn tới đây (vỉa hè có bàn); không có thì kẹp trong `bounds`. */
+  walkMaxZ?: number;
   stations: PlacedStation[];
   baseCustomerIntervalSec: number;
   /** [từ giờ, đến giờ, hệ số] */
@@ -112,6 +116,7 @@ const list: StationDef[] = [
   { kind: 'trash', id: 'thung_rac', name: 'Thùng rác', footprint: { w: 0.6, d: 0.6 } },
   { kind: 'pickup', id: 'diem_giao', name: 'Điểm giao hàng', footprint: { w: 0.8, d: 0.6 } },
   { kind: 'table', id: 'ban_an', name: 'Bàn ăn', seats: 2, footprint: { w: 1.2, d: 0.8 } },
+  { kind: 'table', id: 'ban_via_he', name: 'Bàn vỉa hè', seats: 2, footprint: { w: 1.2, d: 0.8 } },
 
   // Trang trại
   { kind: 'plot', id: 'ruong_rau', name: 'Ruộng rau', seedCost: K(4), output: 'thung_rau', cycleSec: 40, outputCap: 3, animal: false, footprint: PLOT },

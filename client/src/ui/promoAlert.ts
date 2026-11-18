@@ -43,7 +43,7 @@ export function promoAlertsView(s: Snapshot): PromoAlert[] {
 /** Hộp thông báo bên trái (dưới bảng shipper). */
 export function createPromoAlert(root: HTMLElement, onLook?: (x: number, z: number) => void) {
   const box = document.createElement('div');
-  box.className = 'promo-alert';
+  box.className = 'visit-alert';
   box.hidden = true;
   root.append(box);
   let key = '';

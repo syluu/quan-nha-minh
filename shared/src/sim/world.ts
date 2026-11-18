@@ -52,6 +52,9 @@ export interface Customer {
   eatTimer: number;
   /** Khách quen (id trong REGULARS). */
   regular?: string;
+  /** Đích đang đi tới và các điểm rẽ còn lại trên lối đi (đi vòng qua bàn). */
+  goal?: { x: number; z: number };
+  via?: { x: number; z: number }[];
 }
 
 export type StaffRole = 'cashier' | 'cook' | 'courier' | 'cleaner' | 'farmhand';

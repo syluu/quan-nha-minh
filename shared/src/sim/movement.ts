@@ -59,6 +59,6 @@ export function movePlayer(
 
   const b = layout.bounds;
   x = Math.max(b.minX + r, Math.min(x, b.maxX - r));
-  z = Math.max(b.minZ + r, Math.min(z, b.maxZ - r));
+  z = Math.max(b.minZ + r, Math.min(z, (layout.walkMaxZ ?? b.maxZ) - r));
   return { x, z, dir: Math.atan2(mx, mz) };
 }

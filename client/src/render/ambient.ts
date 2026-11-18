@@ -223,7 +223,7 @@ export function createAmbient(scene: THREE.Scene, hemi: THREE.HemisphereLight, s
       walkers.forEach((g, i) => {
         const dir = i % 2 ? 1 : -1;
         const x = b.minX - 14 + (((t * (0.9 + (i % 3) * 0.25) + i * 7.3) % span) + span) % span;
-        g.position.set(dir > 0 ? x : b.minX + b.maxX - x, Math.abs(Math.sin(t * 6 + i)) * 0.04, b.maxZ + (dir > 0 ? 2.6 : 3.4));
+        g.position.set(dir > 0 ? x : b.minX + b.maxX - x, Math.abs(Math.sin(t * 6 + i)) * 0.04, b.maxZ + (dir > 0 ? 3.9 : 4.5));
         g.rotation.y = dir > 0 ? Math.PI / 2 : -Math.PI / 2;
         g.children.forEach((c, j) => c.name === 'leg' && (c.rotation.z = Math.sin(t * 6 + i) * 0.5 * (j % 2 ? 1 : -1)));
       });

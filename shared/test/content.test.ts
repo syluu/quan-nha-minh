@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { BALANCE, INGREDIENTS, ITEMS, SHOPS, STATIONS, getStationDef } from '../src/content';
 import type { PlacedStation, ShopLayout } from '../src/content';
+import { routeAround } from '../src/sim/route';
 
 const shops = Object.values(SHOPS);
 
@@ -37,6 +38,12 @@ function segmentHitsBox(a: Pt, b: Pt, box: Box): boolean {
     }
   }
   return true;
+}
+
+/** Các chặng thật khách đi từ a tới b (đi vòng theo lối đi nếu đường thẳng vướng bàn). */
+function legs(shop: ShopLayout, a: Pt, b: Pt): [Pt, Pt][] {
+  const pts = [a, ...routeAround(shop.id, a, b)];
+  return pts.slice(1).map((p, i) => [pts[i], p]);
 }
 
 function customerPoints(shop: ShopLayout): Pt[] {
@@ -103,7 +110,8 @@ describe.each(shops.map((s) => [s.id, s] as const))('shop %s', (_id, shop) => {
     const boxes = shop.stations.map((s) => [s.instanceId, footprintOf(s)] as const);
     for (const [id, b] of boxes) {
       expect(b.minX >= shop.bounds.minX && b.maxX <= shop.bounds.maxX, id).toBe(true);
-      expect(b.minZ >= shop.bounds.minZ && b.maxZ <= shop.bounds.maxZ, id).toBe(true);
+      // Bàn vỉa hè nằm ngoài sàn quán, trong phần vỉa hè đi được (walkMaxZ).
+      expect(b.minZ >= shop.bounds.minZ && b.maxZ <= (shop.walkMaxZ ?? shop.bounds.maxZ), id).toBe(true);
     }
     for (let i = 0; i < boxes.length; i++)
       for (let j = i + 1; j < boxes.length; j++) {
@@ -185,7 +193,8 @@ describe.each(shops.map((s) => [s.id, s] as const))('shop %s', (_id, shop) => {
       for (const p of pts) segments.push([p, q]);
     }
     for (const [a, b] of segments)
-      for (const box of boxes) expect(segmentHitsBox(a, b, box), JSON.stringify([a, b])).toBe(false);
+      for (const [p, q] of legs(shop, a, b))
+        for (const box of boxes) expect(segmentHitsBox(p, q, box), JSON.stringify([a, b, p, q])).toBe(false);
   });
 });
 
@@ -248,19 +257,32 @@ describe('plan 5 content', () => {
     expect(itemCost('ca_phe_sua_da')).toBe(6_000);
   });
 
-  it.each(['com_tam', 'pho_cafe'] as const)('%s has 4 tables whose seats are reachable from the cashier and the exit', (id) => {
+  it.each(['com_tam', 'pho_cafe'] as const)('%s has 8 tables in 2 rows inside + 4 on the sidewalk, seats reachable without crossing a table', (id) => {
     const shop = SHOPS[id];
     const tables = shop.stations.filter((s) => getStationDef(s.def).kind === 'table');
-    expect(tables).toHaveLength(4);
+    expect(tables).toHaveLength(12);
+    const inside = tables.filter((t) => t.z < shop.bounds.maxZ);
+    const sidewalk = tables.filter((t) => t.z > shop.bounds.maxZ);
+    expect(inside).toHaveLength(8);
+    expect(sidewalk).toHaveLength(4);
+    // Xếp theo hàng: mỗi hàng 4 bàn cùng z, các cột thẳng nhau.
+    expect([...new Set(inside.map((t) => t.z))]).toHaveLength(2);
+    expect([...new Set(sidewalk.map((t) => t.z))]).toHaveLength(1);
+    expect([...new Set(tables.map((t) => t.x))]).toHaveLength(4);
+    for (const t of sidewalk) expect(getStationDef(t.def).name).toBe('Bàn vỉa hè');
     const cashier = shop.stations.find((s) => getStationDef(s.def).kind === 'cashier')!;
     const boxes = shop.stations.map((s) => footprintOf(s, 0.05));
+    const clear = (a: Pt, b: Pt, what: string) => {
+      for (const [p, q] of legs(shop, a, b)) for (const box of boxes) expect(segmentHitsBox(p, q, box), what).toBe(false);
+    };
     for (const t of tables) {
       expect(t.seatPoints).toHaveLength(2);
-      for (const seat of t.seatPoints!)
-        for (const box of boxes) {
-          expect(segmentHitsBox(cashier.customerPoint!, seat, box), `${t.instanceId} from cashier`).toBe(false);
-          expect(segmentHitsBox(seat, shop.exit, box), `${t.instanceId} to exit`).toBe(false);
-        }
+      for (const seat of t.seatPoints!) {
+        clear(cashier.customerPoint!, seat, `${t.instanceId} from cashier`);
+        clear(seat, shop.exit, `${t.instanceId} to exit`);
+      }
+      // Người dọn (đứng ở workPoint) đi được tới mọi bàn khác.
+      for (const o of tables) if (o !== t) clear(t.workPoint, o.workPoint, `cleaner ${t.instanceId} → ${o.instanceId}`);
     }
   });
 });

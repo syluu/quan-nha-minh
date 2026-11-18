@@ -5,6 +5,7 @@ import { distanceToFootprint } from './carry';
 import type { SimEvent } from './events';
 import { effectiveStars, marketingMultiplier } from './marketing';
 import { pushRating } from './rating';
+import { routeAround } from './route';
 import { gameHour } from './time';
 import type { Customer, Regular, ShopState, WorldState } from './world';
 import { nextRandom } from './world';
@@ -152,6 +153,27 @@ function walk(c: Customer, tx: number, tz: number, dt: number): boolean {
   return step >= d - ARRIVE;
 }
 
+/**
+ * Đi tới (tx, tz) theo lối đi của quán: đổi đích thì tìm đường mới (vòng qua bàn nếu cần), rồi đi lần lượt qua các điểm rẽ.
+ * Trả về true khi đã tới đích.
+ */
+function go(c: Customer, shopId: ShopId, tx: number, tz: number, dt: number): boolean {
+  if (!c.goal || c.goal.x !== tx || c.goal.z !== tz) {
+    c.goal = { x: tx, z: tz };
+    c.via = routeAround(shopId, c, c.goal).slice(0, -1);
+  }
+  if (c.via?.length) {
+    if (walk(c, c.via[0].x, c.via[0].z, dt)) c.via.shift();
+    return false;
+  }
+  const arrived = walk(c, tx, tz, dt);
+  if (arrived) {
+    delete c.goal;
+    delete c.via;
+  }
+  return arrived;
+}
+
 function seatPoint(shopId: ShopId, c: Customer): { x: number; z: number } | null {
   if (!c.table) return null;
   return SHOPS[shopId].stations.find((p) => p.instanceId === c.table)?.seatPoints?.[c.seat] ?? null;
@@ -239,7 +261,7 @@ export function tickCustomers(world: WorldState, shopId: ShopId, dt: number): Si
     switch (c.state) {
       case 'toShelf': {
         const d = displayFor(shopId, c.wants[0])!;
-        if (walk(c, d.customerPoint!.x, d.customerPoint!.z, dt)) c.state = 'atShelf';
+        if (go(c, shopId, d.customerPoint!.x, d.customerPoint!.z, dt)) c.state = 'atShelf';
         break;
       }
       case 'atShelf': {
@@ -266,7 +288,7 @@ export function tickCustomers(world: WorldState, shopId: ShopId, dt: number): Si
         const i = queueIndex++;
         const tx = cashier.customerPoint!.x + layout.queueDir.x * BALANCE.QUEUE_SPACING * i;
         const tz = cashier.customerPoint!.z + layout.queueDir.z * BALANCE.QUEUE_SPACING * i;
-        const arrived = walk(c, tx, tz, dt);
+        const arrived = go(c, shopId, tx, tz, dt);
         if (!arrived) {
           c.state = 'toQueue';
           break;
@@ -318,7 +340,7 @@ export function tickCustomers(world: WorldState, shopId: ShopId, dt: number): Si
       case 'toTable': {
         const pt = seatPoint(shopId, c);
         if (!pt) c.state = 'leaving';
-        else if (walk(c, pt.x, pt.z, dt)) c.state = 'eating';
+        else if (go(c, shopId, pt.x, pt.z, dt)) c.state = 'eating';
         break;
       }
       case 'eating': {
@@ -335,7 +357,7 @@ export function tickCustomers(world: WorldState, shopId: ShopId, dt: number): Si
       case 'leaving': {
         // Khách đoàn đi bộ ra lại xe du lịch; khách thường ra cửa.
         const out = c.tourist ? tourDoor(shopId) : layout.exit;
-        if (walk(c, out.x, out.z, dt)) shop.customers.splice(shop.customers.indexOf(c), 1);
+        if (go(c, shopId, out.x, out.z, dt)) shop.customers.splice(shop.customers.indexOf(c), 1);
         break;
       }
     }

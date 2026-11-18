@@ -9,6 +9,8 @@ import { setMachineEnabled } from '../src/sim/upgrades';
 import { createWorld } from '../src/sim/world';
 import type { WorldState } from '../src/sim/world';
 import { putPlayer, repeat } from './helpers';
+import { movePlayer } from '../src/sim/movement';
+import { normalizeLoaded } from '../src/sim/snapshot';
 
 function comTam(tables = 1): WorldState {
   const w = createWorld('X', 1);
@@ -203,5 +205,77 @@ describe('plan 5 review fixes', () => {
     w.secOfDay = 359.99;
     advanceTime(w, 0.1);
     expect(w.shops.com_tam.stations.ban_an_1.seats).toEqual(['dirty', 'free']);
+  });
+});
+
+describe('tables in rows + sidewalk tables', () => {
+  const tableBoxes = SHOPS.com_tam.stations
+    .filter((p) => p.seatPoints)
+    .map((p) => ({ id: p.instanceId, minX: p.x - 0.6, maxX: p.x + 0.6, minZ: p.z - 0.4, maxZ: p.z + 0.4 }));
+  const insideTable = (x: number, z: number) => tableBoxes.find((b) => x > b.minX && x < b.maxX && z > b.minZ && z < b.maxZ)?.id;
+
+  it('a customer seated at the last sidewalk table walks there and back out without walking through any table', () => {
+    const w = comTam(12);
+    const shop = w.shops.com_tam;
+    // Mọi bàn khác đều đã có người: khách mới chỉ còn chỗ ở bàn vỉa hè ngoài cùng.
+    for (let i = 1; i <= 11; i++) shop.stations[`ban_an_${i}`].seats = ['taken', 'taken'];
+    const wp = getPlaced('com_tam', 'thu_ngan').workPoint;
+    putPlayer(w, 'a', wp.x, wp.z, [], 'com_tam');
+    let seated = null;
+    for (let i = 0; i < 20 && !seated; i++) {
+      const { c } = payingCustomer(w);
+      repeat(1.1, (dt) => tickCustomers(w, 'com_tam', dt));
+      if (c.state === 'toTable') seated = c;
+      else shop.customers = [];
+    }
+    expect(seated!.table).toBe('ban_an_12');
+    const hits = new Set<string>();
+    repeat(60, (dt) => {
+      tickCustomers(w, 'com_tam', dt);
+      if (!shop.customers.includes(seated!)) return;
+      const t = insideTable(seated!.x, seated!.z);
+      if (t) hits.add(t);
+    });
+    expect([...hits]).toEqual([]);
+    expect(shop.customers.includes(seated!)).toBe(false); // ăn xong đã ra về
+    expect(shop.stations.ban_an_12.seats).toContain('dirty');
+  });
+
+  it('the cleaner goes between table rows (and out to the sidewalk) without walking through a table', () => {
+    const w = comTam(12);
+    putPlayer(w, 'a', 0, 2, [], 'com_tam');
+    expect(hireStaff(w, 'com_tam', 'cleaner', null, 'a')).toEqual({ ok: true });
+    for (const i of [1, 8, 12, 5]) w.shops.com_tam.stations[`ban_an_${i}`].seats = ['dirty', 'dirty'];
+    const s = w.shops.com_tam.staff[0];
+    const hits = new Set<string>();
+    repeat(60, (dt) => {
+      tickStaff(w, 'com_tam', dt);
+      const t = insideTable(s.x, s.z);
+      if (t) hits.add(t);
+    });
+    expect([...hits]).toEqual([]);
+    for (const i of [1, 8, 12, 5]) expect(w.shops.com_tam.stations[`ban_an_${i}`].seats).toEqual(['free', 'free']);
+  });
+
+  it('players can walk out onto the sidewalk to the sidewalk tables, the bánh mì cart stays inside its floor', () => {
+    const layout = SHOPS.com_tam;
+    let p = { x: 4.6, z: 8, dir: 0 };
+    for (let i = 0; i < 100; i++) p = movePlayer(p, { mx: 0, mz: 1 }, 3, 0.05, layout, () => true);
+    expect(p.z).toBeGreaterThan(getPlaced('com_tam', 'ban_an_9').z);
+    let q = { x: 0, z: 4, dir: 0 };
+    for (let i = 0; i < 100; i++) q = movePlayer(q, { mx: 0, mz: 1 }, 3, 0.05, SHOPS.banh_mi, () => true);
+    expect(q.z).toBeLessThanOrEqual(SHOPS.banh_mi.bounds.maxZ);
+  });
+
+  it('sidewalk tables open after the first 4 inside tables, cost more, and old saves get the new tables', () => {
+    const t9 = getPlaced('com_tam', 'ban_an_9');
+    expect(t9.requires).toEqual(['ban_an_4']);
+    expect(t9.unlockCost).toBe(1_200_000);
+    expect(getPlaced('com_tam', 'ban_an_5').unlockCost).toBe(800_000);
+    const old = JSON.parse(JSON.stringify(comTam(4)));
+    for (let i = 5; i <= 12; i++) delete old.shops.com_tam.stations[`ban_an_${i}`];
+    const w = normalizeLoaded(old);
+    expect(w.shops.com_tam.stations.ban_an_4.unlocked).toBe(true);
+    expect(w.shops.com_tam.stations.ban_an_12).toMatchObject({ unlocked: false, seats: ['free', 'free'] });
   });
 });
